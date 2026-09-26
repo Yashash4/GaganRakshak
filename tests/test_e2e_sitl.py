@@ -1,6 +1,6 @@
-"""End-to-end over real ArduPilot SITL: FC -> onboard router -> radio -> ground router -> GCS.
+"""End-to-end over real ArduPilot SITL: FC -> onboard router -> link_sim radio -> ground router -> GCS.
 
-Routers run as separate processes, as deployed. Skipped where SITL is not built.
+Routers and the radio run as separate processes, as deployed. Skipped where SITL is not built.
 """
 
 import socket
@@ -17,14 +17,14 @@ from gaganrakshak import sitl
 
 MAV = mavutil.mavlink
 I = 5  # SITL instance: link tcp 5810, harness tcp 5812
-RADIO, GCS, IDS_ON, IDS_GND = 16300, 16301, 16310, 16311
+RADIO_AIR, RADIO_GND, GCS, IDS_ON, IDS_GND = 16300, 16302, 16301, 16310, 16311
 RADIO_BYTES_PER_S = 57600 / 10  # 57.6 kbps serial, 8N1 = 10 bits on the wire per byte
 
 pytestmark = pytest.mark.skipif(not sitl.BINARY.exists(), reason="ArduPilot SITL not built")
 
 
-def router(*args):
-    return subprocess.Popen([sys.executable, "-m", "gaganrakshak.router", *args])
+def proc(module, *args):
+    return subprocess.Popen([sys.executable, "-m", f"gaganrakshak.{module}", *args])
 
 
 class Mirror:
@@ -70,10 +70,11 @@ def chain(tmp_path_factory):
     procs = [sitl.start(I, work)]
     sitl.wait_ready(work)
     ids_on, ids_gnd = Mirror(IDS_ON), Mirror(IDS_GND)
-    procs.append(router("--onboard", "--a", f"tcp:127.0.0.1:{sitl.ports(I)['link']}",
-                        "--b", f"udpout:127.0.0.1:{RADIO}", "--ids-port", str(IDS_ON)))
-    procs.append(router("--a", f"udpin:127.0.0.1:{RADIO}", "--b", f"udpout:127.0.0.1:{GCS}",
-                        "--ids-port", str(IDS_GND)))
+    procs.append(proc("router", "--onboard", "--a", f"tcp:127.0.0.1:{sitl.ports(I)['link']}",
+                      "--b", f"udpout:127.0.0.1:{RADIO_AIR}", "--ids-port", str(IDS_ON)))
+    procs.append(proc("link_sim", "--air-port", str(RADIO_AIR), "--ground-port", str(RADIO_GND)))
+    procs.append(proc("router", "--a", f"udpin:127.0.0.1:{RADIO_GND}", "--b", f"udpout:127.0.0.1:{GCS}",
+                      "--ids-port", str(IDS_GND)))
     gcs = mavutil.mavlink_connection(f"udpin:127.0.0.1:{GCS}", source_system=255, source_component=190)
     assert gcs.wait_heartbeat(timeout=60), "no heartbeat at GCS"
     # What MAVProxy does on connect: all streams at 4 Hz.
@@ -111,6 +112,7 @@ def test_clean_link_imu_rate_and_radio_load(chain):
     assert imu_hz >= 50
     assert load < 0.70
     assert any(m.get_type() == "GPS_RAW_INT" for m in at_gcs)
+    assert any(m.get_type() == "RADIO_STATUS" and m.get_srcSystem() == 51 for m in at_gcs)
     assert ids_gnd.take(), "ground IDS mirror empty"
 
 
