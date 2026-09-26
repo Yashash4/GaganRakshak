@@ -13,7 +13,7 @@ import pytest
 from pymavlink import mavutil
 from pymavlink.dialects.v20 import ardupilotmega as mav2
 
-from gaganrakshak import sitl
+from gaganrakshak import crypto, sitl
 
 MAV = mavutil.mavlink
 I = 5  # SITL instance: link tcp 5810, harness tcp 5812
@@ -70,11 +70,14 @@ def chain(tmp_path_factory):
     procs = [sitl.start(I, work)]
     sitl.wait_ready(work)
     ids_on, ids_gnd = Mirror(IDS_ON), Mirror(IDS_GND)
+    for name in ("sign", "commit"):  # full IDS traffic on the radio: signatures + commitments
+        (work / f"{name}.key").write_text(crypto.generate_keypair()[0].hex())
     procs.append(proc("router", "--onboard", "--a", f"tcp:127.0.0.1:{sitl.ports(I)['link']}",
-                      "--b", f"udpout:127.0.0.1:{RADIO_AIR}", "--ids-port", str(IDS_ON)))
+                      "--b", f"udpout:127.0.0.1:{RADIO_AIR}", "--ids-port", str(IDS_ON),
+                      "--commit-key", str(work / "commit.key")))
     procs.append(proc("link_sim", "--air-port", str(RADIO_AIR), "--ground-port", str(RADIO_GND)))
     procs.append(proc("router", "--a", f"udpin:127.0.0.1:{RADIO_GND}", "--b", f"udpout:127.0.0.1:{GCS}",
-                      "--ids-port", str(IDS_GND)))
+                      "--ids-port", str(IDS_GND), "--sign-key", str(work / "sign.key")))
     gcs = mavutil.mavlink_connection(f"udpin:127.0.0.1:{GCS}", source_system=255, source_component=190)
     assert gcs.wait_heartbeat(timeout=60), "no heartbeat at GCS"
     # What MAVProxy does on connect: all streams at 4 Hz.
@@ -101,19 +104,23 @@ def test_clean_link_imu_rate_and_radio_load(chain):
     gcs, ids_on, ids_gnd, _ = chain
     gcs_collect(gcs, 5)  # let the FC settle to the requested rates
     ids_on.take()
+    ids_gnd.take()
     t0 = time.monotonic()
     at_gcs = gcs_collect(gcs, 10)
     dt = time.monotonic() - t0
     onboard = ids_on.take()
+    off_radio = [m for d, _, m in ids_gnd.take() if d == b"D"]  # everything the radio delivered
 
     imu_hz = sum(n == "RAW_IMU" for _, n, _ in onboard) / dt
-    load = sum(len(m.get_msgbuf()) for m in at_gcs) / dt / RADIO_BYTES_PER_S
-    print(f"IDS RAW_IMU {imu_hz:.1f} Hz; radio downlink load {load:.1%} of 57.6 kbps")
+    load = sum(len(m.get_msgbuf()) for m in off_radio) / dt / RADIO_BYTES_PER_S
+    ids_share = sum(len(m.get_msgbuf()) for m in off_radio if m.get_type().startswith("GR_")) / dt / RADIO_BYTES_PER_S
+    print(f"IDS RAW_IMU {imu_hz:.1f} Hz; radio downlink load {load:.1%} of 57.6 kbps "
+          f"(commitments {ids_share:.1%})")
+    assert any(m.get_type() == "GR_COMMIT" for m in off_radio)
     assert imu_hz >= 50
     assert load < 0.70
     assert any(m.get_type() == "GPS_RAW_INT" for m in at_gcs)
     assert any(m.get_type() == "RADIO_STATUS" and m.get_srcSystem() == 51 for m in at_gcs)
-    assert ids_gnd.take(), "ground IDS mirror empty"
 
 
 def test_gcs_command_reaches_fc(chain):

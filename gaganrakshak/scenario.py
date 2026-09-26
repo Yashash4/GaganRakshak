@@ -274,20 +274,24 @@ class Run:
             sitl.wait_ready(out / "sitl")
             recs = [Recorder(p["ids_on"], out / "onboard"), Recorder(p["ids_gnd"], out / "ground")]
             py = [sys.executable, "-m", "gaganrakshak.router"]
+            keys = {}
+            for agent in ("ground_sign", "onboard_commit"):  # per-run test keys
+                seed, pub = crypto.generate_keypair()
+                (out / f"{agent}.key").write_text(seed.hex())
+                (out / f"{agent}.pub").write_text(pub.hex())
+                keys[agent] = str(out / f"{agent}.key")
             procs.append(subprocess.Popen(py + ["--onboard", "--a", f"tcp:127.0.0.1:{p['link']}",
                                                 "--b", f"udpout:127.0.0.1:{p['radio_air']}",
-                                                "--ids-port", str(p["ids_on"])]))
+                                                "--ids-port", str(p["ids_on"]),
+                                                "--commit-key", keys["onboard_commit"]]))
             attacker = ATTACKS[plan["attack"]["type"]](self) if plan["attack"] else None
             cfg = LinkConfig(seed=plan["seed"], **plan["link"])
             self.link = LinkSim(p["radio_air"], p["radio_gnd"], cfg,
                                 getattr(attacker, "link_attacker", None)).start()
-            seed, pub = crypto.generate_keypair()  # per-run test key for command signing
-            (out / "ground_sign.key").write_text(seed.hex())
-            (out / "ground_sign.pub").write_text(pub.hex())
             procs.append(subprocess.Popen(py + ["--a", f"udpin:127.0.0.1:{p['radio_gnd']}",
                                                 "--b", f"udpout:127.0.0.1:{p['gcs']}",
                                                 "--ids-port", str(p["ids_gnd"]),
-                                                "--sign-key", str(out / "ground_sign.key")]))
+                                                "--sign-key", keys["ground_sign"]]))
             self.harness = mavutil.mavlink_connection(f"tcp:127.0.0.1:{p['harness']}", source_system=250)
             # Address the FC itself: a broadcast (target 0) would be routed by ArduPilot onto the
             # vehicle link too.

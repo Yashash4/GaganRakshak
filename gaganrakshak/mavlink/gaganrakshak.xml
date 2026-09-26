@@ -14,5 +14,14 @@
       <field type="uint8_t" name="cmd_seq">Sequence number of the signed command frame.</field>
       <field type="uint8_t[64]" name="signature">Ed25519 signature over counter and the command frame.</field>
     </message>
+    <message id="52501" name="GR_COMMIT">
+      <description>Signed commitment of the security-relevant downlink frames the onboard agent forwarded in one window (one chunk). Entries are 6 bytes: seq, msgid, first 4 bytes of SHA-256(frame).</description>
+      <field type="uint32_t" name="window_id">Commitment window counter.</field>
+      <field type="uint8_t" name="chunk">Chunk index within the window.</field>
+      <field type="uint8_t" name="n_chunks">Number of chunks in the window.</field>
+      <field type="uint8_t" name="count">Number of entries in this chunk.</field>
+      <field type="uint8_t[64]" name="signature">Ed25519 signature over window_id, chunk, n_chunks, count and entries.</field>
+      <field type="uint8_t[180]" name="entries">Up to 30 entries; declared last so MAVLink2 trims unused bytes.</field>
+    </message>
   </messages>
 </mavlink>

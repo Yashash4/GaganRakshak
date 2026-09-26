@@ -362,6 +362,7 @@ enums: Dict[str, Enum] = {}
 MAVLINK_MSG_ID_BAD_DATA = -1
 MAVLINK_MSG_ID_UNKNOWN = -2
 MAVLINK_MSG_ID_GR_CMD_SIG = 52500
+MAVLINK_MSG_ID_GR_COMMIT = 52501
 
 
 class MAVLink_gr_cmd_sig_message(MAVLink_message):
@@ -408,8 +409,54 @@ class MAVLink_gr_cmd_sig_message(MAVLink_message):
 setattr(MAVLink_gr_cmd_sig_message, "name", mavlink_msg_deprecated_name_property())
 
 
+class MAVLink_gr_commit_message(MAVLink_message):
+    """
+    Signed commitment of the security-relevant downlink frames the
+    onboard agent forwarded in one window (one chunk). Entries are 6
+    bytes: seq, msgid, first 4 bytes of SHA-256(frame).
+    """
+
+    id = MAVLINK_MSG_ID_GR_COMMIT
+    msgname = "GR_COMMIT"
+    fieldnames = ["window_id", "chunk", "n_chunks", "count", "signature", "entries"]
+    ordered_fieldnames = ["window_id", "chunk", "n_chunks", "count", "signature", "entries"]
+    fieldtypes = ["uint32_t", "uint8_t", "uint8_t", "uint8_t", "uint8_t", "uint8_t"]
+    fielddisplays_by_name: Dict[str, str] = {}
+    fieldenums_by_name: Dict[str, str] = {}
+    fieldunits_by_name: Dict[str, str] = {}
+    native_format = bytearray(b"<IBBBBB")
+    orders = [0, 1, 2, 3, 4, 5]
+    lengths = [1, 1, 1, 1, 64, 180]
+    array_lengths = [0, 0, 0, 0, 64, 180]
+    crc_extra = 44
+    unpacker = struct.Struct("<IBBB64B180B")
+    instance_field = None
+    instance_offset = -1
+
+    def __init__(self, window_id: int, chunk: int, n_chunks: int, count: int, signature: Sequence[int], entries: Sequence[int]):
+        MAVLink_message.__init__(self, MAVLink_gr_commit_message.id, MAVLink_gr_commit_message.msgname)
+        self._fieldnames = MAVLink_gr_commit_message.fieldnames
+        self._instance_field = MAVLink_gr_commit_message.instance_field
+        self._instance_offset = MAVLink_gr_commit_message.instance_offset
+        self.window_id = window_id
+        self.chunk = chunk
+        self.n_chunks = n_chunks
+        self.count = count
+        self.signature = signature
+        self.entries = entries
+
+    def pack(self, mav: "MAVLink", force_mavlink1: bool = False) -> bytes:
+        return self._pack(mav, self.crc_extra, self.unpacker.pack(self.window_id, self.chunk, self.n_chunks, self.count, self.signature[0], self.signature[1], self.signature[2], self.signature[3], self.signature[4], self.signature[5], self.signature[6], self.signature[7], self.signature[8], self.signature[9], self.signature[10], self.signature[11], self.signature[12], self.signature[13], self.signature[14], self.signature[15], self.signature[16], self.signature[17], self.signature[18], self.signature[19], self.signature[20], self.signature[21], self.signature[22], self.signature[23], self.signature[24], self.signature[25], self.signature[26], self.signature[27], self.signature[28], self.signature[29], self.signature[30], self.signature[31], self.signature[32], self.signature[33], self.signature[34], self.signature[35], self.signature[36], self.signature[37], self.signature[38], self.signature[39], self.signature[40], self.signature[41], self.signature[42], self.signature[43], self.signature[44], self.signature[45], self.signature[46], self.signature[47], self.signature[48], self.signature[49], self.signature[50], self.signature[51], self.signature[52], self.signature[53], self.signature[54], self.signature[55], self.signature[56], self.signature[57], self.signature[58], self.signature[59], self.signature[60], self.signature[61], self.signature[62], self.signature[63], self.entries[0], self.entries[1], self.entries[2], self.entries[3], self.entries[4], self.entries[5], self.entries[6], self.entries[7], self.entries[8], self.entries[9], self.entries[10], self.entries[11], self.entries[12], self.entries[13], self.entries[14], self.entries[15], self.entries[16], self.entries[17], self.entries[18], self.entries[19], self.entries[20], self.entries[21], self.entries[22], self.entries[23], self.entries[24], self.entries[25], self.entries[26], self.entries[27], self.entries[28], self.entries[29], self.entries[30], self.entries[31], self.entries[32], self.entries[33], self.entries[34], self.entries[35], self.entries[36], self.entries[37], self.entries[38], self.entries[39], self.entries[40], self.entries[41], self.entries[42], self.entries[43], self.entries[44], self.entries[45], self.entries[46], self.entries[47], self.entries[48], self.entries[49], self.entries[50], self.entries[51], self.entries[52], self.entries[53], self.entries[54], self.entries[55], self.entries[56], self.entries[57], self.entries[58], self.entries[59], self.entries[60], self.entries[61], self.entries[62], self.entries[63], self.entries[64], self.entries[65], self.entries[66], self.entries[67], self.entries[68], self.entries[69], self.entries[70], self.entries[71], self.entries[72], self.entries[73], self.entries[74], self.entries[75], self.entries[76], self.entries[77], self.entries[78], self.entries[79], self.entries[80], self.entries[81], self.entries[82], self.entries[83], self.entries[84], self.entries[85], self.entries[86], self.entries[87], self.entries[88], self.entries[89], self.entries[90], self.entries[91], self.entries[92], self.entries[93], self.entries[94], self.entries[95], self.entries[96], self.entries[97], self.entries[98], self.entries[99], self.entries[100], self.entries[101], self.entries[102], self.entries[103], self.entries[104], self.entries[105], self.entries[106], self.entries[107], self.entries[108], self.entries[109], self.entries[110], self.entries[111], self.entries[112], self.entries[113], self.entries[114], self.entries[115], self.entries[116], self.entries[117], self.entries[118], self.entries[119], self.entries[120], self.entries[121], self.entries[122], self.entries[123], self.entries[124], self.entries[125], self.entries[126], self.entries[127], self.entries[128], self.entries[129], self.entries[130], self.entries[131], self.entries[132], self.entries[133], self.entries[134], self.entries[135], self.entries[136], self.entries[137], self.entries[138], self.entries[139], self.entries[140], self.entries[141], self.entries[142], self.entries[143], self.entries[144], self.entries[145], self.entries[146], self.entries[147], self.entries[148], self.entries[149], self.entries[150], self.entries[151], self.entries[152], self.entries[153], self.entries[154], self.entries[155], self.entries[156], self.entries[157], self.entries[158], self.entries[159], self.entries[160], self.entries[161], self.entries[162], self.entries[163], self.entries[164], self.entries[165], self.entries[166], self.entries[167], self.entries[168], self.entries[169], self.entries[170], self.entries[171], self.entries[172], self.entries[173], self.entries[174], self.entries[175], self.entries[176], self.entries[177], self.entries[178], self.entries[179]), force_mavlink1=force_mavlink1)
+
+
+# Define name on the class for backwards compatibility (it is now msgname).
+# Done with setattr to hide the class variable from mypy.
+setattr(MAVLink_gr_commit_message, "name", mavlink_msg_deprecated_name_property())
+
+
 mavlink_map: Dict[int, Type[MAVLink_message]] = {
     MAVLINK_MSG_ID_GR_CMD_SIG: MAVLink_gr_cmd_sig_message,
+    MAVLINK_MSG_ID_GR_COMMIT: MAVLink_gr_commit_message,
 }
 
 
@@ -835,3 +882,35 @@ class MAVLink(object):
 
         """
         self.send(self.gr_cmd_sig_encode(counter, cmd_msgid, cmd_sysid, cmd_compid, cmd_seq, signature), force_mavlink1=force_mavlink1)
+
+    def gr_commit_encode(self, window_id: int, chunk: int, n_chunks: int, count: int, signature: Sequence[int], entries: Sequence[int]) -> MAVLink_gr_commit_message:
+        """
+        Signed commitment of the security-relevant downlink frames the onboard
+        agent forwarded in one window (one chunk). Entries are 6
+        bytes: seq, msgid, first 4 bytes of SHA-256(frame).
+
+        window_id                 : Commitment window counter. (type:uint32_t)
+        chunk                     : Chunk index within the window. (type:uint8_t)
+        n_chunks                  : Number of chunks in the window. (type:uint8_t)
+        count                     : Number of entries in this chunk. (type:uint8_t)
+        signature                 : Ed25519 signature over window_id, chunk, n_chunks, count and entries. (type:uint8_t)
+        entries                   : Up to 30 entries; declared last so MAVLink2 trims unused bytes. (type:uint8_t)
+
+        """
+        return MAVLink_gr_commit_message(window_id, chunk, n_chunks, count, signature, entries)
+
+    def gr_commit_send(self, window_id: int, chunk: int, n_chunks: int, count: int, signature: Sequence[int], entries: Sequence[int], force_mavlink1: bool = False) -> None:
+        """
+        Signed commitment of the security-relevant downlink frames the onboard
+        agent forwarded in one window (one chunk). Entries are 6
+        bytes: seq, msgid, first 4 bytes of SHA-256(frame).
+
+        window_id                 : Commitment window counter. (type:uint32_t)
+        chunk                     : Chunk index within the window. (type:uint8_t)
+        n_chunks                  : Number of chunks in the window. (type:uint8_t)
+        count                     : Number of entries in this chunk. (type:uint8_t)
+        signature                 : Ed25519 signature over window_id, chunk, n_chunks, count and entries. (type:uint8_t)
+        entries                   : Up to 30 entries; declared last so MAVLink2 trims unused bytes. (type:uint8_t)
+
+        """
+        self.send(self.gr_commit_encode(window_id, chunk, n_chunks, count, signature, entries), force_mavlink1=force_mavlink1)

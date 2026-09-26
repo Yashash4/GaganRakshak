@@ -29,6 +29,7 @@ from pathlib import Path
 from pymavlink import mavutil
 
 from .cmd_sign import Signer, is_command
+from .commit import CommitTx
 
 MAV = mavutil.mavlink
 ROUTER_SYSID, ROUTER_COMPID = 1, MAV.MAV_COMP_ID_ONBOARD_COMPUTER
@@ -64,7 +65,7 @@ def sim_only(msg) -> bool:
 
 class Router:
     def __init__(self, a: str, b: str, ids_port: int = 15600, onboard: bool = False,
-                 fc_rate_hz: int = 50, sign_key: bytes | None = None):
+                 fc_rate_hz: int = 50, sign_key: bytes | None = None, commit_key: bytes | None = None):
         self.a = mavutil.mavlink_connection(a, source_system=ROUTER_SYSID, source_component=ROUTER_COMPID)
         self.b = mavutil.mavlink_connection(b, source_system=ROUTER_SYSID, source_component=ROUTER_COMPID)
         self.ids = ("127.0.0.1", ids_port)
@@ -72,6 +73,7 @@ class Router:
         self.onboard = onboard
         self.fc_rate_hz = fc_rate_hz
         self.signer = Signer(sign_key) if sign_key else None  # ground agent only
+        self.commit = CommitTx(commit_key) if commit_key else None  # onboard agent only
         self.radio_hz: dict[str, float] = {}  # per message type, set by GCS requests
         self._last_tx: dict[str, float] = {}
         self.stats = {"a_to_b": Counter(), "b_to_a": Counter(), "dropped": Counter(),
@@ -105,7 +107,12 @@ class Router:
             if entry is not None:
                 us = msg.param2
                 self.radio_hz[entry.msgname] = 0 if us < 0 else (DEFAULT_RADIO_HZ if us == 0 else 1e6 / us)
-            self.b.mav.command_ack_send(msg.command, MAV.MAV_RESULT_ACCEPTED if entry else MAV.MAV_RESULT_FAILED)
+            ack = MAV.MAVLink_command_ack_message(msg.command, MAV.MAV_RESULT_ACCEPTED if entry else MAV.MAV_RESULT_FAILED)
+            buf = ack.pack(self.b.mav)
+            self.b.mav.seq = (self.b.mav.seq + 1) % 256
+            self.b.write(buf)
+            if self.commit:
+                self.commit.add(buf, ack)  # our own downlink frames are committed too
             return True
         return False
 
@@ -122,6 +129,10 @@ class Router:
 
     def _pump(self, src, dst, direction: bytes, key: str):
         while not self._stop.is_set():
+            if self.commit and direction == b"D":
+                for frame in self.commit.flush(time.monotonic()):
+                    dst.write(frame)
+                    self.stats["bytes_to_b"] += len(frame)
             msg = src.recv_match(blocking=True, timeout=0.1)
             if msg is None:
                 continue
@@ -140,7 +151,11 @@ class Router:
                 continue
             if self.onboard and direction == b"D" and not self._allow_downlink(name, time.monotonic()):
                 continue
+            if not self.onboard and direction == b"D" and name.startswith("GR_"):
+                continue  # commitments end at the ground agent
             dst.write(buf)
+            if self.commit and direction == b"D":
+                self.commit.add(bytes(buf), msg)
             if self.signer and direction == b"U" and is_command(msg):
                 for sig in self.signer.sign(bytes(buf), msg):
                     dst.write(sig)
@@ -168,9 +183,11 @@ def main():
     ap.add_argument("--onboard", action="store_true")
     ap.add_argument("--fc-rate", type=int, default=50)
     ap.add_argument("--sign-key", type=Path, help="ground agent: file with the hex Ed25519 private seed")
+    ap.add_argument("--commit-key", type=Path, help="onboard agent: file with the hex Ed25519 private seed")
     args = ap.parse_args()
-    key = bytes.fromhex(args.sign_key.read_text().strip()) if args.sign_key else None
-    r = Router(args.a, args.b, args.ids_port, args.onboard, args.fc_rate, key).start()
+    load = lambda p: bytes.fromhex(p.read_text().strip()) if p else None
+    r = Router(args.a, args.b, args.ids_port, args.onboard, args.fc_rate,
+               load(args.sign_key), load(args.commit_key)).start()
     while True:
         time.sleep(10)
         if r.onboard:

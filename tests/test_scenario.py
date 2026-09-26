@@ -6,6 +6,7 @@ import yaml
 
 from gaganrakshak import sitl
 from gaganrakshak.cmd_sign import CmdVerifier
+from gaganrakshak.commit import CommitRx
 from gaganrakshak.ids import Ids, run_replay
 from gaganrakshak.protocol import for_agent
 from gaganrakshak.scenario import resolve, run_many, run_ports
@@ -45,11 +46,14 @@ def test_eight_parallel_runs(tmp_path):
         assert {k: l[k] for k in p} == p  # labels carry the exact resolved plan
         assert l["recorded_frames"]["onboard"] > 1000 and l["recorded_frames"]["ground"] > 100
         assert [e["event"] for e in l["events"]][0] == "takeoff" and l["events"][-1]["event"] == "end"
-        verifier = CmdVerifier(bytes.fromhex((tmp_path / p["run_id"] / "ground_sign.pub").read_text()))
+        pub = lambda name: bytes.fromhex((tmp_path / p["run_id"] / f"{name}.pub").read_text())
+        verifier, commit_rx = CmdVerifier(pub("ground_sign")), CommitRx(pub("onboard_commit"))
         for side in ("onboard", "ground"):  # recorded traffic replays cleanly through the IDS
-            dets = [for_agent(side)] + ([verifier] if side == "onboard" else [])
+            dets = [for_agent(side), verifier if side == "onboard" else commit_rx]
             ids = run_replay(Ids(dets), tmp_path / p["run_id"] / side)
             assert ids.alerts == [], (p["run_id"], side, ids.alerts[:3])  # clean runs: no alarms
             assert not ids.adapter.stats["unknown"], (p["run_id"], side, ids.adapter.stats["unknown"])
             assert sum(ids.adapter.stats["mapped"].values()) > 50
         assert verifier.verified >= 5  # every pilot command (mode, arm, takeoff, targets) signed
+        st = commit_rx.stats
+        assert st["match"] > 500 and st["altered"] == st["unexpected"] == 0, st
