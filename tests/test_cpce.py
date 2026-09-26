@@ -4,7 +4,7 @@ import math
 
 import numpy as np
 
-from gaganrakshak.cpce import G, Residuals
+from gaganrakshak.cpce import G, Residuals, learn_trend_crit
 from gaganrakshak.sample import Attitude, Gnss, Imu, Sample, Status
 
 LAT0, LON0, M_PER_DEG = -35.36, 149.16, 6371000 * math.pi / 180
@@ -116,6 +116,9 @@ def test_heading_drag_moves_the_bias_estimate_only_slightly():
     assert late and max(np.linalg.norm(a["r1"] - b["r1"]) for a, b in late) < 0.02
 
 
+TREND_CRIT = 10.0  # stands for a calibrated threshold on the overlap-corrected statistic
+
+
 def yawing_hover(seconds, body_bias, spoof_accel=(0.0, 0.0), spoof_from=None, yaw_rate=0.105):  # ~6 deg/s
     """Hover while yawing at yaw_rate; IMU carries a body-frame accelerometer bias; from spoof_from
     GNSS reports an NED-fixed acceleration (velocity and position) that did not happen."""
@@ -155,7 +158,8 @@ def test_ned_fixed_trend_restores_the_uncontaminated_bias():
     """A spoof acceleration starting 20 s after arming (inside free learning): the trend is found,
     and the bias is replaced by the jointly fitted body bias (spoof separated out) and frozen."""
     res = Residuals()
-    res.armed_at = 0.0  # warm-up complete: this test isolates the bias learning
+    res.observable_at = 0.0  # heading observable from the start: this test isolates the bias learning
+    res.trend_f_crit = TREND_CRIT
     for smp in yawing_hover(90.0, (0.05, -0.03, 0.0), spoof_accel=(0.04, 0.0), spoof_from=20.0):
         res.observe(smp)
     assert res.inertial_trend is not None, "trend not detected"
@@ -166,7 +170,8 @@ def test_ned_fixed_trend_restores_the_uncontaminated_bias():
 
 def test_body_bias_while_yawing_is_not_a_trend():
     res = Residuals()
-    res.armed_at = 0.0  # warm-up complete: this test isolates the bias learning
+    res.observable_at = 0.0  # heading observable from the start: this test isolates the bias learning
+    res.trend_f_crit = TREND_CRIT
     for smp in yawing_hover(90.0, (0.05, -0.03, 0.0)):
         res.observe(smp)
     assert res.inertial_trend is None and np.allclose(res.bias[:2], (0.05, -0.03), atol=0.005)
@@ -176,8 +181,61 @@ def test_spoof_that_starts_during_warm_up_is_caught_once_armed():
     """The spoof acceleration is already present when learning begins: every learning window
     carries it, and the joint fit still separates it from the body bias."""
     res = Residuals()
-    res.armed_at = 30.0  # warm-up completes at 30 s; the spoof began at 10 s
+    res.trend_f_crit = TREND_CRIT
+    res.observable_at = 30.0  # heading observable from 30 s; the spoof began at 10 s
     for smp in yawing_hover(120.0, (0.05, -0.03, 0.0), spoof_accel=(0.04, 0.0), spoof_from=10.0):
         res.observe(smp)
     assert res.inertial_trend is not None and res.inertial_trend["t"] > 30.0
     assert np.allclose(res.bias[:2], (0.05, -0.03), atol=0.005), res.bias
+
+
+def test_trend_threshold_allows_only_the_budgeted_clean_flights_above_it():
+    peaks = [0.4, 9.2, 1.1, 3.0, 0.2, 5.5]
+    assert learn_trend_crit(peaks, hours=1.2, budget_per_hour=1.0) == {"f_crit": 5.5, "false_trends": 1, "flights": 6}
+    assert learn_trend_crit(peaks, hours=0.5, budget_per_hour=1.0)["f_crit"] == 9.2  # none allowed: above every peak
+
+
+def test_bias_does_not_slide_along_an_unobserved_direction_on_a_straight_leg():
+    """Constant heading, nearly constant pitch: every learning window sees almost the same attitude,
+    so body x and z are observed well only in one combination. Along the barely observed one the
+    bias must stay at the prior mean (0), whatever small NED error (here 0.1 m/s²) the fit sees."""
+    yaw, err = 0.3, 0.1
+    a_ned = np.array([0.4, 0.0, 0.0])
+
+    def pitch_at(t):  # nose-down leg with small pitch wobble: the weak direction is barely observed
+        return -0.4 + 0.015 * math.sin(0.3 * t)
+
+    def f_body(t):
+        cp, sp, cy, sy = math.cos(pitch_at(t)), math.sin(pitch_at(t)), math.cos(yaw), math.sin(yaw)
+        R = np.array([[cp * cy, -sy, sp * cy], [cp * sy, cy, sp * sy], [-sp, 0.0, cp]])  # body -> NED, roll 0
+        return R.T @ (a_ned - np.array([0.0, 0.0, G]))
+
+    res = Residuals()
+    res.observable_at = 0.0
+    samples = [Sample(0.0, 1, Status("GUIDED", True))]
+    for i in range(int(90 * 200)):
+        t = i / 200
+        if i % 4 == 0:
+            samples.append(Sample(t, 1, Attitude(0.0, pitch_at(t), yaw), msg_id=30))
+        samples.append(Sample(t, 1, Imu(*f_body(t), 0.0, 0.0, 0.0), msg_id=27))
+        if i % 40 == 0 and t > 0:
+            gt = t - 0.10
+            v = a_ned[:2] * gt + np.array([err * gt, 0.0])  # GNSS carries the unmodelled error
+            p = 0.5 * a_ned[:2] * gt * gt + np.array([0.5 * err * gt * gt, 0.0])
+            lat = LAT0 + p[0] / M_PER_DEG
+            lon = LON0 + p[1] / (M_PER_DEG * math.cos(math.radians(LAT0)))
+            samples.append(Sample(t, 1, Gnss(lat, lon, 100.0, v[0], v[1], None, 3, 10, fix_time=gt)))
+    for smp in samples:
+        res.observe(smp)
+    w, U = np.linalg.eigh(res._A + res._prior)
+    assert 0.30 / math.sqrt(w[0]) > res._observed_sigma  # the weakest direction is not observed yet
+    assert abs(U[:, 0] @ res.bias) < 1e-9 and np.all(np.abs(res.bias) < 0.2), res.bias
+
+
+def test_anchor_gate_is_the_bin_upper_at_the_bin_end_and_interpolates():
+    from gaganrakshak.cpce import gate_at
+
+    g = {"bin_s": 10.0, "upper": [10.0, 30.0, 60.0]}
+    assert gate_at(g, 0.0) == 10.0 and gate_at(g, 10.0) == 10.0  # no jump at the bin start
+    assert gate_at(g, 15.0) == 20.0 and gate_at(g, 20.0) == 30.0 and gate_at(g, 99.0) == 60.0
+    assert gate_at(None, 5.0) == float("inf")

@@ -183,7 +183,7 @@ class Residuals:
              rotates the change but not its length: heading-invariant in any motion)
         RH = |GNSS horizontal speed| while the IMU shows the vehicle at rest on the ground (true
              speed is zero): catches a constant spoofed velocity, which RS cannot
-    Before arming (see warm-up) only RS and R3 count; they need no heading."""
+    Before a horizon arms (see warm-up) only RS and R3 count for it; they need no heading."""
 
     def __init__(self, horizons=HORIZONS, gnss_lag_s: float = 0.10, bias_memory: float = 1000.0):
         self.horizons = horizons
@@ -193,7 +193,14 @@ class Residuals:
         self.att_hist = Timeline(max(horizons) + 10)  # t -> (roll, pitch, yaw), window-start attitude
         self.bias = np.zeros(3)  # body-frame accelerometer bias, learned in trusted periods
         self._forget = 1.0 - 1.0 / bias_memory  # per long-window update (~200 s at 5 Hz)
-        self._A = np.eye(3) * 1e-3  # recursive least squares with forgetting; small prior on 0
+        self._A = np.zeros((3, 3))  # recursive least squares with forgetting (data part)
+        # Prior: the turn-on bias of a consumer MEMS accelerometer is bounded (zero-g offset class
+        # ±50 mg, e.g. MPU-6000 X/Y) -> σ_p = 0.5 m/s² around 0, weighted against the measured
+        # long-window residual noise (0.30 m/s). It is not forgotten, so a component the flight has
+        # not yet made observable (e.g. z, seen only through tilt) stays near 0 instead of absorbing noise.
+        self._prior = np.eye(3) * (0.30 / 0.5) ** 2
+        self._observed_sigma = 0.3 * 0.5  # a component is applied once its posterior σ is below this
+        self._t_learn: float | None = None  # end of the previous learning window
         self._y = np.zeros(3)
         self.origin: tuple[float, float] | None = None
         self.gnss: deque = deque()  # (t, n, e, alt, vn, ve, baro_alt)
@@ -201,15 +208,17 @@ class Residuals:
         self._last_fix: float | None = None
         # Warm-up (trusted init): the autopilot's yaw is only observable once the vehicle has
         # accelerated; until then it can be several degrees off and the prediction with it.
-        # R1/R2 arm after ``warmup_dv`` m/s of inertial speed change plus one long horizon.
+        # The heading counts as observable after ``warmup_dv`` m/s of inertial speed change; each
+        # horizon's R1/R2 arm once a whole window fits after that (the longest one last).
         self.warmup_dv = 5.0
         self._excitation = 0.0
         self._v_prev: tuple | None = None
         self.armed_at: float | None = None
+        self.observable_at: float | None = None  # heading observable: bias learning may start
         self.freeze_bias = False
         # Bias guard. A true accelerometer bias is fixed in the BODY frame (rotates in NED with
         # heading); a spoofer's acceleration is fixed in NED. Free learning only while trusted
-        # (from warm-up arming, at most trusted_learning_s, no suspicion); otherwise the bias may move only
+        # (from heading observability, at most trusted_learning_s, no suspicion); otherwise the bias may move only
         # within a bias-stability bound (assumption: 0.2 mg/K temperature drift at <=1 K/min,
         # consumer MEMS accelerometer). The turn-on bias, much larger, is what early learning finds.
         self.t_armed: float | None = None
@@ -219,6 +228,10 @@ class Residuals:
         self._learn: deque = deque(maxlen=600)  # (J 2x3, y 2, h, heading, t) of recent learning windows
         self.inertial_trend: dict | None = None  # set when an NED-fixed residual trend is found
         self._t_trend_check = -1e9
+        # NED-trend threshold on the overlap-corrected F statistic, learned from clean flights at the
+        # false-alarm budget (``calibrate``); infinite = trend test off until calibrated
+        self.trend_f_crit = math.inf
+        self.trend_peak = 0.0  # largest statistic seen this flight (calibration reads it)
         self._rest: deque = deque(maxlen=50)  # (|f|, |ω|) of the last second of IMU samples
         self.armed: bool | None = None
         # autopilot-measured vibration (VIBRATION): level scales the expected inertial error
@@ -280,9 +293,9 @@ class Residuals:
                     dv = window(self._v_prev, now, R_prev, self.bias)[0]
                     self._excitation += float(np.linalg.norm(dv[:2]))
                     if self._excitation >= self.warmup_dv:
+                        self.observable_at = t
                         self.armed_at = t + max(self.horizons)
             self._v_prev = now
-        armed = self.armed_at is not None and t >= self.armed_at
         times = [x[0] for x in self.gnss]
         for H in self.horizons:
             i = bisect.bisect_left(times, t - H)
@@ -302,6 +315,10 @@ class Residuals:
             reg = 0 if acc < REGIMES[0] else 1 if acc < REGIMES[1] else 2
             vlevel, clipped = self.vib_over(t0, t)
             vbin = 0 if vlevel < self.vib_edges[0] else 1 if vlevel < self.vib_edges[1] else 2
+            # a horizon counts once its window starts after the heading became observable (the
+            # window-start heading is then trustworthy): short horizons arm seconds after the first
+            # real acceleration, the longest one a minute later
+            observable = self.observable_at is not None and t - H >= self.observable_at
             if self.at_rest():
                 r_rest = math.hypot(g.vn, g.ve)
             else:
@@ -313,7 +330,7 @@ class Residuals:
                 "vib": vlevel,
                 "vbin": vbin,
                 "clipped": clipped,
-                "armed": armed,
+                "armed": observable,
                 "r1": np.array([g.vn, g.ve]) - vp,
                 "r2": np.array([n, e]) - pp,
                 "rs": math.hypot(g.vn - vn0, g.ve - ve0) - float(np.linalg.norm(dV[:2])),
@@ -323,9 +340,10 @@ class Residuals:
             if r_rest is not None and H == min(self.horizons):
                 r["rh"] = r_rest
             out.append(r)
-            # learn only once warm-up has armed: before that the autopilot heading used at the
-            # window start can be several degrees off, which looks like an NED-fixed trend
-            if H == LEARN_H and armed and not self.freeze_bias:
+            # learn only from windows that start once the heading is observable: before the first
+            # real acceleration the autopilot heading used at the window start can be several
+            # degrees off, which looks like an NED-fixed trend
+            if H == LEARN_H and observable and not self.freeze_bias:
                 self._learn_bias(t, r, dM1, h)
         return out
 
@@ -349,10 +367,23 @@ class Residuals:
             self.inertial_trend = {"t": t, **trend}
             r["trend"] = trend
             return
-        self._A = self._forget * self._A + J.T @ J
-        self._y = self._forget * self._y + J.T @ y
-        candidate = np.linalg.solve(self._A, self._y)
-        trusted = self.armed_at is not None and t - self.armed_at <= self.trusted_learning_s
+        # consecutive learning windows end one GNSS fix apart but span LEARN_H: they share almost all
+        # their data, so each adds only its new part (spacing / window length) of information
+        w = 1.0 if self._t_learn is None else min(1.0, max(0.0, t - self._t_learn) / h)
+        self._t_learn = t
+        self._A = self._forget * self._A + w * (J.T @ J)
+        self._y = self._forget * self._y + w * (J.T @ y)
+        info = self._A + self._prior
+        candidate = np.linalg.solve(info, self._y)
+        # bias applied only where observable. On a straight leg every window sees the same
+        # attitude, so one combination of body axes (e.g. x with z through the pitch) is barely
+        # observed and the fit can slide along it far from the truth while still matching the
+        # residuals. Keep the estimate only along information eigen-directions whose posterior σ
+        # has dropped well below the prior's; along the others the prior mean (0) stays.
+        w, U = np.linalg.eigh(info)
+        seen = U[:, 0.30 / np.sqrt(w) < self._observed_sigma]
+        candidate = seen @ (seen.T @ candidate)
+        trusted = self.observable_at is not None and t - self.observable_at <= self.trusted_learning_s
         if trusted or self._t_bias is None:
             self.bias = candidate
         else:
@@ -362,10 +393,14 @@ class Residuals:
             self.bias = self.bias + (step if n <= limit else step * (limit / n))
         self._t_bias = t
 
-    def _ned_trend(self, min_windows: int = 60, min_heading_deg: float = 45.0, f_crit: float = 30.0) -> dict | None:
+    def _ned_trend(self, min_windows: int = 60, min_heading_deg: float = 45.0) -> dict | None:
         """Does an NED-fixed acceleration (a spoofer's signature) explain the recent learning
         windows on top of a body-fixed bias? Joint fit y = J b + h a vs bias-only y = J b; with
-        enough heading diversity the two are separable, and a significant a (F-test) is a trend."""
+        enough heading diversity the two are separable, and a significant a (F-test) is a trend.
+        Learning windows end at every GNSS fix but span LEARN_H, so consecutive windows share
+        almost all their data: the F statistic is scaled by fix spacing / window length (the
+        effective number of independent windows). Its threshold is learned on clean flights, whose
+        autopilot tilt error leaks gravity into a slowly varying NED-fixed residual as well."""
         if len(self._learn) < min_windows:
             return None
         psis = [x[3] for x in self._learn]
@@ -391,11 +426,13 @@ class Residuals:
         assert best is not None
         rss_j, tau, beta_j = best
         dof = len(y) - 5 - 1  # 3 bias + 2 acceleration + onset
-        f = ((rss_b - rss_j) / 2) / max(rss_j / dof, 1e-12)
-        if f > f_crit:
+        overlap = (ends[-1] - ends[0]) / max(1, len(ends) - 1) / LEARN_H  # 1 / windows per independent one
+        f = ((rss_b - rss_j) / 2) / max(rss_j / dof, 1e-12) * overlap
+        self.trend_peak = max(self.trend_peak, f)
+        if f > self.trend_f_crit:
             return {
                 "ned_accel": [round(float(x), 4) for x in beta_j[3:]],
-                "f_stat": round(f, 1),
+                "f_stat": round(f, 2),
                 "onset_t": round(tau, 1),
                 "bias": beta_j[:3],
             }
@@ -434,10 +471,14 @@ def anchored_offset(res: Residuals, anchor: tuple, t: float, gnss_ne) -> tuple[n
 
 
 def gate_at(gate: dict | None, age: float) -> float:
-    """Learned anchored-offset gate (clean-flight upper band per anchor-age bin)."""
+    """Learned anchored-offset gate (clean-flight upper band per anchor-age bin). Offsets grow with
+    age, so a bin's quantile is set by its oldest ages: it is the gate at the bin's END, linearly
+    interpolated from the previous bin's (a step at the bin start would jump a whole bin early)."""
     if not gate:
         return float("inf")  # uncalibrated: never claim spoofing, advisories only
-    return gate["upper"][min(int(age // gate["bin_s"]), len(gate["upper"]) - 1)]
+    upper, w = gate["upper"], gate["bin_s"]
+    ends = [w * (b + 1) for b in range(len(upper))]
+    return float(np.interp(age, [0.0, *ends], [upper[0], *upper]))
 
 
 # -- detection layer (CUSUM, trusted anchor, GNSS templates) ---------------------------------
@@ -463,8 +504,8 @@ def nis(r: dict, sigma: dict) -> dict:
 
 
 class Cpce:
-    """IDS detector. ``calib`` = {"sigma": {ch: {H: σ}}, "cusum": {"k": k, "h": h}} learned from
-    clean flights (``calibrate``). Evidence:
+    """IDS detector. ``calib`` = {"sigma": {ch: {H: σ}}, "cusum": {"k": k, "h": h}, "trend": {"f_crit": F}, ...}
+    learned from clean flights (``calibrate``). Evidence:
     - ``gnss_inertial_inconsistency``  first CUSUM onset of a suspicion; an advisory episode, so a
       short spoof that never becomes a confirmed one is not dropped  [gnss_integrity_advisory, LOW]
     - ``gps_spoofing``  offset vs the trusted anchor persistent, coherent in direction and above
@@ -488,6 +529,7 @@ class Cpce:
         self.res.imu.max_s = anchor_max_s + max(self.res.horizons) + 5
         self.res.att_hist.max_s = self.res.imu.max_s
         self.k, self.h = calib["cusum"]["k"], calib["cusum"]["h"]
+        self.res.trend_f_crit = calib["trend"]["f_crit"]
         self.persist_s, self.coherence, self.clear_n, self.anchor_max_s = persist_s, coherence, clear_n, anchor_max_s
         self.S: dict[tuple[str, float], float] = {}
         self._t_prev: float | None = None
@@ -622,8 +664,9 @@ def learn_gate(offsets: list[tuple[float, float]], bin_s: float = 10.0, q: float
     return {"bin_s": bin_s, "q": q, "upper": upper, "samples": len(offsets)}
 
 
-def _extract(run: Path, imu_keep: int = 1) -> tuple[list[dict], list[tuple[float, float]]]:
-    """One clean flight: residual windows (unclipped) and anchored offsets vs anchor age."""
+def _extract(run: Path, imu_keep: int = 1) -> tuple[list[dict], list[tuple[float, float]], float]:
+    """One clean flight: residual windows (unclipped), anchored offsets vs anchor age, and the
+    flight's peak NED-trend statistic (the trend test never fires here, so learning is unaltered)."""
     from .adapter import ArduPilotAdapter
     from .ids import replay_tlogs
 
@@ -661,7 +704,16 @@ def _extract(run: Path, imu_keep: int = 1) -> tuple[list[dict], list[tuple[float
                     off = anchored_offset(res, a, t, (g[1], g[2]))
                     if off is not None:
                         offsets.append((off[1], float(np.linalg.norm(off[0]))))
-    return raw, offsets
+    return raw, offsets, res.trend_peak
+
+
+def learn_trend_crit(peaks: list[float], hours: float, budget_per_hour: float) -> dict:
+    """The trend test reports at most once per flight: the threshold lets at most budget x hours
+    of the clean flights exceed it (their peaks are the only false trends it can raise)."""
+    allowed = int(budget_per_hour * hours)
+    ranked = sorted(peaks, reverse=True)
+    crit = ranked[allowed] if allowed < len(ranked) else 0.0
+    return {"f_crit": round(crit, 3), "false_trends": sum(p > crit for p in peaks), "flights": len(peaks)}
 
 
 def calibrate(runs: list[Path], budget_per_hour: float, k: float = 3.0, imu_keep: int = 1, workers: int = 16) -> dict:
@@ -673,8 +725,8 @@ def calibrate(runs: list[Path], budget_per_hour: float, k: float = 3.0, imu_keep
 
     with ProcessPoolExecutor(workers) as ex:
         results = list(ex.map(_extract, runs, [imu_keep] * len(runs)))
-    per_run = [raw for raw, _ in results]
-    offsets = [o for _, off in results for o in off]
+    per_run = [raw for raw, _, _ in results]
+    offsets = [o for _, off, _ in results for o in off]
     vibs = np.array([r["vib"] for rr in per_run for r in rr]) if any(per_run) else np.zeros(1)
     edges = (float(np.percentile(vibs, 100 / 3)), float(np.percentile(vibs, 200 / 3)))
     for rr in per_run:
@@ -736,19 +788,22 @@ def calibrate(runs: list[Path], budget_per_hour: float, k: float = 3.0, imu_keep
         return n
 
     # Smallest h meeting the budget. Onset counts are not strictly monotone in h (a path that
-    # oscillates around a level crosses it often), so scan: coarse steps of 2.5, then 0.25 steps
-    # inside the first coarse cell that meets the budget.
+    # oscillates around a level crosses it often), so scan: coarse doubling steps from 2.5 (slowly
+    # varying model error keeps clean residuals correlated for tens of seconds, so h may be large),
+    # then 20 linear steps inside the first coarse cell that meets the budget.
     def meets(h: float) -> bool:
         return false_onsets(h) / hours <= budget_per_hour
 
-    coarse = next((x * 2.5 for x in range(1, 41) if meets(x * 2.5)), 100.0)
-    h = next((coarse - 2.5 + x * 0.25 for x in range(1, 11) if meets(coarse - 2.5 + x * 0.25)), coarse)
+    coarse = next((2.5 * 2**x for x in range(12) if meets(2.5 * 2**x)), 2.5 * 2**11)
+    lo = coarse / 2 if coarse > 2.5 else 0.0
+    h = next((lo + (coarse - lo) * x / 20 for x in range(1, 21) if meets(lo + (coarse - lo) * x / 20)), coarse)
     onsets = false_onsets(h)
     return {
         "sigma": sigma,
         "cusum": {"k": k, "h": h},
         "vib_edges": edges,
         "anchor_gate": learn_gate(offsets),
+        "trend": learn_trend_crit([peak for _, _, peak in results], hours, budget_per_hour),
         "meta": {
             "false_onsets": int(onsets),
             "calibration_hours": round(hours, 3),
