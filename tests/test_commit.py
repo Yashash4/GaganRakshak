@@ -149,3 +149,11 @@ def test_commitment_loss_under_congestion_points_at_dos():
     rx = CommitRx(PUB)
     ev = [e for t, b, _ in kept for e in rx.observe(parse(b), [], "D", t)]
     assert [(e.evidence_type, e.class_hint) for e in ev] == [("selective_commit_loss", "dos")]
+
+
+def test_timeout_allows_for_long_commitments_losing_more():
+    """30 % frame loss with gamma 3.6 means ~70 % commitment loss: a 9 s gap is not suspicious."""
+    rx = CommitRx(PUB, commit_loss_exponent=3.6)
+    rx._history.extend([[False, 30, 9]] * 10)
+    assert rx.required_silence() > 15
+    assert CommitRx(PUB).required_silence() == 5.0  # clean link: the 5 s floor

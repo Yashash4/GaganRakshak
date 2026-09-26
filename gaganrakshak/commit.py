@@ -262,7 +262,8 @@ class CommitRx:
         n = min(recent, len(self._history))
         p_frame = (missing + 1) / (listed + 2)
         p_commit = (lost + 1) / (n + 2)  # arrived windows alone understate loss in a fade
-        p = min(max(p_frame, p_commit), 0.99)
+        # commitments are long frames: expected loss from the frame loss with the learned gamma
+        p = min(max(p_commit, 1 - (1 - p_frame) ** self.gamma), 0.99)
         alpha = budget_per_hour * window_s / 3600.0
         return max(self.timeout_s, window_s * math.log(alpha) / math.log(p))
 
