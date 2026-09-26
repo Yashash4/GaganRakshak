@@ -121,8 +121,10 @@ class CmdVerifier:
         self.uav_id = uav_id
         self.wait_s = wait_s
         self.last_counter = -1
-        self._cmds: dict[tuple[int, int, int, int], tuple[float, bytes, str]] = {}  # key -> (t, frame bytes, name)
-        self._sigs: dict[tuple[int, int, int, int], list[Any]] = {}  # key -> list of GR_CMD_SIG
+        # Several frames can share a key (an injected frame reusing the GCS's next seq, then the genuine
+        # one): every frame is kept and judged on its own bytes, never replaced by a later one.
+        self._cmds: dict[tuple[int, int, int, int], list[tuple[float, bytes, str]]] = {}  # key -> [(t, frame, name)]
+        self._sigs: dict[tuple[int, int, int, int], list[tuple[float, Any]]] = {}  # key -> [(t, GR_CMD_SIG)]
         self.verified = 0
         self._gcs_seq: int | None = None
         self._uplink: deque[tuple[float, int, int]] = (
@@ -141,7 +143,12 @@ class CmdVerifier:
     def key_of(cls, msg):
         return cls._key(msg.get_srcSystem(), msg.get_srcComponent(), msg.get_seq(), msg.get_msgId())
 
+    RANK = {"verified": 0, "replayed": 1, "unsigned": 2, "bad_signature": 3}
+
     def _set(self, k, result):
+        # frames sharing a key: the key's outcome is the worst of their verdicts
+        if k in self.outcome and self.RANK[self.outcome[k]] >= self.RANK[result]:
+            return
         self.outcome[k] = result
         if len(self.outcome) > 4096:  # bounded: consumers read outcomes within seconds
             del self.outcome[next(iter(self.outcome))]
@@ -167,47 +174,59 @@ class CmdVerifier:
             self._gcs_seq = seq
         if msg.get_type() == "GR_CMD_SIG":
             k = self._key(msg.cmd_sysid, msg.cmd_compid, msg.cmd_seq, msg.cmd_msgid)
-            self._sigs.setdefault(k, []).append(msg)
+            self._sigs.setdefault(k, []).append((t, msg))
         elif is_command(msg):
-            k = self.key_of(msg)
-            self._cmds[k] = (t, bytes(msg.get_msgbuf()), msg.get_type())
+            self._cmds.setdefault(self.key_of(msg), []).append((t, bytes(msg.get_msgbuf()), msg.get_type()))
         else:
             return []
         return self._match(t)
 
     def _match(self, t):
+        """Pair each waiting frame with a signature over its exact bytes; unmatched frames wait
+        (their signature may still come) and are judged in tick()."""
         out = []
         for k in [k for k in self._cmds if k in self._sigs]:
-            t_cmd, frame, name = self._cmds.pop(k)
-            sigs = self._sigs.pop(k)
-            ok = [s for s in sigs if crypto.verify(_signed_bytes(s.counter, frame), bytes(s.signature), self.pub)]
-            self._set(
-                k, "bad_signature" if not ok else "replayed" if ok[0].counter <= self.last_counter else "verified"
-            )
-            if not ok:
-                out.append(self._ev(t, "bad_signature", Severity.HIGH, "command_injection", command=name))
-            elif ok[0].counter <= self.last_counter:
-                out.append(
-                    self._ev(
-                        t,
-                        "replayed_command",
-                        Severity.HIGH,
-                        "replay",
-                        command=name,
-                        counter=ok[0].counter,
-                        last=self.last_counter,
-                    )
-                )
+            waiting = []
+            for t_cmd, frame, name in self._cmds[k]:
+                sigs = [s for _, s in self._sigs[k]]
+                ok = [s for s in sigs if crypto.verify(_signed_bytes(s.counter, frame), bytes(s.signature), self.pub)]
+                if ok:
+                    out += self._judge(k, t, name, ok[0])
+                else:
+                    waiting.append((t_cmd, frame, name))
+            if waiting:
+                self._cmds[k] = waiting
             else:
-                self.last_counter = ok[0].counter
-                self.verified += 1
+                del self._cmds[k]
         return out
+
+    def _judge(self, k, t, name, sig) -> list[EvidenceEvent]:
+        """A frame whose exact bytes the signature covers: verified, or replayed (stale counter)."""
+        if sig.counter <= self.last_counter:
+            self._set(k, "replayed")
+            meta = {"command": name, "counter": sig.counter, "last": self.last_counter}
+            return [self._ev(t, "replayed_command", Severity.HIGH, "replay", **meta)]
+        self._set(k, "verified")
+        self.last_counter = sig.counter
+        self.verified += 1
+        return []
 
     def tick(self, t):
         out = []
-        for k, (t_cmd, _, name) in list(self._cmds.items()):
-            if t - t_cmd > self.wait_s:
+        for k, frames in list(self._cmds.items()):
+            due = [f for f in frames if t - f[0] > self.wait_s]
+            if not due:
+                continue
+            rest = [f for f in frames if t - f[0] <= self.wait_s]
+            if rest:
+                self._cmds[k] = rest
+            else:
                 del self._cmds[k]
+            for _t_cmd, _, name in due:
+                if self._sigs.get(k):  # signed commands carried this key, but none signed this frame
+                    self._set(k, "bad_signature")
+                    out.append(self._ev(t, "bad_signature", Severity.HIGH, "command_injection", command=name))
+                    continue
                 self._set(k, "unsigned")
                 p = self.uplink_loss(t)
                 if p * p > self.alpha:  # both signature copies lost is plausible on this link
@@ -234,7 +253,8 @@ class CmdVerifier:
                             uplink_loss=round(p, 3),
                         )
                     )
-        for k in list(self._sigs):  # signatures whose command was lost on the radio
-            if k not in self._cmds:
+        for k in list(self._sigs):  # keep signatures one wait period, for frames sharing their key
+            self._sigs[k] = [(ts, sg) for ts, sg in self._sigs[k] if t - ts <= 2 * self.wait_s]
+            if not self._sigs[k] and k not in self._cmds:
                 del self._sigs[k]
         return out

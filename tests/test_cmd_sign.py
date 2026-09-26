@@ -163,3 +163,22 @@ def test_earlier_unsigned_link_report_still_decodes():
     crc.accumulate(bytes([28]))  # the message's CRC_EXTRA
     m = parse(old + crc.crc.to_bytes(2, "little"))
     assert m.get_type() == "GR_LINK" and m.uplink_loss == 7
+
+
+def test_a_frame_sharing_the_next_genuine_seq_is_still_judged():
+    """An attacker continues the GCS's seq; the genuine command that follows carries the same key.
+    Each frame is judged on its own bytes: the genuine one verifies, the injected one does not."""
+    seed, pub = crypto.generate_keypair()
+    signer, verifier = Signer(seed), CmdVerifier(pub)
+    gcs = mav.MAVLink(None, srcSystem=255, srcComponent=190)
+    injected = mav.MAVLink_command_long_message(1, 1, MAV.MAV_CMD_NAV_LAND, 0, 0, 0, 0, 0, 0, 0, 0)
+    genuine = mav.MAVLink_command_long_message(1, 1, MAV.MAV_CMD_NAV_RETURN_TO_LAUNCH, 0, 0, 0, 0, 0, 0, 0, 0)
+    gcs.seq = 7
+    inj_buf = injected.pack(gcs)
+    gcs.seq = 7  # the genuine GCS sends its next frame with the same seq
+    gen_buf = genuine.pack(gcs)
+    out = verifier.observe(parse(inj_buf), [], "U", 0.0) + verifier.observe(parse(gen_buf), [], "U", 0.1)
+    for sig in signer.sign(gen_buf, parse(gen_buf), 2):
+        out += verifier.observe(parse(sig), [], "U", 0.2)
+    out += verifier.tick(2.0)
+    assert verifier.verified == 1 and [e.evidence_type for e in out] == ["bad_signature"]
