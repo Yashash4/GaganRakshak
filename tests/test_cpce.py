@@ -155,6 +155,7 @@ def test_ned_fixed_trend_restores_the_uncontaminated_bias():
     """A spoof acceleration starting 20 s after arming (inside free learning): the trend is found,
     and the bias is replaced by the jointly fitted body bias (spoof separated out) and frozen."""
     res = Residuals()
+    res.armed_at = 0.0  # warm-up complete: this test isolates the bias learning
     for smp in yawing_hover(90.0, (0.05, -0.03, 0.0), spoof_accel=(0.04, 0.0), spoof_from=20.0):
         res.observe(smp)
     assert res.inertial_trend is not None, "trend not detected"
@@ -165,6 +166,18 @@ def test_ned_fixed_trend_restores_the_uncontaminated_bias():
 
 def test_body_bias_while_yawing_is_not_a_trend():
     res = Residuals()
+    res.armed_at = 0.0  # warm-up complete: this test isolates the bias learning
     for smp in yawing_hover(90.0, (0.05, -0.03, 0.0)):
         res.observe(smp)
     assert res.inertial_trend is None and np.allclose(res.bias[:2], (0.05, -0.03), atol=0.005)
+
+
+def test_spoof_that_starts_during_warm_up_is_caught_once_armed():
+    """The spoof acceleration is already present when learning begins: every learning window
+    carries it, and the joint fit still separates it from the body bias."""
+    res = Residuals()
+    res.armed_at = 30.0  # warm-up completes at 30 s; the spoof began at 10 s
+    for smp in yawing_hover(120.0, (0.05, -0.03, 0.0), spoof_accel=(0.04, 0.0), spoof_from=10.0):
+        res.observe(smp)
+    assert res.inertial_trend is not None and res.inertial_trend["t"] > 30.0
+    assert np.allclose(res.bias[:2], (0.05, -0.03), atol=0.005), res.bias

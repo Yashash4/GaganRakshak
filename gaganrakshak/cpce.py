@@ -209,7 +209,7 @@ class Residuals:
         self.freeze_bias = False
         # Bias guard. A true accelerometer bias is fixed in the BODY frame (rotates in NED with
         # heading); a spoofer's acceleration is fixed in NED. Free learning only while trusted
-        # (after arming, at most trusted_learning_s, no suspicion); otherwise the bias may move only
+        # (from warm-up arming, at most trusted_learning_s, no suspicion); otherwise the bias may move only
         # within a bias-stability bound (assumption: 0.2 mg/K temperature drift at <=1 K/min,
         # consumer MEMS accelerometer). The turn-on bias, much larger, is what early learning finds.
         self.t_armed: float | None = None
@@ -323,7 +323,9 @@ class Residuals:
             if r_rest is not None and H == min(self.horizons):
                 r["rh"] = r_rest
             out.append(r)
-            if H == LEARN_H and not self.freeze_bias:
+            # learn only once warm-up has armed: before that the autopilot heading used at the
+            # window start can be several degrees off, which looks like an NED-fixed trend
+            if H == LEARN_H and armed and not self.freeze_bias:
                 self._learn_bias(t, r, dM1, h)
         return out
 
@@ -350,7 +352,7 @@ class Residuals:
         self._A = self._forget * self._A + J.T @ J
         self._y = self._forget * self._y + J.T @ y
         candidate = np.linalg.solve(self._A, self._y)
-        trusted = self.t_armed is not None and t - self.t_armed <= self.trusted_learning_s
+        trusted = self.armed_at is not None and t - self.armed_at <= self.trusted_learning_s
         if trusted or self._t_bias is None:
             self.bias = candidate
         else:
@@ -377,7 +379,8 @@ class Residuals:
         # [t0, t]: scan candidate onsets, keep the best-fitting joint model
         ends = [t for _, _, _, _, t in self._learn]
         best = None
-        for tau in ends[:: max(1, len(ends) // 40)]:
+        # candidate onsets inside the memory, plus "already active before it" (spoof began earlier)
+        for tau in [ends[0] - 2 * LEARN_H, *ends[:: max(1, len(ends) // 40)]]:
             X_j = np.vstack(
                 [np.hstack([J, max(0.0, t - max(tau, t - h)) * np.eye(2)]) for J, _, h, _, t in self._learn]
             )
