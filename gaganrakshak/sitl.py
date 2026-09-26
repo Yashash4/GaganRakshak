@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import time
 import subprocess
 from pathlib import Path
 
@@ -25,3 +26,13 @@ def start(instance: int, workdir: Path, home: str = HOME, extra_parm: list[Path]
            "--home", home, "--defaults", defaults]
     log = open(workdir / "sitl.log", "w")
     return subprocess.Popen(cmd, cwd=workdir, stdout=log, stderr=subprocess.STDOUT)
+
+
+def wait_ready(workdir: Path, timeout: float = 30.0) -> None:
+    """Block until SITL is listening on SERIAL0."""
+    t0 = time.monotonic()
+    while time.monotonic() - t0 < timeout:
+        if "SERIAL0 on TCP port" in (workdir / "sitl.log").read_text(errors="replace"):
+            return
+        time.sleep(0.2)
+    raise TimeoutError(f"SITL not ready after {timeout} s; see {workdir / 'sitl.log'}")
