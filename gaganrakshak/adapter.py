@@ -54,6 +54,7 @@ IGNORED = {
     "SCALED_PRESSURE3": "third barometer not used",
     "HEARTBEAT(GCS)": "GCS keepalive, no vehicle state; the protocol layer tracks its source",
     "PARAM_VALUE(SIM_*)": "simulator-only parameter; does not exist on a real flight controller",
+    "GR_CMD_SIG": "IDS command signature; verified by cmd_sign, not vehicle state",
 }
 
 

@@ -37,7 +37,7 @@ from pathlib import Path
 import yaml
 from pymavlink import mavutil
 
-from . import sitl
+from . import crypto, sitl
 from .link_sim import LinkConfig, LinkSim
 
 MAV = mavutil.mavlink
@@ -281,9 +281,13 @@ class Run:
             cfg = LinkConfig(seed=plan["seed"], **plan["link"])
             self.link = LinkSim(p["radio_air"], p["radio_gnd"], cfg,
                                 getattr(attacker, "link_attacker", None)).start()
+            seed, pub = crypto.generate_keypair()  # per-run test key for command signing
+            (out / "ground_sign.key").write_text(seed.hex())
+            (out / "ground_sign.pub").write_text(pub.hex())
             procs.append(subprocess.Popen(py + ["--a", f"udpin:127.0.0.1:{p['radio_gnd']}",
                                                 "--b", f"udpout:127.0.0.1:{p['gcs']}",
-                                                "--ids-port", str(p["ids_gnd"])]))
+                                                "--ids-port", str(p["ids_gnd"]),
+                                                "--sign-key", str(out / "ground_sign.key")]))
             self.harness = mavutil.mavlink_connection(f"tcp:127.0.0.1:{p['harness']}", source_system=250)
             # Address the FC itself: a broadcast (target 0) would be routed by ArduPilot onto the
             # vehicle link too.

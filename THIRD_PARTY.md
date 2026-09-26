@@ -5,7 +5,7 @@
 | Component | Use | Licence |
 |---|---|---|
 | ArduPilot (Copter SITL) | Simulated flight controller for all experiments; runs as a separate process, talks MAVLink | GPL-3.0 |
-| pymavlink | MAVLink encoding/decoding | LGPL-3.0 |
+| pymavlink | MAVLink encoding/decoding; its `mavgen` generator produced `gaganrakshak/mavlink/gr_dialect.py` from our own message definitions (`gaganrakshak.xml`) | LGPL-3.0 |
 | MAVProxy | Ground control station in the test setup | GPL-3.0 |
 | NumPy, SciPy | Numerics | BSD-3-Clause |
 | scikit-learn | Isolation Forest (supporting anomaly score) | BSD-3-Clause |

@@ -24,8 +24,11 @@ import socket
 import threading
 import time
 from collections import Counter
+from pathlib import Path
 
 from pymavlink import mavutil
+
+from .cmd_sign import Signer, is_command
 
 MAV = mavutil.mavlink
 ROUTER_SYSID, ROUTER_COMPID = 1, MAV.MAV_COMP_ID_ONBOARD_COMPUTER
@@ -61,13 +64,14 @@ def sim_only(msg) -> bool:
 
 class Router:
     def __init__(self, a: str, b: str, ids_port: int = 15600, onboard: bool = False,
-                 fc_rate_hz: int = 50):
+                 fc_rate_hz: int = 50, sign_key: bytes | None = None):
         self.a = mavutil.mavlink_connection(a, source_system=ROUTER_SYSID, source_component=ROUTER_COMPID)
         self.b = mavutil.mavlink_connection(b, source_system=ROUTER_SYSID, source_component=ROUTER_COMPID)
         self.ids = ("127.0.0.1", ids_port)
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.onboard = onboard
         self.fc_rate_hz = fc_rate_hz
+        self.signer = Signer(sign_key) if sign_key else None  # ground agent only
         self.radio_hz: dict[str, float] = {}  # per message type, set by GCS requests
         self._last_tx: dict[str, float] = {}
         self.stats = {"a_to_b": Counter(), "b_to_a": Counter(), "dropped": Counter(),
@@ -131,12 +135,15 @@ class Router:
                 self.stats["dropped"][name] += 1
                 continue
             self._mirror(direction, bytes(buf))
-            if self.onboard and direction == b"U" and self._intercept_uplink(msg):
-                self.stats["dropped"][name] += 1
+            if self.onboard and direction == b"U" and (name.startswith("GR_") or self._intercept_uplink(msg)):
+                self.stats["dropped"][name] += 1  # IDS traffic and rate requests end here
                 continue
             if self.onboard and direction == b"D" and not self._allow_downlink(name, time.monotonic()):
                 continue
             dst.write(buf)
+            if self.signer and direction == b"U" and is_command(msg):
+                for sig in self.signer.sign(bytes(buf), msg):
+                    dst.write(sig)
             self.stats[key][name] += 1
             if key == "a_to_b":
                 self.stats["bytes_to_b"] += len(buf)
@@ -160,8 +167,10 @@ def main():
     ap.add_argument("--ids-port", type=int, default=15600)
     ap.add_argument("--onboard", action="store_true")
     ap.add_argument("--fc-rate", type=int, default=50)
+    ap.add_argument("--sign-key", type=Path, help="ground agent: file with the hex Ed25519 private seed")
     args = ap.parse_args()
-    r = Router(args.a, args.b, args.ids_port, args.onboard, args.fc_rate).start()
+    key = bytes.fromhex(args.sign_key.read_text().strip()) if args.sign_key else None
+    r = Router(args.a, args.b, args.ids_port, args.onboard, args.fc_rate, key).start()
     while True:
         time.sleep(10)
         if r.onboard:

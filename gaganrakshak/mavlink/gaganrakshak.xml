@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<!-- GaganRakshak IDS messages. Standalone definitions; registered into pymavlink's
+     ardupilotmega dialect at import (gaganrakshak/mavlink/__init__.py). -->
+<mavlink>
+  <version>3</version>
+  <dialect>0</dialect>
+  <messages>
+    <message id="52500" name="GR_CMD_SIG">
+      <description>Ed25519 signature by the ground agent over one uplink command frame and a monotonic counter.</description>
+      <field type="uint64_t" name="counter">Monotonic per-ground-agent command counter.</field>
+      <field type="uint32_t" name="cmd_msgid">Message id of the signed command.</field>
+      <field type="uint8_t" name="cmd_sysid">Sender system id of the signed command.</field>
+      <field type="uint8_t" name="cmd_compid">Sender component id of the signed command.</field>
+      <field type="uint8_t" name="cmd_seq">Sequence number of the signed command frame.</field>
+      <field type="uint8_t[64]" name="signature">Ed25519 signature over counter and the command frame.</field>
+    </message>
+  </messages>
+</mavlink>
