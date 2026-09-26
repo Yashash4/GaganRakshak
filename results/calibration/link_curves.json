@@ -4,21 +4,21 @@
   "upper": [
    0.05,
    0.05,
-   0.16101430012720974,
-   0.2172413706944189,
-   0.3707181634141939,
-   0.5103819531077195,
-   0.9426822703238599,
+   0.17044435671360267,
+   0.23082231258058578,
+   0.39617695129298175,
+   0.5447004866180049,
+   1.0,
    1.0
   ],
   "meta": {
-   "k": 4.5,
-   "false_onsets": 3,
+   "k": 5.0,
+   "false_onsets": 2,
    "samples": 67030,
    "max_distance_m": 386.6,
    "silence_budget_per_hour": 0.2,
    "silence_exceedances": 0,
-   "calibration_hours": 16.192,
+   "calibration_hours": 13.92,
    "budget_per_hour": 0.2,
    "runs": [
     "b1_calm-s2001",
@@ -283,15 +283,15 @@
  },
  "commit": {
   "commit_loss_exponent": 4.896,
-  "selective_z": 27.75,
+  "selective_z": 34.0,
   "meta": {
    "points": 3239,
-   "false_onsets": 3,
-   "calibration_hours": 16.192,
+   "false_onsets": 2,
+   "calibration_hours": 13.92,
    "budget_per_hour": 0.2,
-   "timeout_false_onsets": 3
+   "timeout_false_onsets": 2
   },
   "timeout_budget_per_hour": 0.2,
-  "timeout_scale": 6.75
+  "timeout_scale": 8.75
  }
 }

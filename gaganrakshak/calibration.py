@@ -114,6 +114,15 @@ def _count(args) -> tuple[dict, dict]:
     return by_type, alarms
 
 
+def airborne_hours(runs: list[Path]) -> float:
+    """Takeoff to touchdown (or end) summed over the runs: every false-alarm rate is per airborne hour."""
+    total = 0.0
+    for r in runs:
+        ev = {e["event"]: e["t"] for e in json.loads((r / "labels.json").read_text())["events"]}
+        total += max(0.0, ev.get("touchdown", ev.get("end", 0.0)) - ev.get("takeoff", 0.0))
+    return total / 3600
+
+
 def calibrate_all(
     runs: list[Path], out_dir: Path, alarm_budget: float = 1.0, advisory_budget: float = 1.0, workers: int = 16
 ) -> dict:
@@ -135,18 +144,19 @@ def calibrate_all(
         "advisory_statistics": list(ADVISORY_STATISTICS),
     }
     out_dir.mkdir(parents=True, exist_ok=True)
-    link_monitor.save_curves(out_dir / "link_curves.json", link_monitor.calibrate(runs, alarm_share, guarded=True))
-    phys = cpce.calibrate(runs, advisory_share, workers=workers)
+    hours = airborne_hours(runs)
+    curves = link_monitor.calibrate(runs, alarm_share, guarded=True, hours=hours)
+    link_monitor.save_curves(out_dir / "link_curves.json", curves)
+    phys = cpce.calibrate(runs, advisory_share, workers=workers, hours=hours)
     phys["meta"].update(source="clean SITL calibration flights (guard-selected)", system_budget=budget)
     (out_dir / "cpce.json").write_text(json.dumps(phys, indent=1) + "\n")
     with ProcessPoolExecutor(workers) as ex:
         series = list(ex.map(estimator.extract, runs))
-    est = estimator.learn(series, advisory_share)
+    est = estimator.learn(series, advisory_share, hours=hours)
     est["meta"].update(runs=[r.name for r in runs], source="clean SITL calibration flights (guard-selected)")
     (out_dir / "estimator.json").write_text(json.dumps(est, indent=1) + "\n")
     with ProcessPoolExecutor(workers) as ex:
         per_run = list(ex.map(_count, [(r, out_dir) for r in runs]))
-    hours = phys["meta"]["calibration_hours"]
     counts: dict = {}
     alarm_classes: dict = {}
     for by_type, by_class in per_run:

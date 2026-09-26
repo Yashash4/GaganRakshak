@@ -96,10 +96,11 @@ def poisson_upper(k: int, hours: float, conf: float = 0.95) -> float:
     return float(chi2.ppf(conf, 2 * (k + 1)) / 2 / hours)
 
 
-def learn(series: list[dict], budget_per_hour: float, persist_s: float = PERSIST_S) -> dict:
+def learn(series: list[dict], budget_per_hour: float, persist_s: float = PERSIST_S, hours: float | None = None) -> dict:
     """Per ratio, the smallest grid threshold from which on every larger one the clean flights
     give at most (budget / active ratios) onsets per hour; the budget is shared by the ratios."""
-    hours = sum(float(s[RATIOS[0]][0][-1] - s[RATIOS[0]][0][0]) for s in series if len(s[RATIOS[0]][0])) / 3600
+    if hours is None:  # recording time; calibrate_all passes airborne time (the rate is per airborne hour)
+        hours = sum(float(s[RATIOS[0]][0][-1] - s[RATIOS[0]][0][0]) for s in series if len(s[RATIOS[0]][0])) / 3600
     active = [k for k in RATIOS if any(np.any(s[k][1] != s[k][1][0]) for s in series if len(s[k][1]))]
     share = budget_per_hour / max(1, len(active))
     thresholds: dict[str, float | None] = {k: None for k in RATIOS}

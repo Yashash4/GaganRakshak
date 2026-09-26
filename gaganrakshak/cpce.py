@@ -762,7 +762,14 @@ def learn_trend_crit(peaks: list[float], hours: float, budget_per_hour: float) -
     return {"f_crit": round(crit, 3), "false_trends": sum(p > crit for p in peaks), "flights": len(peaks)}
 
 
-def calibrate(runs: list[Path], budget_per_hour: float, k: float = 3.0, imu_keep: int = 1, workers: int = 16) -> dict:
+def calibrate(
+    runs: list[Path],
+    budget_per_hour: float,
+    k: float = 3.0,
+    imu_keep: int = 1,
+    workers: int = 16,
+    hours: float | None = None,
+) -> dict:
     """From clean flights: vibration bin edges (tertiles of window vibration), σ per (channel,
     horizon, acceleration regime, vibration bin) (robust: 1.4826·MAD; RMS for the rest channel),
     then the smallest CUSUM threshold h meeting the false-alarm budget on the same flights.
@@ -810,7 +817,8 @@ def calibrate(runs: list[Path], budget_per_hour: float, k: float = 3.0, imu_keep
                     if cells[reg][vb] is None:
                         cells[reg][vb] = (cells[reg][vb - 1] if vb else None) or (cells[reg - 1][vb] if reg else None)
             sigma[ch][str(H)] = cells
-    hours = sum(rr[-1]["t"] - rr[0]["t"] for rr in per_run if rr) / 3600
+    if hours is None:  # recording time; calibrate_all passes airborne time (the rate is per airborne hour)
+        hours = sum(rr[-1]["t"] - rr[0]["t"] for rr in per_run if rr) / 3600
     # normalised increments per flight, once (they do not depend on h)
     increments = []
     for rr in per_run:

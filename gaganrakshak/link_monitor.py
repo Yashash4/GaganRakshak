@@ -328,7 +328,9 @@ def _silence_ratios(args) -> list[float]:
     return rx.silence_ratios + ([rx._gap_peak] if rx._gap_peak > 0 else [])
 
 
-def calibrate(runs: list[Path], budget_per_hour: float, bin_m: float = 50.0, guarded: bool = False) -> dict:
+def calibrate(
+    runs: list[Path], budget_per_hour: float, bin_m: float = 50.0, guarded: bool = False, hours: float | None = None
+) -> dict:
     """Per statistic, the smallest k (or z) meeting its false-alarm budget on the clean calibration
     flights (``budget_per_hour`` is each statistic's share); runs that are not clean are rejected
     first unless ``guarded`` says the caller already did. Loss band, heartbeat silence, selective
@@ -341,7 +343,8 @@ def calibrate(runs: list[Path], budget_per_hour: float, bin_m: float = 50.0, gua
     runs = runs if guarded else select(runs)
     with ProcessPoolExecutor(8) as ex:
         per_run = list(ex.map(run_samples, runs))
-    hours = sum(s[-1][0] - s[0][0] for s, _, _ in per_run if s) / 3600
+    if hours is None:  # recording time; calibrate_all passes airborne time (the rate is per airborne hour)
+        hours = sum(s[-1][0] - s[0][0] for s, _, _ in per_run if s) / 3600
     curves = {"loss": _fit_to_budget([s for s, _, _ in per_run], hours, budget_per_hour, bin_m=bin_m, floor=0.05)}
     # heartbeat-silence limits follow from the loss band (LinkMonitor.silence_limit); report how
     # the calibration flights' longest silences compare

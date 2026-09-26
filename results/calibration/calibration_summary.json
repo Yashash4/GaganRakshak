@@ -14,26 +14,26 @@
   "estimator_innovation_high"
  ],
  "runs": 257,
- "hours": 16.353,
+ "hours": 13.920158888888889,
  "evidence_onsets_by_type": {
   "unsigned_command": 26,
-  "inertial_trend": 6,
-  "excess_loss": 3,
-  "commit_timeout": 3,
+  "inertial_trend": 4,
+  "excess_loss": 2,
+  "commit_timeout": 2,
   "gnss_inertial_inconsistency": 2,
   "gps_spoofing": 2,
   "estimator_innovation_high": 2,
-  "selective_commit_loss": 3
+  "selective_commit_loss": 2
  },
  "alarm_episodes_by_class": {
   "unsigned_command_old_sizing": 25,
-  "dos": 3,
-  "telemetry_manipulation": 6,
+  "dos": 2,
+  "telemetry_manipulation": 4,
   "gps_spoofing": 2
  },
- "alarms_per_hour": 0.673,
- "alarms_upper95_per_hour": 1.113,
- "advisories_per_hour": 0.612,
+ "alarms_per_hour": 0.575,
+ "alarms_upper95_per_hour": 1.037,
+ "advisories_per_hour": 0.575,
  "advisories_upper95_per_hour": 1.037,
  "guard_skipped": [
   {

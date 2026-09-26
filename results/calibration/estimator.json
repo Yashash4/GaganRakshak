@@ -8,27 +8,27 @@
  },
  "persist_s": 2.0,
  "meta": {
-  "calibration_hours": 16.956,
+  "calibration_hours": 13.92,
   "budget_per_hour": 0.3333333333333333,
   "false_onsets": 2,
-  "false_onsets_per_hour": 0.118,
-  "upper95_per_hour": 0.371,
+  "false_onsets_per_hour": 0.144,
+  "upper95_per_hour": 0.452,
   "per_ratio": {
    "velocity_variance": {
     "false_onsets": 1,
-    "upper95_per_hour": 0.28
+    "upper95_per_hour": 0.341
    },
    "pos_horiz_variance": {
     "false_onsets": 1,
-    "upper95_per_hour": 0.28
+    "upper95_per_hour": 0.341
    },
    "pos_vert_variance": {
     "false_onsets": 0,
-    "upper95_per_hour": 0.177
+    "upper95_per_hour": 0.215
    },
    "compass_variance": {
     "false_onsets": 0,
-    "upper95_per_hour": 0.177
+    "upper95_per_hour": 0.215
    }
   },
   "off": [

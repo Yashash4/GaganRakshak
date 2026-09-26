@@ -438,7 +438,7 @@
  },
  "cusum": {
   "k": 3.0,
-  "h": 248.0
+  "h": 256.0
  },
  "vib_edges": [
   0.04687169287058962,
@@ -483,13 +483,13 @@
   "samples": 227478
  },
  "trend": {
-  "f_crit": 19.064,
-  "false_trends": 5,
+  "f_crit": 19.348,
+  "false_trends": 4,
   "flights": 257
  },
  "meta": {
-  "false_onsets": 5,
-  "calibration_hours": 16.353,
+  "false_onsets": 4,
+  "calibration_hours": 13.92,
   "budget_per_hour": 0.3333333333333333,
   "runs": [
    "b1_calm-s2001",
