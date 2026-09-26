@@ -176,6 +176,7 @@ class Run:
         self.events: list[dict] = []
         self.t0 = None  # monotonic time of the takeoff command = scenario t = 0
         self.gnss_attack_offset = lambda t: (0.0, 0.0)  # metres N/E, set by GNSS attacks
+        self.gnss_attack_velocity = None  # m/s N/E, set only by coherent GNSS attacks
         self.link = None
         self._glitching = False
         self._home = None
@@ -213,6 +214,10 @@ class Run:
             gn, ge = self._benign_glitch(rng) if self.t0 is not None else (0.0, 0.0)
             an, ae = an + gn, ae + ge
             n, e = gm[0] + an, gm[1] + ae
+            if self.gnss_attack_velocity is not None:  # never sent otherwise: stock behaviour
+                vn, ve = self.gnss_attack_velocity(self.t()) if self.t0 is not None else (0.0, 0.0)
+                h.param_set_send("SIM_GPS1_GLTV_X", vn)
+                h.param_set_send("SIM_GPS1_GLTV_Y", ve)
             h.param_set_send("SIM_GPS1_GLTCH_X", n / M_PER_DEG)
             h.param_set_send("SIM_GPS1_GLTCH_Y", e / (M_PER_DEG * math.cos(math.radians(HOME_LAT))))
             self.gnss_log.write(f"{self.t():.3f},{gm[0]:.3f},{gm[1]:.3f},{an:.3f},{ae:.3f}\n")

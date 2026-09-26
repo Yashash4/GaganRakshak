@@ -16,6 +16,7 @@ logs its actual timeline into the run labels: ``attack_start``, ``attack_end`` a
 | jamming            A9  | A9    | nothing gets through, both directions                              |
 | gps_jump           A1  | A1    | GNSS position offset step, held (SIM_GPS1_GLTCH over the harness link) |
 | gps_drift_naive    A2n | A2n   | GNSS position ramp only; GNSS velocity untouched (labelled naive)  |
+| gps_drift          A2  | A2    | coherent: position ramp plus the matching GNSS velocity offset     |
 
 GNSS attacks set ``run.gnss_attack_offset(t) -> (north_m, east_m)``, which the harness adds to
 its GNSS error model at 1 Hz over the simulator-only port.
@@ -261,6 +262,22 @@ class GpsDriftNaive(GnssAttack):
         return self.p.get("rate_ms", 1.0) * dt
 
 
+class GpsDriftCoherent(GpsDriftNaive):
+    """A2: the position drifts at rate_ms AND the reported GNSS velocity carries the matching
+    offset (the drift-rate vector), as a real spoofer's fake trajectory would. Needs the
+    simulator's GPS velocity glitch (SIM_GPS1_GLTV, our ArduPilot fork)."""
+
+    def __init__(self, run):
+        super().__init__(run)
+        run.gnss_attack_velocity = self.velocity
+
+    def velocity(self, t: float):
+        if not self.start <= t < self.end:
+            return 0.0, 0.0
+        r = self.p.get("rate_ms", 1.0)
+        return r * self.unit[0], r * self.unit[1]
+
+
 ATTACKS = {
     "command_injection": CommandInjection,
     "telemetry_manipulation": TelemetryManipulation,
@@ -271,4 +288,5 @@ ATTACKS = {
     "jamming": Jamming,
     "gps_jump": GpsJump,
     "gps_drift_naive": GpsDriftNaive,
+    "gps_drift": GpsDriftCoherent,
 }

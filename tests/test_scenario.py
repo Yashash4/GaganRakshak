@@ -75,3 +75,11 @@ def test_benign_glitch_windows_are_deterministic_and_inside_the_flight():
     assert a == b and a["type"] == "gnss_glitch" and 1 <= len(a["windows"]) <= 3
     assert all(0 < s < e < spec["duration_s"] for s, e in a["windows"])
     assert resolve(yaml.safe_load((SCEN / "b1_calm.yaml").read_text()), 5)["benign"] is None
+
+
+def test_every_scenario_attack_type_is_registered():
+    from gaganrakshak.attacks import ATTACKS
+
+    for f in sorted(SCEN.glob("*.yaml")):
+        attack = yaml.safe_load(f.read_text()).get("attack")
+        assert attack is None or attack["type"] in ATTACKS, f.name
