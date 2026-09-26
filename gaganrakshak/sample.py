@@ -35,6 +35,7 @@ class Gnss:
     satellites: Optional[int] = None
     h_acc: Optional[float] = None  # receiver self-report — weak evidence only (D-006)
     v_acc: Optional[float] = None
+    fix_time: Optional[float] = None  # receiver fix timestamp, s; identifies repeats of one fix
 
 
 @dataclass(frozen=True)

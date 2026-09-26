@@ -120,7 +120,8 @@ class ArduPilotAdapter:
             return [Gnss(lat=m.lat / 1e7, lon=m.lon / 1e7, alt=m.alt / 1000.0, vn=vn, ve=ve, vd=None,
                          fix_type=m.fix_type, satellites=_none_if(m.satellites_visible, 255),
                          h_acc=h_acc / 1000.0 if h_acc else None,
-                         v_acc=v_acc / 1000.0 if v_acc else None)]
+                         v_acc=v_acc / 1000.0 if v_acc else None,
+                         fix_time=m.time_usec / 1e6 if m.time_usec else None)]
         if name in ("SCALED_PRESSURE", "SCALED_PRESSURE2"):
             return [Baro(pressure_pa=m.press_abs * 100.0, alt_m=None, temperature_c=m.temperature / 100.0)]
         if name == "ATTITUDE":
