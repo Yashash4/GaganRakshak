@@ -213,11 +213,18 @@ class LinkSim:
             time.sleep(0.0005)
 
     def start(self):
-        threading.Thread(target=self.run, daemon=True).start()
+        self._thread = threading.Thread(target=self.run, daemon=True)
+        self._thread.start()
         return self
 
     def stop(self):
+        """Stop the radio and release its ports now: an attacker or harness thread may keep this
+        object alive after the run, and the next run on these ports must be able to bind them."""
         self._stop.set()
+        if getattr(self, "_thread", None) is not None:
+            self._thread.join(timeout=5)
+        self.air.close()
+        self.gnd.close()
 
     def stats(self) -> dict:
         return {

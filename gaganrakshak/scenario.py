@@ -428,6 +428,11 @@ class Run:
         finally:
             self._stop.set()
             time.sleep(0.3)
+            # the pool reuses this worker process: sockets it opened must not outlive the run, or the
+            # next run on this instance cannot bind its ports
+            for conn in (getattr(self, "gcs", None), getattr(self, "harness", None)):
+                if conn is not None:
+                    conn.close()
             for r in recs:
                 r.close()
             for pr in reversed(procs):

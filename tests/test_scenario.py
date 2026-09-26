@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 
 import pytest
@@ -111,3 +112,20 @@ def test_accelerating_spoof_offset_and_velocity_are_consistent():
     vn, ve = run.gnss_attack_velocity(60.0)
     assert abs(vn) < 1e-9 and abs(ve - 0.02 * 50) < 1e-9  # due east
     assert run.gnss_attack_velocity(120.0) == (0.0, 0.0)
+
+
+@pytest.mark.sitl
+def test_one_instance_runs_back_to_back(tmp_path):
+    """A worker process is reused for the next plan on the same instance: every port the first
+    run opened must be free again. An attack whose timeline outlives the flight keeps the run
+    object alive; its sockets must still be closed (this failed a whole batch with 'address in use')."""
+    spec = yaml.safe_load((SCEN / "smoke.yaml").read_text())
+    spec["attack"] = {
+        "type": "gps_drift",
+        "start_s": 5,
+        "duration_s": 300,
+        "params": {"rate_ms": 0.5, "bearing_deg": 0},
+    }
+    plans = [resolve(spec, s) for s in (1, 2)]
+    results = run_many(plans, tmp_path, workers=1, first_instance=int(os.environ.get("GR_TEST_INSTANCE", 60)))
+    assert [status for _, status in results] == ["ok", "ok"], results
