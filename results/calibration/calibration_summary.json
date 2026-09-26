@@ -1,0 +1,154 @@
+{
+ "alarm_budget_per_hour": 1.0,
+ "alarm_statistics": [
+  "excess_loss",
+  "telemetry_gap",
+  "selective_commit_loss",
+  "commit_timeout",
+  "gps_spoofing"
+ ],
+ "advisory_budget_per_hour": 1.0,
+ "advisory_statistics": [
+  "gnss_inertial_inconsistency",
+  "inertial_trend",
+  "estimator_innovation_high"
+ ],
+ "runs": 257,
+ "hours": 16.353,
+ "evidence_onsets_by_type": {
+  "unsigned_command": 26,
+  "inertial_trend": 6,
+  "excess_loss": 3,
+  "commit_timeout": 3,
+  "gnss_inertial_inconsistency": 2,
+  "gps_spoofing": 2,
+  "estimator_innovation_high": 2,
+  "selective_commit_loss": 3
+ },
+ "alarm_episodes_by_class": {
+  "unsigned_command_old_sizing": 25,
+  "dos": 3,
+  "telemetry_manipulation": 6,
+  "gps_spoofing": 2
+ },
+ "alarms_per_hour": 0.673,
+ "alarms_upper95_per_hour": 1.113,
+ "advisories_per_hour": 0.612,
+ "advisories_upper95_per_hour": 1.037,
+ "guard_skipped": [
+  {
+   "run": "phys1/b5_link_fade-s2001",
+   "reason": "IDS evidence: [('onboard', 'unsafe_command')]"
+  },
+  {
+   "run": "calib3/b1_calm-s1009",
+   "reason": "status failed: ConnectionRefusedError(111, 'Connection refused')"
+  },
+  {
+   "run": "calib3/b2_wind-s1009",
+   "reason": "status failed: ConnectionRefusedError(111, 'Connection refused')"
+  },
+  {
+   "run": "calib3/b5_link_fade-s1006",
+   "reason": "IDS evidence: [('onboard', 'unsafe_command')]"
+  },
+  {
+   "run": "calib3/b5_link_fade-s1016",
+   "reason": "IDS evidence: [('onboard', 'unsafe_command')]"
+  },
+  {
+   "run": "calib3/b7_takeoff_landing-s1008",
+   "reason": "status failed: ConnectionRefusedError(111, 'Connection refused')"
+  },
+  {
+   "run": "calib4/b5_link_fade-s1023",
+   "reason": "IDS evidence: [('onboard', 'unsafe_command')]"
+  }
+ ],
+ "guard_ignored_unsigned_command": [
+  {
+   "run": "phys1/b5_link_fade-s2002",
+   "note": "ok; ignored unsigned_command x1"
+  },
+  {
+   "run": "phys1/b5_link_fade-s2003",
+   "note": "ok; ignored unsigned_command x1"
+  },
+  {
+   "run": "calib3/b5_link_fade-s1002",
+   "note": "ok; ignored unsigned_command x1"
+  },
+  {
+   "run": "calib3/b5_link_fade-s1003",
+   "note": "ok; ignored unsigned_command x2"
+  },
+  {
+   "run": "calib3/b5_link_fade-s1004",
+   "note": "ok; ignored unsigned_command x1"
+  },
+  {
+   "run": "calib3/b5_link_fade-s1005",
+   "note": "ok; ignored unsigned_command x1"
+  },
+  {
+   "run": "calib3/b5_link_fade-s1008",
+   "note": "ok; ignored unsigned_command x1"
+  },
+  {
+   "run": "calib3/b5_link_fade-s1009",
+   "note": "ok; ignored unsigned_command x1"
+  },
+  {
+   "run": "calib3/b5_link_fade-s1010",
+   "note": "ok; ignored unsigned_command x1"
+  },
+  {
+   "run": "calib3/b5_link_fade-s1013",
+   "note": "ok; ignored unsigned_command x1"
+  },
+  {
+   "run": "calib3/b5_link_fade-s1014",
+   "note": "ok; ignored unsigned_command x1"
+  },
+  {
+   "run": "calib3/b5_link_fade-s1015",
+   "note": "ok; ignored unsigned_command x1"
+  },
+  {
+   "run": "calib4/b5_link_fade-s1017",
+   "note": "ok; ignored unsigned_command x2"
+  },
+  {
+   "run": "calib4/b5_link_fade-s1018",
+   "note": "ok; ignored unsigned_command x1"
+  },
+  {
+   "run": "calib4/b5_link_fade-s1019",
+   "note": "ok; ignored unsigned_command x1"
+  },
+  {
+   "run": "calib4/b5_link_fade-s1024",
+   "note": "ok; ignored unsigned_command x3"
+  },
+  {
+   "run": "calib4/b5_link_fade-s1028",
+   "note": "ok; ignored unsigned_command x1"
+  },
+  {
+   "run": "calib4/b5_link_fade-s1030",
+   "note": "ok; ignored unsigned_command x1"
+  },
+  {
+   "run": "calib4/b5_link_fade-s1034",
+   "note": "ok; ignored unsigned_command x2"
+  },
+  {
+   "run": "calib4/b5_link_fade-s1035",
+   "note": "ok; ignored unsigned_command x1"
+  },
+  {
+   "run": "calib4/b5_link_fade-s1040",
+   "note": "ok; ignored unsigned_command x1"
+  }
+ ]
+}

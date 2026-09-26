@@ -38,4 +38,5 @@ def test_rejects_run_with_unauthorised_evidence(tmp_path):
     labels["attack"] = None
     (run / "labels.json").write_text(json.dumps(labels))
     ok, why = usable(run)
-    assert not ok and "unsigned_command" in why
+    # a lost signature alone is not disqualifying (clean fades lose them), but what the injection did is
+    assert not ok and "uncommanded_mode_change" in why

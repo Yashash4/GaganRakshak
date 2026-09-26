@@ -201,6 +201,9 @@ class Residuals:
         self._prior = np.eye(3) * (0.30 / 0.5) ** 2
         self._observed_sigma = 0.3 * 0.5  # a component is applied once its posterior σ is below this
         self._t_learn: float | None = None  # end of the previous learning window
+        self.min_heading_deg = 45.0  # heading spread the learning memory needs before the bias may move
+        self.converged_sigma = 0.02  # free learning ends once every observed direction is this certain
+        self._converged = False
         self._y = np.zeros(3)
         self.origin: tuple[float, float] | None = None
         self.gnss: deque = deque()  # (t, n, e, alt, vn, ve, baro_alt)
@@ -367,6 +370,12 @@ class Residuals:
             self.inertial_trend = {"t": t, **trend}
             r["trend"] = trend
             return
+        # A body-frame bias and an NED-fixed acceleration (a spoofer's) look identical while the
+        # heading does not change: the bias may move only once the recent windows span enough
+        # heading. Without that a spoof on a straight dash would be learned as bias.
+        psis = [x[3] for x in self._learn]
+        if math.degrees(max(psis) - min(psis)) < self.min_heading_deg:
+            return
         # consecutive learning windows end one GNSS fix apart but span LEARN_H: they share almost all
         # their data, so each adds only its new part (spacing / window length) of information
         w = 1.0 if self._t_learn is None else min(1.0, max(0.0, t - self._t_learn) / h)
@@ -380,10 +389,17 @@ class Residuals:
         # observed and the fit can slide along it far from the truth while still matching the
         # residuals. Keep the estimate only along information eigen-directions whose posterior σ
         # has dropped well below the prior's; along the others the prior mean (0) stays.
-        w, U = np.linalg.eigh(info)
-        seen = U[:, 0.30 / np.sqrt(w) < self._observed_sigma]
+        ev, U = np.linalg.eigh(info)
+        post = 0.30 / np.sqrt(ev)
+        seen = U[:, post < self._observed_sigma]
         candidate = seen @ (seen.T @ candidate)
-        trusted = self.observable_at is not None and t - self.observable_at <= self.trusted_learning_s
+        # free learning finds the turn-on bias; once every observed direction is known well it
+        # ends (whatever arrives later moves the bias only within the stability bound)
+        if seen.shape[1] and float(post[post < self._observed_sigma].max()) < self.converged_sigma:
+            self._converged = True
+        trusted = (
+            not self._converged and self.observable_at is not None and t - self.observable_at <= self.trusted_learning_s
+        )
         if trusted or self._t_bias is None:
             self.bias = candidate
         else:
@@ -707,6 +723,30 @@ def _extract(run: Path, imu_keep: int = 1) -> tuple[list[dict], list[tuple[float
     return raw, offsets, res.trend_peak
 
 
+def screen_outliers(runs: list[Path], results: list, k: float = 8.0, min_group: int = 5):
+    """Cross-run screen: one flight with a harness glitch or a real GNSS anomaly must not widen every
+    threshold. A run whose peak long-window velocity residual is far above the other runs of the
+    same scenario (median + k robust σ, 1.4826·MAD) is left out and listed with its peak."""
+    peak = [
+        max((float(np.linalg.norm(r["r1"])) for r in raw if r["H"] == LEARN_H and r["armed"]), default=0.0)
+        for raw, _, _ in results
+    ]
+    groups: dict[str, list[int]] = {}
+    for i, r in enumerate(runs):
+        groups.setdefault(r.name.rsplit("-s", 1)[0], []).append(i)
+    drop: dict[int, float] = {}
+    for idx in groups.values():
+        if len(idx) < min_group:
+            continue
+        x = np.array([peak[i] for i in idx])
+        med = float(np.median(x))
+        limit = med + k * 1.4826 * float(np.median(np.abs(x - med)))
+        drop.update({i: peak[i] for i in idx if peak[i] > limit})
+    keep = [i for i in range(len(runs)) if i not in drop]
+    screened = [{"run": runs[i].name, "peak_r1_ms": round(v, 2)} for i, v in drop.items()]
+    return [runs[i] for i in keep], [results[i] for i in keep], screened
+
+
 def learn_trend_crit(peaks: list[float], hours: float, budget_per_hour: float) -> dict:
     """The trend test reports at most once per flight: the threshold lets at most budget x hours
     of the clean flights exceed it (their peaks are the only false trends it can raise)."""
@@ -725,6 +765,7 @@ def calibrate(runs: list[Path], budget_per_hour: float, k: float = 3.0, imu_keep
 
     with ProcessPoolExecutor(workers) as ex:
         results = list(ex.map(_extract, runs, [imu_keep] * len(runs)))
+    runs, results, screened = screen_outliers(runs, results)
     per_run = [raw for raw, _, _ in results]
     offsets = [o for _, off, _ in results for o in off]
     vibs = np.array([r["vib"] for rr in per_run for r in rr]) if any(per_run) else np.zeros(1)
@@ -809,5 +850,6 @@ def calibrate(runs: list[Path], budget_per_hour: float, k: float = 3.0, imu_keep
             "calibration_hours": round(hours, 3),
             "budget_per_hour": budget_per_hour,
             "runs": [r.name for r in runs],
+            "screened_out": screened,
         },
     }

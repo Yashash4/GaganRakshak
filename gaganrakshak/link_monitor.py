@@ -118,7 +118,10 @@ class LinkMonitor:
         self.uav_id = uav_id
         curves = curves or {}  # none: record samples only (calibration); no loss/gap evidence
         self.curve: BandCurve | None = curves.get("loss")
-        self.budget_per_hour = budget_per_hour
+        # the heartbeat-silence limit uses the share of the alarm budget the calibration assigned
+        self.budget_per_hour = (
+            self.curve.meta.get("silence_budget_per_hour", budget_per_hour) if self.curve else budget_per_hour
+        )
         self.window, self.min_frames = window, min_frames
         self.gap_s, self.txbuf_min, self.congestion_s = gap_s, txbuf_min, congestion_s
         self.home: tuple[float, float] | None = None
@@ -294,7 +297,7 @@ def fit_commit_loss(pairs: list, hours: float, budget_per_hour: float, min_lost:
         if n >= 20 and 0.02 < f < 0.98 and c < 0.98
     ]
     gamma = sum(x * y for x, y in xy) / sum(x * x for x, _ in xy) if len(xy) >= 20 else 1.0
-    for z in [x / 4 for x in range(4, 81)]:
+    for z in [x / 4 for x in range(4, 201)]:
         n_on = 0
         for run in pairs:
             above = False
@@ -313,17 +316,35 @@ def fit_commit_loss(pairs: list, hours: float, budget_per_hour: float, min_lost:
     }
 
 
-def calibrate(runs: list[Path], budget_per_hour: float, bin_m: float = 50.0) -> dict:
-    """Per statistic, the smallest k (or z) meeting the false-alarm budget on the clean
-    calibration flights; runs that are not clean are rejected first."""
+def _silence_ratios(args) -> list[float]:
+    """Per commitment silence with telemetry flowing: peak silence / analytic limit (scale 1)."""
+    run, commit = args
+    from .commit import CommitRx
+    from .ids import Ids, run_replay
+
+    rx = CommitRx(bytes.fromhex((run / "onboard_commit.pub").read_text()), **{**commit, "timeout_scale": 1.0})
+    run_replay(Ids([rx]), run / "ground")
+    return rx.silence_ratios + ([rx._gap_peak] if rx._gap_peak > 0 else [])
+
+
+def calibrate(runs: list[Path], budget_per_hour: float, bin_m: float = 50.0, guarded: bool = False) -> dict:
+    """Per statistic, the smallest k (or z) meeting its false-alarm budget on the clean calibration
+    flights (``budget_per_hour`` is each statistic's share); runs that are not clean are rejected
+    first unless ``guarded`` says the caller already did. Loss band, heartbeat silence, selective
+    commitment loss and commitment timeout each get the share; the in-sample false counts of all
+    four are recorded."""
+    from concurrent.futures import ProcessPoolExecutor
+
     from .calibration import select
 
-    runs = select(runs)
-    per_run = [run_samples(r) for r in runs]
+    runs = runs if guarded else select(runs)
+    with ProcessPoolExecutor(8) as ex:
+        per_run = list(ex.map(run_samples, runs))
     hours = sum(s[-1][0] - s[0][0] for s, _, _ in per_run if s) / 3600
     curves = {"loss": _fit_to_budget([s for s, _, _ in per_run], hours, budget_per_hour, bin_m=bin_m, floor=0.05)}
     # heartbeat-silence limits follow from the loss band (LinkMonitor.silence_limit); report how
     # the calibration flights' longest silences compare
+    curves["loss"].meta["silence_budget_per_hour"] = budget_per_hour
     lm = LinkMonitor(None, curves=curves)
     curves["loss"].meta["silence_exceedances"] = sum(
         1 for _, g, _ in per_run for _, d, x in g if x > lm.silence_limit(d)
@@ -331,7 +352,20 @@ def calibrate(runs: list[Path], budget_per_hour: float, bin_m: float = 50.0) -> 
     for c in curves.values():
         c.meta.update(calibration_hours=round(hours, 3), budget_per_hour=budget_per_hour, runs=[r.name for r in runs])
     commit = fit_commit_loss([p for _, _, p in per_run], hours, budget_per_hour)
-    commit["meta"].update(calibration_hours=round(hours, 3), budget_per_hour=budget_per_hour)
+    commit["timeout_budget_per_hour"] = budget_per_hour
+    settings = {k: v for k, v in commit.items() if k != "meta"}
+    with ProcessPoolExecutor(8) as ex:
+        ratios = [x for rr in ex.map(_silence_ratios, [(r, settings) for r in runs]) for x in rr]
+    # smallest scale of the analytic limit whose false timeouts meet the share (each silence
+    # exceeding the scaled limit is one onset)
+    scale = next(
+        (c for c in [1.0 + x / 4 for x in range(0, 57)] if sum(r > c for r in ratios) / hours <= budget_per_hour), 15.0
+    )
+    commit["timeout_scale"] = scale
+    timeouts = sum(r > scale for r in ratios)
+    commit["meta"].update(
+        calibration_hours=round(hours, 3), budget_per_hour=budget_per_hour, timeout_false_onsets=timeouts
+    )
     return {**curves, "commit": commit}
 
 

@@ -112,8 +112,16 @@ class CommitRx:
         selective_z: float = 4.0,
         selective_min: int = 5,
         commit_loss_exponent: float = 1.0,
+        timeout_budget_per_hour: float = 1.0,
+        timeout_scale: float = 1.0,
     ):
         self.pub = public_key
+        # the analytic silence limit assumes the recent loss estimate holds; in real fades loss
+        # changes faster, so the limit is scaled by a factor learned on clean flights at the budget
+        self.timeout_scale = timeout_scale
+        self.silence_ratios: list[float] = []  # per silence with telemetry flowing: peak silence / limit
+        self._gap_peak = 0.0
+        self.timeout_budget_per_hour = timeout_budget_per_hour  # this statistic's share of the alarm budget
         self.uav_id = uav_id
         self.timeout_s = timeout_s
         self.selective_z = selective_z
@@ -186,7 +194,9 @@ class CommitRx:
             _signed_bytes(m.window_id, m.chunk, m.n_chunks, m.count, entries), bytes(m.signature), self.pub
         ):
             return [self._ev(t, "commit_bad_signature", Severity.HIGH, window=m.window_id)]
-        self._t_last_commit, self._timed_out = t, False
+        if self._gap_peak > 0:
+            self.silence_ratios.append(self._gap_peak)
+        self._t_last_commit, self._timed_out, self._gap_peak = t, False, 0.0
         w = m.window_id
         # (seq, msgid) -> tags. Not unique: at FC rates the 8-bit seq wraps several times per window.
         listed: dict[tuple[int, int], list[bytes]] = {}
@@ -332,10 +342,13 @@ class CommitRx:
     def tick(self, t, min_rate_hz: float = 5.0):
         """Telemetry kept flowing but no commitment came for longer than random loss explains.
         An outage (jamming, fade) stops both and is the link monitor's business."""
-        timeout = self.required_silence()
+        base = self.required_silence(self.timeout_budget_per_hour)
+        timeout = self.timeout_scale * base
         while self._recent_frames and t - self._recent_frames[0] > timeout:
             self._recent_frames.popleft()
         flowing = len(self._recent_frames) >= min_rate_hz * timeout
+        if self._t_last_commit is not None and flowing:
+            self._gap_peak = max(self._gap_peak, (t - self._t_last_commit) / base)
         if self._t_last_commit is not None and not self._timed_out and flowing and t - self._t_last_commit > timeout:
             self._timed_out = True
             return [self._loss_ev(t, "commit_timeout", silent_s=round(t - self._t_last_commit, 1))]

@@ -239,3 +239,34 @@ def test_anchor_gate_is_the_bin_upper_at_the_bin_end_and_interpolates():
     assert gate_at(g, 0.0) == 10.0 and gate_at(g, 10.0) == 10.0  # no jump at the bin start
     assert gate_at(g, 15.0) == 20.0 and gate_at(g, 20.0) == 30.0 and gate_at(g, 99.0) == 60.0
     assert gate_at(None, 5.0) == float("inf")
+
+
+def test_no_bias_learning_without_heading_change():
+    """Constant heading: a body-frame bias and an NED-fixed spoof acceleration are indistinguishable,
+    so nothing is learned and a spoof present from the start stays fully in the residual."""
+    res = Residuals()
+    res.observable_at = 0.0
+    rows = []
+    for smp in yawing_hover(90.0, (0.0, 0.0, 0.0), spoof_accel=(0.05, 0.0), spoof_from=0.0, yaw_rate=0.0):
+        rows += res.observe(smp)
+    assert np.all(res.bias == 0.0), res.bias
+    late = [r["r1"] for r in rows if r["H"] == 15.0 and r["t"] > 60]
+    assert late and np.allclose(np.mean(late, axis=0), (0.75, 0.0), atol=0.05)  # 0.05 m/s² x 15 s
+
+
+def test_outlier_screen_drops_only_a_run_far_above_its_scenario_group():
+    from pathlib import Path
+
+    from gaganrakshak.cpce import screen_outliers
+
+    def run_result(peak):
+        return ([{"H": 15.0, "armed": True, "r1": np.array([peak, 0.0])}], [], 0.0)
+
+    peaks = [0.30, 0.34, 0.28, 0.33, 0.31, 3.0]  # the last: a glitch far above the others
+    runs = [Path(f"b1_calm-s{1000 + i}") for i in range(len(peaks))] + [
+        Path("b5_link_fade-s1"),
+        Path("b5_link_fade-s2"),
+    ]
+    results = [run_result(p) for p in peaks] + [run_result(9.0), run_result(0.2)]  # b5 group too small to screen
+    kept, _, screened = screen_outliers(runs, results)
+    assert [s["run"] for s in screened] == ["b1_calm-s1005"] and len(kept) == 7
