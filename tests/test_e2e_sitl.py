@@ -72,12 +72,34 @@ def chain(tmp_path_factory):
     ids_on, ids_gnd = Mirror(IDS_ON), Mirror(IDS_GND)
     for name in ("sign", "commit"):  # full IDS traffic on the radio: signatures + commitments
         (work / f"{name}.key").write_text(crypto.generate_keypair()[0].hex())
-    procs.append(proc("router", "--onboard", "--a", f"tcp:127.0.0.1:{sitl.ports(I)['link']}",
-                      "--b", f"udpout:127.0.0.1:{RADIO_AIR}", "--ids-port", str(IDS_ON),
-                      "--commit-key", str(work / "commit.key")))
+    procs.append(
+        proc(
+            "router",
+            "--onboard",
+            "--a",
+            f"tcp:127.0.0.1:{sitl.ports(I)['link']}",
+            "--b",
+            f"udpout:127.0.0.1:{RADIO_AIR}",
+            "--ids-port",
+            str(IDS_ON),
+            "--commit-key",
+            str(work / "commit.key"),
+        )
+    )
     procs.append(proc("link_sim", "--air-port", str(RADIO_AIR), "--ground-port", str(RADIO_GND)))
-    procs.append(proc("router", "--a", f"udpin:127.0.0.1:{RADIO_GND}", "--b", f"udpout:127.0.0.1:{GCS}",
-                      "--ids-port", str(IDS_GND), "--sign-key", str(work / "sign.key")))
+    procs.append(
+        proc(
+            "router",
+            "--a",
+            f"udpin:127.0.0.1:{RADIO_GND}",
+            "--b",
+            f"udpout:127.0.0.1:{GCS}",
+            "--ids-port",
+            str(IDS_GND),
+            "--sign-key",
+            str(work / "sign.key"),
+        )
+    )
     gcs = mavutil.mavlink_connection(f"udpin:127.0.0.1:{GCS}", source_system=255, source_component=190)
     assert gcs.wait_heartbeat(timeout=60), "no heartbeat at GCS"
     # What MAVProxy does on connect: all streams at 4 Hz.
@@ -114,8 +136,7 @@ def test_clean_link_imu_rate_and_radio_load(chain):
     imu_hz = sum(n == "RAW_IMU" for _, n, _ in onboard) / dt
     load = sum(len(m.get_msgbuf()) for m in off_radio) / dt / RADIO_BYTES_PER_S
     ids_share = sum(len(m.get_msgbuf()) for m in off_radio if m.get_type().startswith("GR_")) / dt / RADIO_BYTES_PER_S
-    print(f"IDS RAW_IMU {imu_hz:.1f} Hz; radio downlink load {load:.1%} of 57.6 kbps "
-          f"(commitments {ids_share:.1%})")
+    print(f"IDS RAW_IMU {imu_hz:.1f} Hz; radio downlink load {load:.1%} of 57.6 kbps (commitments {ids_share:.1%})")
     assert any(m.get_type() == "GR_COMMIT" for m in off_radio)
     assert imu_hz >= 50
     assert load < 0.70
@@ -125,8 +146,9 @@ def test_clean_link_imu_rate_and_radio_load(chain):
 
 def test_gcs_command_reaches_fc(chain):
     gcs, *_ = chain
-    gcs.mav.command_long_send(1, 1, MAV.MAV_CMD_REQUEST_MESSAGE, 0,
-                              MAV.MAVLINK_MSG_ID_AUTOPILOT_VERSION, 0, 0, 0, 0, 0, 0)
+    gcs.mav.command_long_send(
+        1, 1, MAV.MAV_CMD_REQUEST_MESSAGE, 0, MAV.MAVLINK_MSG_ID_AUTOPILOT_VERSION, 0, 0, 0, 0, 0, 0
+    )
     got = gcs_collect(gcs, 3)
     assert any(m.get_type() == "AUTOPILOT_VERSION" for m in got)
     assert any(m.get_type() == "COMMAND_ACK" and m.command == MAV.MAV_CMD_REQUEST_MESSAGE for m in got)
@@ -141,16 +163,21 @@ def test_sim_params_never_reach_radio_or_ids(chain):
     for x in (0.5, 1.0, 0.0):
         h.param_set_send("SIM_GPS1_GLTCH_X", x)
         time.sleep(0.2)
-    echoed = [m for m in iter(lambda: h.recv_match(type="PARAM_VALUE", blocking=True, timeout=1), None)
-              if m.param_id.startswith("SIM_")]
+    echoed = [
+        m
+        for m in iter(lambda: h.recv_match(type="PARAM_VALUE", blocking=True, timeout=1), None)
+        if m.param_id.startswith("SIM_")
+    ]
     assert echoed, "harness saw no SIM_ echo; test would prove nothing"
     at_gcs = gcs_collect(gcs, 2)
     onboard = ids_on.take() + ids_gnd.take()
     h.close()
-    assert not [m for m in at_gcs if m.get_type() == "SIMSTATE"
-                or (m.get_type() == "PARAM_VALUE" and m.param_id.startswith("SIM_"))]
-    assert not [m for _, n, m in onboard if n == "SIMSTATE"
-                or (n == "PARAM_VALUE" and m.param_id.startswith("SIM_"))]
+    assert not [
+        m
+        for m in at_gcs
+        if m.get_type() == "SIMSTATE" or (m.get_type() == "PARAM_VALUE" and m.param_id.startswith("SIM_"))
+    ]
+    assert not [m for _, n, m in onboard if n == "SIMSTATE" or (n == "PARAM_VALUE" and m.param_id.startswith("SIM_"))]
 
 
 def test_link_survives_ids_loss(chain):

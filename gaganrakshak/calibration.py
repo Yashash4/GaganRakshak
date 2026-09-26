@@ -9,8 +9,15 @@ HARNESS_ANOMALIES = {"touchdown_not_seen"}
 # Evidence whose thresholds calibration learns: judged with uncalibrated defaults it would
 # reject exactly the flights that show the behaviour to be learned. Everything else
 # (protocol, signatures, altered/injected frames, integrity) disqualifies a run.
-CALIBRATED_EVIDENCE = {"selective_commit_loss", "commit_timeout", "excess_loss", "telemetry_gap",
-                       "radio_congestion", "gnss_inertial_inconsistency", "gps_spoofing"}
+CALIBRATED_EVIDENCE = {
+    "selective_commit_loss",
+    "commit_timeout",
+    "excess_loss",
+    "telemetry_gap",
+    "radio_congestion",
+    "gnss_inertial_inconsistency",
+    "gps_spoofing",
+}
 
 
 def usable(run: Path, check_ids: bool = True) -> tuple[bool, str]:
@@ -26,8 +33,12 @@ def usable(run: Path, check_ids: bool = True) -> tuple[bool, str]:
         return False, f"harness anomaly: {bad}"
     if check_ids:
         from .evaluate import evaluate
-        ev = [e for e in evaluate(run, link_curves=Path("/nonexistent"))["evidence"]
-              if e["type"] not in CALIBRATED_EVIDENCE]
+
+        ev = [
+            e
+            for e in evaluate(run, link_curves=Path("/nonexistent"))["evidence"]
+            if e["type"] not in CALIBRATED_EVIDENCE
+        ]
         if ev:
             return False, f"IDS evidence: {sorted({(e['agent'], e['type']) for e in ev})}"
     return True, "ok"

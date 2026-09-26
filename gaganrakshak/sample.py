@@ -109,8 +109,17 @@ class StatusText:
 
 
 Payload = Union[
-    Imu, Gnss, Baro, Attitude, Command, Status, EstimatorRatios, LinkStats,
-    ParamValue, VersionInfo, StatusText,
+    Imu,
+    Gnss,
+    Baro,
+    Attitude,
+    Command,
+    Status,
+    EstimatorRatios,
+    LinkStats,
+    ParamValue,
+    VersionInfo,
+    StatusText,
 ]
 
 

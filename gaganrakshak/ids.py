@@ -35,14 +35,29 @@ class PassThroughFusion:
     Replaced by CUSUM + evidence templates in the physics/fusion track."""
 
     def update(self, events: list[EvidenceEvent], t: float) -> list[Alert]:
-        return [Alert(t=e.t, uav_id=e.uav_id, attack_class=e.class_hint, confidence=min(1.0, e.score),
-                      severity=e.severity, evidence=(e,))
-                for e in events if e.class_hint and e.severity >= Severity.MEDIUM]
+        return [
+            Alert(
+                t=e.t,
+                uav_id=e.uav_id,
+                attack_class=e.class_hint,
+                confidence=min(1.0, e.score),
+                severity=e.severity,
+                evidence=(e,),
+            )
+            for e in events
+            if e.class_hint and e.severity >= Severity.MEDIUM
+        ]
 
 
 class Ids:
-    def __init__(self, detectors: list, fusion=None, log: Optional[EvidenceLog] = None,
-                 uav_id: int = 1, clear_after_s: float = 10.0):
+    def __init__(
+        self,
+        detectors: list,
+        fusion=None,
+        log: Optional[EvidenceLog] = None,
+        uav_id: int = 1,
+        clear_after_s: float = 10.0,
+    ):
         self.adapter = ArduPilotAdapter(uav_id)
         self.detectors = detectors
         self.fusion = fusion or PassThroughFusion()
@@ -61,23 +76,40 @@ class Ids:
 
     def _decide(self, events: list[EvidenceEvent], t: float) -> list[Alert]:
         for ep in self.tracker.close_idle(t):
-            self.log.append({"t": t, "kind": "episode_closed", "episode": ep.episode_id,
-                             "class": ep.attack_class, "t_start": ep.t_start, "t_end": ep.t_end})
+            self.log.append(
+                {
+                    "t": t,
+                    "kind": "episode_closed",
+                    "episode": ep.episode_id,
+                    "class": ep.attack_class,
+                    "t_start": ep.t_start,
+                    "t_end": ep.t_end,
+                }
+            )
         alerts = self.fusion.update(events, t) if events else []
         for a in alerts:
             ep, new = self.tracker.update(a)
             self.alerts.append(a)
             if new:
-                self.log.append({"t": a.t, "kind": "episode_opened", "episode": ep.episode_id,
-                                 "class": a.attack_class, "severity": int(a.severity),
-                                 "confidence": a.confidence,
-                                 "evidence": [{"source": e.source, "type": e.evidence_type, "score": e.score}
-                                              for e in a.evidence]})
+                self.log.append(
+                    {
+                        "t": a.t,
+                        "kind": "episode_opened",
+                        "episode": ep.episode_id,
+                        "class": a.attack_class,
+                        "severity": int(a.severity),
+                        "confidence": a.confidence,
+                        "evidence": [
+                            {"source": e.source, "type": e.evidence_type, "score": e.score} for e in a.evidence
+                        ],
+                    }
+                )
         return alerts
 
 
 def replay_tlogs(prefix: Path) -> Iterable[tuple[float, str, object]]:
     """(time, direction, msg) from <prefix>_D.tlog and <prefix>_U.tlog, merged in time order."""
+
     def read(direction):
         path = Path(f"{prefix}_{direction}.tlog")
         if not path.exists():
@@ -85,6 +117,7 @@ def replay_tlogs(prefix: Path) -> Iterable[tuple[float, str, object]]:
         log = mavutil.mavlink_connection(str(path), robust_parsing=True)
         while (m := log.recv_msg()) is not None:
             yield m._timestamp, direction, m
+
     return heapq.merge(read("D"), read("U"), key=lambda x: x[0])
 
 

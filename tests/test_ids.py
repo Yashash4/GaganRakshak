@@ -19,8 +19,11 @@ class LandFlagger:
 
     def observe(self, msg, samples, direction, t):
         self.seen_directions.add(direction)
-        return [EvidenceEvent(t, 1, "toy", "in_land", 1.0, Severity.HIGH, "toy_class")
-                for s in samples if isinstance(s.payload, Status) and s.payload.mode == "LAND"]
+        return [
+            EvidenceEvent(t, 1, "toy", "in_land", 1.0, Severity.HIGH, "toy_class")
+            for s in samples
+            if isinstance(s.payload, Status) and s.payload.mode == "LAND"
+        ]
 
     def tick(self, t):
         self.ticks += 1

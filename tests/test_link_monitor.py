@@ -29,8 +29,11 @@ def downlink(seconds=40, per_s=20):
     out = []
     for s in range(seconds):
         for i in range(per_s):
-            m = (mav.MAVLink_heartbeat_message(2, 3, 0, 0, 4, 3) if i == 0
-                 else mav.MAVLink_attitude_message(s * 1000 + i, 0, 0, 0, 0, 0, 0))
+            m = (
+                mav.MAVLink_heartbeat_message(2, 3, 0, 0, 4, 3)
+                if i == 0
+                else mav.MAVLink_attitude_message(s * 1000 + i, 0, 0, 0, 0, 0, 0)
+            )
             buf = m.pack(fc)
             fc.seq = (fc.seq + 1) % 256
             tx.add(buf, parse(buf))
@@ -115,8 +118,9 @@ def test_heartbeat_gap_normal_at_range_is_quiet():
 
 
 def gpi(fc, n_m, t_ms=0):
-    return mav.MAVLink_global_position_int_message(t_ms, int((-35.36 + n_m / 111320) * 1e7), 1491652300,
-                                                   584000, 20000, 0, 0, 0, 0).pack(fc)
+    return mav.MAVLink_global_position_int_message(
+        t_ms, int((-35.36 + n_m / 111320) * 1e7), 1491652300, 584000, 20000, 0, 0, 0, 0
+    ).pack(fc)
 
 
 def test_falsified_far_position_does_not_excuse_loss():

@@ -13,8 +13,10 @@ from gaganrakshak.integrity import IntegrityMonitor, load_baseline, sign_baselin
 MAV = mavutil.mavlink
 BASE_DIR = Path(__file__).parent.parent / "configs" / "baseline"
 SEED, PUB = crypto.generate_keypair()
-BASELINE = {"version": {"flight_sw_version": 67568127, "git_hash": "dbe79216"},
-            "params": {"FENCE_ENABLE": 0.0, "FS_THR_ENABLE": 1.0}}
+BASELINE = {
+    "version": {"flight_sw_version": 67568127, "git_hash": "dbe79216"},
+    "params": {"FENCE_ENABLE": 0.0, "FS_THR_ENABLE": 1.0},
+}
 
 
 class Link:

@@ -18,8 +18,7 @@ args = ap.parse_args()
 
 m = mavutil.mavlink_connection(args.connect, source_system=255)
 m.wait_heartbeat(timeout=30)
-m.mav.request_data_stream_send(m.target_system, m.target_component,
-                               mavutil.mavlink.MAV_DATA_STREAM_ALL, args.rate, 1)
+m.mav.request_data_stream_send(m.target_system, m.target_component, mavutil.mavlink.MAV_DATA_STREAM_ALL, args.rate, 1)
 
 
 def collect(seconds):
@@ -35,8 +34,13 @@ def collect(seconds):
 def imu_stats(rows):
     a = np.array([[r["xacc"], r["yacc"], r["zacc"]] for r in rows]) * 9.80665 / 1000  # mG -> m/s^2
     g = np.array([[r["xgyro"], r["ygyro"], r["zgyro"]] for r in rows]) / 1000  # mrad/s -> rad/s
-    return {"n": len(rows), "acc_mean": a.mean(0).round(4).tolist(), "acc_std": a.std(0).round(4).tolist(),
-            "gyr_mean": g.mean(0).round(5).tolist(), "gyr_std": g.std(0).round(5).tolist()}
+    return {
+        "n": len(rows),
+        "acc_mean": a.mean(0).round(4).tolist(),
+        "acc_std": a.std(0).round(4).tolist(),
+        "gyr_mean": g.mean(0).round(5).tolist(),
+        "gyr_std": g.std(0).round(5).tolist(),
+    }
 
 
 def summarise(d, dur, label):
@@ -44,11 +48,15 @@ def summarise(d, dur, label):
     vel = np.array([r["vel"] / 100 for r in gps]) if gps else np.array([np.nan])
     alt = np.array([r["alt"] / 1000 for r in gps]) if gps else np.array([np.nan])
     return {
-        "label": label, "duration_s": round(dur, 1),
+        "label": label,
+        "duration_s": round(dur, 1),
         "rate_hz": {k: round(len(v) / dur, 1) for k, v in d.items()},
-        "imu1": imu_stats(d["RAW_IMU"]), "imu2": imu_stats(d["SCALED_IMU2"]),
-        "gps_n_fix3": len(gps), "gps_ground_speed_mean": float(np.nanmean(vel)),
-        "gps_ground_speed_std": float(np.nanstd(vel)), "gps_alt_std": float(np.nanstd(alt)),
+        "imu1": imu_stats(d["RAW_IMU"]),
+        "imu2": imu_stats(d["SCALED_IMU2"]),
+        "gps_n_fix3": len(gps),
+        "gps_ground_speed_mean": float(np.nanmean(vel)),
+        "gps_ground_speed_std": float(np.nanstd(vel)),
+        "gps_alt_std": float(np.nanstd(alt)),
     }
 
 
@@ -71,8 +79,9 @@ for _ in range(20):
     if m.motors_armed():
         break
     time.sleep(2)
-m.mav.command_long_send(m.target_system, m.target_component,
-                        mavutil.mavlink.MAV_CMD_NAV_TAKEOFF, 0, 0, 0, 0, 0, 0, 0, 10)
+m.mav.command_long_send(
+    m.target_system, m.target_component, mavutil.mavlink.MAV_CMD_NAV_TAKEOFF, 0, 0, 0, 0, 0, 0, 0, 10
+)
 time.sleep(20)
 hover, dur = collect(30)
 res["hover"] = summarise(hover, dur, "hover 10 m GUIDED")

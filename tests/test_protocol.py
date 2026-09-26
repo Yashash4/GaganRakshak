@@ -70,8 +70,9 @@ def test_uplink_flood_once_per_onset():
 
 def test_disarm_in_flight_is_unsafe_but_not_on_ground():
     fc, gcs, det = Sender(1), Sender(255), ProtocolDetector()
-    disarm = lambda: gcs(mav.MAVLink_command_long_message(1, 1, MAV.MAV_CMD_COMPONENT_ARM_DISARM,
-                                                          0, 0, 21196, 0, 0, 0, 0, 0))
+    disarm = lambda: gcs(
+        mav.MAVLink_command_long_message(1, 1, MAV.MAV_CMD_COMPONENT_ARM_DISARM, 0, 0, 21196, 0, 0, 0, 0, 0)
+    )
     pos = lambda alt_m: fc(mav.MAVLink_global_position_int_message(0, 0, 0, 0, int(alt_m * 1000), 0, 0, 0, 0))
     det.observe(pos(0.1), [], "D", 0)
     assert kinds(det, [disarm()]) == []  # operator disarm after landing (harness does this)
@@ -83,6 +84,7 @@ def test_signed_unsafe_command_is_the_operators():
     """Onboard: a disarm in flight is an alarm unless the ground agent signed it."""
     from gaganrakshak import crypto
     from gaganrakshak.cmd_sign import CmdVerifier, Signer
+
     seed, pub = crypto.generate_keypair()
     fc, gcs = Sender(1), Sender(255, 190)
     signer, verifier = Signer(seed), CmdVerifier(pub)
@@ -106,6 +108,7 @@ def test_unsafe_command_waits_for_a_slow_signature_verdict():
     """A signed disarm whose signature arrives 1.5 s later is still the operator's."""
     from gaganrakshak import crypto
     from gaganrakshak.cmd_sign import CmdVerifier, Signer
+
     seed, pub = crypto.generate_keypair()
     fc, gcs = Sender(1), Sender(255, 190)
     signer, verifier = Signer(seed), CmdVerifier(pub, wait_s=2.0)

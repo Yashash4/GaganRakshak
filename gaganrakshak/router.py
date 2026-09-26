@@ -37,21 +37,49 @@ ROUTER_SYSID, ROUTER_COMPID = 1, MAV.MAV_COMP_ID_ONBOARD_COMPUTER
 # ArduPilot stream groups (GCS_MAVLink ap_message tables): which message types each
 # MAV_DATA_STREAM id controls. Messages not listed are events and are never throttled.
 STREAMS = {
-    MAV.MAV_DATA_STREAM_RAW_SENSORS: {"RAW_IMU", "SCALED_IMU2", "SCALED_IMU3", "SCALED_PRESSURE",
-                                      "SCALED_PRESSURE2", "SCALED_PRESSURE3"},
-    MAV.MAV_DATA_STREAM_EXTENDED_STATUS: {"SYS_STATUS", "POWER_STATUS", "MCU_STATUS", "MEMINFO",
-                                          "MISSION_CURRENT", "GPS_RAW_INT", "GPS2_RAW",
-                                          "NAV_CONTROLLER_OUTPUT", "FENCE_STATUS",
-                                          "POSITION_TARGET_GLOBAL_INT"},
+    MAV.MAV_DATA_STREAM_RAW_SENSORS: {
+        "RAW_IMU",
+        "SCALED_IMU2",
+        "SCALED_IMU3",
+        "SCALED_PRESSURE",
+        "SCALED_PRESSURE2",
+        "SCALED_PRESSURE3",
+    },
+    MAV.MAV_DATA_STREAM_EXTENDED_STATUS: {
+        "SYS_STATUS",
+        "POWER_STATUS",
+        "MCU_STATUS",
+        "MEMINFO",
+        "MISSION_CURRENT",
+        "GPS_RAW_INT",
+        "GPS2_RAW",
+        "NAV_CONTROLLER_OUTPUT",
+        "FENCE_STATUS",
+        "POSITION_TARGET_GLOBAL_INT",
+    },
     MAV.MAV_DATA_STREAM_POSITION: {"GLOBAL_POSITION_INT", "LOCAL_POSITION_NED"},
     MAV.MAV_DATA_STREAM_RC_CHANNELS: {"SERVO_OUTPUT_RAW", "RC_CHANNELS", "RC_CHANNELS_RAW"},
     MAV.MAV_DATA_STREAM_EXTRA1: {"ATTITUDE", "SIMSTATE", "AHRS2", "PID_TUNING"},
     MAV.MAV_DATA_STREAM_EXTRA2: {"VFR_HUD"},
-    MAV.MAV_DATA_STREAM_EXTRA3: {"AHRS", "SYSTEM_TIME", "WIND", "RANGEFINDER", "DISTANCE_SENSOR",
-                                 "TERRAIN_REQUEST", "TERRAIN_REPORT", "BATTERY_STATUS",
-                                 "GIMBAL_DEVICE_ATTITUDE_STATUS", "OPTICAL_FLOW", "MAG_CAL_REPORT",
-                                 "MAG_CAL_PROGRESS", "EKF_STATUS_REPORT", "VIBRATION",
-                                 "ESC_TELEMETRY_1_TO_4", "AOA_SSA", "EXTENDED_SYS_STATE"},
+    MAV.MAV_DATA_STREAM_EXTRA3: {
+        "AHRS",
+        "SYSTEM_TIME",
+        "WIND",
+        "RANGEFINDER",
+        "DISTANCE_SENSOR",
+        "TERRAIN_REQUEST",
+        "TERRAIN_REPORT",
+        "BATTERY_STATUS",
+        "GIMBAL_DEVICE_ATTITUDE_STATUS",
+        "OPTICAL_FLOW",
+        "MAG_CAL_REPORT",
+        "MAG_CAL_PROGRESS",
+        "EKF_STATUS_REPORT",
+        "VIBRATION",
+        "ESC_TELEMETRY_1_TO_4",
+        "AOA_SSA",
+        "EXTENDED_SYS_STATE",
+    },
 }
 STREAM_OF = {name: sid for sid, names in STREAMS.items() for name in names}
 DEFAULT_RADIO_HZ = 2.0  # until the GCS asks for something else
@@ -64,9 +92,17 @@ def sim_only(msg) -> bool:
 
 
 class Router:
-    def __init__(self, a: str, b: str, ids_port: int = 15600, onboard: bool = False,
-                 fc_rate_hz: int = 50, sign_key: bytes | None = None, commit_key: bytes | None = None,
-                 imu_rate_hz: int = 0):
+    def __init__(
+        self,
+        a: str,
+        b: str,
+        ids_port: int = 15600,
+        onboard: bool = False,
+        fc_rate_hz: int = 50,
+        sign_key: bytes | None = None,
+        commit_key: bytes | None = None,
+        imu_rate_hz: int = 0,
+    ):
         self.a = mavutil.mavlink_connection(a, source_system=ROUTER_SYSID, source_component=ROUTER_COMPID)
         self.b = mavutil.mavlink_connection(b, source_system=ROUTER_SYSID, source_component=ROUTER_COMPID)
         self.ids = ("127.0.0.1", ids_port)
@@ -78,8 +114,7 @@ class Router:
         self.commit = CommitTx(commit_key) if commit_key else None  # onboard agent only
         self.radio_hz: dict[str, float] = {}  # per message type, set by GCS requests
         self._last_tx: dict[str, float] = {}
-        self.stats = {"a_to_b": Counter(), "b_to_a": Counter(), "dropped": Counter(),
-                      "bytes_to_b": 0}
+        self.stats = {"a_to_b": Counter(), "b_to_a": Counter(), "dropped": Counter(), "bytes_to_b": 0}
         self._stop = threading.Event()
 
     # -- shaping (onboard only) ------------------------------------------------------
@@ -109,7 +144,9 @@ class Router:
             if entry is not None:
                 us = msg.param2
                 self.radio_hz[entry.msgname] = 0 if us < 0 else (DEFAULT_RADIO_HZ if us == 0 else 1e6 / us)
-            ack = MAV.MAVLink_command_ack_message(msg.command, MAV.MAV_RESULT_ACCEPTED if entry else MAV.MAV_RESULT_FAILED)
+            ack = MAV.MAVLink_command_ack_message(
+                msg.command, MAV.MAV_RESULT_ACCEPTED if entry else MAV.MAV_RESULT_FAILED
+            )
             buf = ack.pack(self.b.mav)
             self.b.mav.seq = (self.b.mav.seq + 1) % 256
             self.b.write(buf)
@@ -122,8 +159,19 @@ class Router:
         ts, tc = self.a.target_system or 1, self.a.target_component or 1
         self.a.mav.request_data_stream_send(ts, tc, MAV.MAV_DATA_STREAM_ALL, self.fc_rate_hz, 1)
         if self.imu_rate_hz:  # the IDS integrates IMU: as fast as the FC link sustains (less aliasing)
-            self.a.mav.command_long_send(ts, tc, MAV.MAV_CMD_SET_MESSAGE_INTERVAL, 0,
-                                         MAV.MAVLINK_MSG_ID_RAW_IMU, 1e6 / self.imu_rate_hz, 0, 0, 0, 0, 0)
+            self.a.mav.command_long_send(
+                ts,
+                tc,
+                MAV.MAV_CMD_SET_MESSAGE_INTERVAL,
+                0,
+                MAV.MAVLINK_MSG_ID_RAW_IMU,
+                1e6 / self.imu_rate_hz,
+                0,
+                0,
+                0,
+                0,
+                0,
+            )
 
     # -- forwarding --------------------------------------------------------------------
     def _mirror(self, direction: bytes, buf: bytes):
@@ -192,8 +240,16 @@ def main():
     ap.add_argument("--commit-key", type=Path, help="onboard agent: file with the hex Ed25519 private seed")
     args = ap.parse_args()
     load = lambda p: bytes.fromhex(p.read_text().strip()) if p else None
-    r = Router(args.a, args.b, args.ids_port, args.onboard, args.fc_rate,
-               load(args.sign_key), load(args.commit_key), args.imu_rate).start()
+    r = Router(
+        args.a,
+        args.b,
+        args.ids_port,
+        args.onboard,
+        args.fc_rate,
+        load(args.sign_key),
+        load(args.commit_key),
+        args.imu_rate,
+    ).start()
     while True:
         time.sleep(10)
         if r.onboard:

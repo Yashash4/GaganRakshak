@@ -47,8 +47,8 @@ HOME_LAT = float(sitl.HOME.split(",")[0])
 IMU_RATE_HZ = 200  # RAW_IMU requested from the FC for the onboard IDS (less vibration aliasing)
 
 
-
 # -- plan -------------------------------------------------------------------------------
+
 
 def _draw(rng: random.Random, v):
     """[lo, hi] -> uniform draw; anything else is fixed."""
@@ -73,9 +73,12 @@ def resolve(spec: dict, seed: int) -> dict:
     if spec.get("attack"):
         a = spec["attack"]
         start = _draw(rng, a["start_s"])
-        attack = {"type": a["type"], "start_s": round(start, 2),
-                  "end_s": round(start + _draw(rng, a.get("duration_s", 30)), 2),
-                  "params": {k: _draw(rng, v) for k, v in a.get("params", {}).items()}}
+        attack = {
+            "type": a["type"],
+            "start_s": round(start, 2),
+            "end_s": round(start + _draw(rng, a.get("duration_s", 30)), 2),
+            "params": {k: _draw(rng, v) for k, v in a.get("params", {}).items()},
+        }
     return {
         "run_id": f"{spec['name']}-s{seed}",
         "scenario": spec["name"],
@@ -108,6 +111,7 @@ def _benign(b, rng, duration):
 
 
 # -- recording ----------------------------------------------------------------------------
+
 
 class Recorder:
     """IDS-side capture of a router mirror: one tlog per direction (D = from aircraft side,
@@ -152,10 +156,17 @@ class Recorder:
 
 # -- run ----------------------------------------------------------------------------------
 
+
 def run_ports(instance: int) -> dict:
     base = 20000 + 100 * instance
-    return {**sitl.ports(instance), "radio_air": base, "radio_gnd": base + 1, "gcs": base + 2,
-            "ids_on": base + 10, "ids_gnd": base + 11}
+    return {
+        **sitl.ports(instance),
+        "radio_air": base,
+        "radio_gnd": base + 1,
+        "gcs": base + 2,
+        "ids_on": base + 10,
+        "ids_gnd": base + 11,
+    }
 
 
 class Run:
@@ -244,13 +255,13 @@ class Run:
         assert self._pump(g, 60, lambda m: m.get_type() == "HEARTBEAT" and m.get_srcSystem() == 1), "no FC"
         g.target_system, g.target_component = 1, 1
         g.mav.request_data_stream_send(1, 1, MAV.MAV_DATA_STREAM_ALL, 4, 1)  # as MAVProxy does
-        if not self._pump(g, 120, lambda m: m.get_type() == "EKF_STATUS_REPORT"
-                          and m.flags & 0x08 and m.flags & 0x10):
+        if not self._pump(g, 120, lambda m: m.get_type() == "EKF_STATUS_REPORT" and m.flags & 0x08 and m.flags & 0x10):
             raise RuntimeError("EKF not ready")
         g.set_mode("GUIDED")
         self._pump(g, 1)
-        armed = lambda m: (m.get_type() == "HEARTBEAT" and m.get_srcSystem() == 1
-                           and m.base_mode & MAV.MAV_MODE_FLAG_SAFETY_ARMED)
+        armed = lambda m: (
+            m.get_type() == "HEARTBEAT" and m.get_srcSystem() == 1 and m.base_mode & MAV.MAV_MODE_FLAG_SAFETY_ARMED
+        )
         for _ in range(20):
             g.arducopter_arm()
             if self._pump(g, 3, armed):
@@ -260,16 +271,20 @@ class Run:
         self.t0 = time.monotonic()
         self.event("takeoff", alt=plan["takeoff_alt_m"])
         g.mav.command_long_send(1, 1, MAV.MAV_CMD_NAV_TAKEOFF, 0, 0, 0, 0, 0, 0, 0, plan["takeoff_alt_m"])
-        self._pump(g, 30, lambda m: m.get_type() == "GLOBAL_POSITION_INT"
-                   and m.relative_alt / 1000 > 0.9 * plan["takeoff_alt_m"])
+        self._pump(
+            g,
+            30,
+            lambda m: m.get_type() == "GLOBAL_POSITION_INT" and m.relative_alt / 1000 > 0.9 * plan["takeoff_alt_m"],
+        )
         g.mav.command_long_send(1, 1, MAV.MAV_CMD_DO_CHANGE_SPEED, 0, 1, plan["speed_ms"], -1, 0, 0, 0, 0)
         ops = sorted(plan["operator"], key=lambda o: o["at_s"])
         wp = 0
         while self.t() < plan["duration_s"] and not self._stop.is_set():
             n, e, alt = plan["waypoints"][wp % len(plan["waypoints"])]
             self.event("waypoint", n=n, e=e, alt=alt)
-            g.mav.set_position_target_local_ned_send(0, 1, 1, MAV.MAV_FRAME_LOCAL_NED, 0x0DF8,
-                                                     n, e, -alt, 0, 0, 0, 0, 0, 0, 0, 0)
+            g.mav.set_position_target_local_ned_send(
+                0, 1, 1, MAV.MAV_FRAME_LOCAL_NED, 0x0DF8, n, e, -alt, 0, 0, 0, 0, 0, 0, 0, 0
+            )
             leg_end = time.monotonic() + 60
             while time.monotonic() < leg_end and self.t() < plan["duration_s"]:
                 self._pump(g, 0.5)
@@ -280,8 +295,9 @@ class Run:
             wp += 1
         self.event("land")
         g.set_mode("LAND")
-        disarmed = lambda m: (m.get_type() == "HEARTBEAT" and m.get_srcSystem() == 1
-                              and not m.base_mode & MAV.MAV_MODE_FLAG_SAFETY_ARMED)
+        disarmed = lambda m: (
+            m.get_type() == "HEARTBEAT" and m.get_srcSystem() == 1 and not m.base_mode & MAV.MAV_MODE_FLAG_SAFETY_ARMED
+        )
         # Touchdown = the vehicle stopped descending: |vz| < 0.2 m/s for 5 s, after 10 s in LAND.
         # (Relative altitude on the ground drifts with the barometer on long flights.)
         land_t, still = time.monotonic(), [None]
@@ -336,33 +352,56 @@ class Run:
                 (out / f"{agent}.key").write_text(seed.hex())
                 (out / f"{agent}.pub").write_text(pub.hex())
                 keys[agent] = str(out / f"{agent}.key")
-            procs.append(subprocess.Popen(py + ["--onboard", "--a", f"tcp:127.0.0.1:{p['link']}",
-                                                "--b", f"udpout:127.0.0.1:{p['radio_air']}",
-                                                "--ids-port", str(p["ids_on"]),
-                                                "--commit-key", keys["onboard_commit"],
-                                                "--imu-rate", str(IMU_RATE_HZ)]))
+            procs.append(
+                subprocess.Popen(
+                    py
+                    + [
+                        "--onboard",
+                        "--a",
+                        f"tcp:127.0.0.1:{p['link']}",
+                        "--b",
+                        f"udpout:127.0.0.1:{p['radio_air']}",
+                        "--ids-port",
+                        str(p["ids_on"]),
+                        "--commit-key",
+                        keys["onboard_commit"],
+                        "--imu-rate",
+                        str(IMU_RATE_HZ),
+                    ]
+                )
+            )
             attacker = ATTACKS[plan["attack"]["type"]](self) if plan["attack"] else None
             cfg = LinkConfig(seed=plan["seed"], **plan["link"])
-            self.link = LinkSim(p["radio_air"], p["radio_gnd"], cfg,
-                                getattr(attacker, "link_attacker", None)).start()
-            procs.append(subprocess.Popen(py + ["--a", f"udpin:127.0.0.1:{p['radio_gnd']}",
-                                                "--b", f"udpout:127.0.0.1:{p['gcs']}",
-                                                "--ids-port", str(p["ids_gnd"]),
-                                                "--sign-key", keys["ground_sign"]]))
+            self.link = LinkSim(p["radio_air"], p["radio_gnd"], cfg, getattr(attacker, "link_attacker", None)).start()
+            procs.append(
+                subprocess.Popen(
+                    py
+                    + [
+                        "--a",
+                        f"udpin:127.0.0.1:{p['radio_gnd']}",
+                        "--b",
+                        f"udpout:127.0.0.1:{p['gcs']}",
+                        "--ids-port",
+                        str(p["ids_gnd"]),
+                        "--sign-key",
+                        keys["ground_sign"],
+                    ]
+                )
+            )
             self.harness = mavutil.mavlink_connection(f"tcp:127.0.0.1:{p['harness']}", source_system=250)
             # Address the FC itself: a broadcast (target 0) would be routed by ArduPilot onto the
             # vehicle link too.
             self.harness.target_system, self.harness.target_component = 1, 1
             # simulator truth (SIMSTATE, EXTRA1) on the harness link only: drives the radio model
             self.harness.mav.request_data_stream_send(1, 1, mavutil.mavlink.MAV_DATA_STREAM_EXTRA1, 4, 1)
-            for k, v in {**plan["sim_params"],
-                         **{f"SIM_WIND_{k.upper()}": v for k, v in plan["wind"].items()}}.items():
+            for k, v in {**plan["sim_params"], **{f"SIM_WIND_{k.upper()}": v for k, v in plan["wind"].items()}}.items():
                 self.harness.param_set_send(k, v)
             self.gnss_log = open(out / "gnss_error.csv", "w")
             self.gnss_log.write("t,gm_n,gm_e,attack_n,attack_e\n")
             threading.Thread(target=self._harness, daemon=True).start()
-            self.gcs = mavutil.mavlink_connection(f"udpin:127.0.0.1:{p['gcs']}", source_system=255,
-                                                  source_component=190)
+            self.gcs = mavutil.mavlink_connection(
+                f"udpin:127.0.0.1:{p['gcs']}", source_system=255, source_component=190
+            )
             if attacker:
                 threading.Thread(target=attacker.timeline, daemon=True).start()
             self._pilot()
@@ -384,16 +423,22 @@ class Run:
                 self.link.stop()
             if hasattr(self, "gnss_log"):
                 self.gnss_log.close()
-        labels = {**plan, "instance": self.instance, "status": status, "t0_wall": self.events[0]["wall"]
-                  if self.events else None, "events": self.events,
-                  "recorded_frames": {r_name: r.count for r_name, r in zip(("onboard", "ground"), recs)},
-                  "non_mavlink_frames": {r_name: r.non_mavlink for r_name, r in zip(("onboard", "ground"), recs)},
-                  "link_stats": self.link.stats() if self.link else None}
+        labels = {
+            **plan,
+            "instance": self.instance,
+            "status": status,
+            "t0_wall": self.events[0]["wall"] if self.events else None,
+            "events": self.events,
+            "recorded_frames": {r_name: r.count for r_name, r in zip(("onboard", "ground"), recs)},
+            "non_mavlink_frames": {r_name: r.non_mavlink for r_name, r in zip(("onboard", "ground"), recs)},
+            "link_stats": self.link.stats() if self.link else None,
+        }
         (out / "labels.json").write_text(json.dumps(labels, indent=1))
         return labels
 
 
 # -- parallel runner ------------------------------------------------------------------------
+
 
 def _worker(plan, out_root, free):
     inst = free.get()

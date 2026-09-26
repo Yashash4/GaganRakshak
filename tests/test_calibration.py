@@ -11,8 +11,9 @@ RAW = Path(__file__).parent.parent / "results" / "raw"
 def run_dir(tmp_path, name="r", status="ok", attack=None, events=("takeoff", "touchdown", "end")):
     d = tmp_path / name
     d.mkdir()
-    (d / "labels.json").write_text(json.dumps({"status": status, "attack": attack,
-                                               "events": [{"event": e, "t": 0} for e in events]}))
+    (d / "labels.json").write_text(
+        json.dumps({"status": status, "attack": attack, "events": [{"event": e, "t": 0} for e in events]})
+    )
     return d
 
 
@@ -30,6 +31,7 @@ A3_RUN = RAW / "att" / "a3_cmd_injection-s1"
 def test_rejects_run_with_unauthorised_evidence(tmp_path):
     """An injected command is rejected by the IDS evidence alone, even with the attack label removed."""
     import shutil
+
     run = tmp_path / "unlabelled"
     shutil.copytree(A3_RUN, run, ignore=shutil.ignore_patterns("sitl"))
     labels = json.loads((run / "labels.json").read_text())

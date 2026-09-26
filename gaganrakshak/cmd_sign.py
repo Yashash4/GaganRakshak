@@ -47,8 +47,9 @@ class Signer:
     def sign(self, frame: bytes, msg) -> list[bytes]:
         self.counter += 1
         sig = crypto.sign(_signed_bytes(self.counter, frame), self.seed)
-        m = mav2.MAVLink_gr_cmd_sig_message(self.counter, msg.get_msgId(), msg.get_srcSystem(),
-                                            msg.get_srcComponent(), msg.get_seq(), sig)
+        m = mav2.MAVLink_gr_cmd_sig_message(
+            self.counter, msg.get_msgId(), msg.get_srcSystem(), msg.get_srcComponent(), msg.get_seq(), sig
+        )
         out = []
         for _ in range(COPIES):
             out.append(m.pack(self._mav))
@@ -118,13 +119,23 @@ class CmdVerifier:
             t_cmd, frame, name = self._cmds.pop(k)
             sigs = self._sigs.pop(k)
             ok = [s for s in sigs if crypto.verify(_signed_bytes(s.counter, frame), bytes(s.signature), self.pub)]
-            self._set(k, "bad_signature" if not ok else "replayed" if ok[0].counter <= self.last_counter
-                      else "verified")
+            self._set(
+                k, "bad_signature" if not ok else "replayed" if ok[0].counter <= self.last_counter else "verified"
+            )
             if not ok:
                 out.append(self._ev(t, "bad_signature", Severity.HIGH, "command_injection", command=name))
             elif ok[0].counter <= self.last_counter:
-                out.append(self._ev(t, "replayed_command", Severity.HIGH, "replay", command=name,
-                                    counter=ok[0].counter, last=self.last_counter))
+                out.append(
+                    self._ev(
+                        t,
+                        "replayed_command",
+                        Severity.HIGH,
+                        "replay",
+                        command=name,
+                        counter=ok[0].counter,
+                        last=self.last_counter,
+                    )
+                )
             else:
                 self.last_counter = ok[0].counter
                 self.verified += 1
@@ -138,11 +149,29 @@ class CmdVerifier:
                 self._set(k, "unsigned")
                 p = self.uplink_loss(t)
                 if p * p > self.alpha:  # both signature copies lost is plausible on this link
-                    out.append(self._ev(t, "unsigned_command", Severity.LOW, "dos", command=name,
-                                        sysid=k[0], uplink_loss=round(p, 3)))
+                    out.append(
+                        self._ev(
+                            t,
+                            "unsigned_command",
+                            Severity.LOW,
+                            "dos",
+                            command=name,
+                            sysid=k[0],
+                            uplink_loss=round(p, 3),
+                        )
+                    )
                 else:
-                    out.append(self._ev(t, "unsigned_command", Severity.MEDIUM, "command_injection",
-                                        command=name, sysid=k[0], uplink_loss=round(p, 3)))
+                    out.append(
+                        self._ev(
+                            t,
+                            "unsigned_command",
+                            Severity.MEDIUM,
+                            "command_injection",
+                            command=name,
+                            sysid=k[0],
+                            uplink_loss=round(p, 3),
+                        )
+                    )
         for k in list(self._sigs):  # signatures whose command was lost on the radio
             if k not in self._cmds:
                 del self._sigs[k]

@@ -39,9 +39,18 @@ FC_SYSID, GCS_SYSID, RADIO_SYSID = 1, 255, 51
 
 
 class ProtocolDetector:
-    def __init__(self, uav_id: int = 1, allowed: dict | None = None, dup_window: int = 32,
-                 uplink_max_per_s: int = 50, airborne_m: float = 1.0, seq_dirs=("D", "U"),
-                 verifier=None, check_unsafe: bool = True, max_wait_s: float = 60.0):
+    def __init__(
+        self,
+        uav_id: int = 1,
+        allowed: dict | None = None,
+        dup_window: int = 32,
+        uplink_max_per_s: int = 50,
+        airborne_m: float = 1.0,
+        seq_dirs=("D", "U"),
+        verifier=None,
+        check_unsafe: bool = True,
+        max_wait_s: float = 60.0,
+    ):
         self.uav_id = uav_id
         self.verifier = verifier  # cmd_sign.CmdVerifier: decides whether an unsafe command is the operator's
         self.check_unsafe = check_unsafe
@@ -66,8 +75,17 @@ class ProtocolDetector:
     def observe(self, msg, samples, direction, t):
         name = msg.get_type()
         if name == "BAD_DATA":
-            return [self._ev(t, "malformed", 1.0, Severity.MEDIUM, "mavlink_anomaly",
-                             direction=direction, reason=getattr(msg, "reason", ""))]
+            return [
+                self._ev(
+                    t,
+                    "malformed",
+                    1.0,
+                    Severity.MEDIUM,
+                    "mavlink_anomaly",
+                    direction=direction,
+                    reason=getattr(msg, "reason", ""),
+                )
+            ]
         out = []
         sysid, compid, seq = msg.get_srcSystem(), msg.get_srcComponent(), msg.get_seq()
         if name == "GLOBAL_POSITION_INT" and sysid == FC_SYSID:
@@ -75,14 +93,37 @@ class ProtocolDetector:
             self._t_alt = t
 
         if sysid not in self.allowed.get(direction, ()):
-            out.append(self._ev(t, "unknown_source", 1.0, Severity.HIGH, "mavlink_anomaly",
-                                direction=direction, sysid=sysid, compid=compid, msg=name))
+            out.append(
+                self._ev(
+                    t,
+                    "unknown_source",
+                    1.0,
+                    Severity.HIGH,
+                    "mavlink_anomaly",
+                    direction=direction,
+                    sysid=sysid,
+                    compid=compid,
+                    msg=name,
+                )
+            )
 
         key = (direction, sysid, compid)
         recent = self._recent[key]
         if seq in recent and direction in self.seq_dirs:
-            out.append(self._ev(t, "seq_duplicate", 1.0, Severity.MEDIUM, "mavlink_anomaly",
-                                direction=direction, sysid=sysid, compid=compid, seq=seq, msg=name))
+            out.append(
+                self._ev(
+                    t,
+                    "seq_duplicate",
+                    1.0,
+                    Severity.MEDIUM,
+                    "mavlink_anomaly",
+                    direction=direction,
+                    sysid=sysid,
+                    compid=compid,
+                    seq=seq,
+                    msg=name,
+                )
+            )
         elif key in self._last_seq:
             self.gaps[key] += (seq - self._last_seq[key] - 1) % 256
         recent.append(seq)
@@ -94,17 +135,40 @@ class ProtocolDetector:
                 self._uplink.popleft()
             flooding = len(self._uplink) > self.uplink_max_per_s
             if flooding and not self._flooding:  # one event per flood onset, re-armed when it ends
-                out.append(self._ev(t, "uplink_flood", len(self._uplink) / self.uplink_max_per_s,
-                                    Severity.HIGH, "dos", rate=len(self._uplink)))
+                out.append(
+                    self._ev(
+                        t,
+                        "uplink_flood",
+                        len(self._uplink) / self.uplink_max_per_s,
+                        Severity.HIGH,
+                        "dos",
+                        rate=len(self._uplink),
+                    )
+                )
             self._flooding = flooding
 
-        if (self.check_unsafe and name in ("COMMAND_LONG", "COMMAND_INT") and msg.command in UNSAFE_IN_FLIGHT
-                and self.airborne and t - self._t_alt < 2.0 and not (msg.command == MAV.MAV_CMD_COMPONENT_ARM_DISARM
-                                           and msg.param1 == 1)):
+        if (
+            self.check_unsafe
+            and name in ("COMMAND_LONG", "COMMAND_INT")
+            and msg.command in UNSAFE_IN_FLIGHT
+            and self.airborne
+            and t - self._t_alt < 2.0
+            and not (msg.command == MAV.MAV_CMD_COMPONENT_ARM_DISARM and msg.param1 == 1)
+        ):
             key = (sysid, compid, seq, msg.get_msgId())
             if self.verifier is None:
-                out.append(self._ev(t, "unsafe_command", 1.0, Severity.HIGH, "command_injection",
-                                    direction=direction, command=int(msg.command), sysid=sysid))
+                out.append(
+                    self._ev(
+                        t,
+                        "unsafe_command",
+                        1.0,
+                        Severity.HIGH,
+                        "command_injection",
+                        direction=direction,
+                        command=int(msg.command),
+                        sysid=sysid,
+                    )
+                )
             else:
                 self._unsafe.append((t, key, int(msg.command), sysid))
         return out
@@ -119,12 +183,23 @@ class ProtocolDetector:
             if verdict is None and t - t0 < self.max_wait_s:
                 keep.append(item)
             elif verdict == "verified":
-                out.append(self._ev(t, "operator_unsafe_command", 0.0, Severity.INFO, None,
-                                    command=command, sysid=sysid))
+                out.append(
+                    self._ev(t, "operator_unsafe_command", 0.0, Severity.INFO, None, command=command, sysid=sysid)
+                )
             else:
-                out.append(self._ev(t, "unsafe_command", 1.0, Severity.HIGH, "command_injection",
-                                    command=command, sysid=sysid, signature=verdict or "no verdict",
-                                    uplink_loss=round(self.verifier.uplink_loss(t), 3)))
+                out.append(
+                    self._ev(
+                        t,
+                        "unsafe_command",
+                        1.0,
+                        Severity.HIGH,
+                        "command_injection",
+                        command=command,
+                        sysid=sysid,
+                        signature=verdict or "no verdict",
+                        uplink_loss=round(self.verifier.uplink_loss(t), 3),
+                    )
+                )
         self._unsafe = keep
         return out
 

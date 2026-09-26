@@ -66,13 +66,20 @@ class _Dir:
     tx_free_at: float = 0.0
     last_due: float = 0.0
     heap: list = field(default_factory=list)
-    stats: dict = field(default_factory=lambda: {"in": 0, "sent": 0, "bytes_sent": 0, "overflow": 0,
-                                                 "lost": 0, "attacker_in": 0})
+    stats: dict = field(
+        default_factory=lambda: {"in": 0, "sent": 0, "bytes_sent": 0, "overflow": 0, "lost": 0, "attacker_in": 0}
+    )
 
 
 class LinkSim:
-    def __init__(self, air_port: int, ground_port: int, cfg: LinkConfig = LinkConfig(),
-                 attacker: Optional[Attacker] = None, host: str = "127.0.0.1"):
+    def __init__(
+        self,
+        air_port: int,
+        ground_port: int,
+        cfg: LinkConfig = LinkConfig(),
+        attacker: Optional[Attacker] = None,
+        host: str = "127.0.0.1",
+    ):
         self.cfg = cfg
         self.attacker = attacker or Attacker()
         self.rng = random.Random(cfg.seed)
@@ -167,10 +174,18 @@ class LinkSim:
 
     def _radio_status(self):
         lost = sum(d.stats["lost"] + d.stats["overflow"] for d in self.dirs.values())
-        free = max(0, 100 - int(100 * max(0.0, self.dirs[DOWN].tx_free_at - time.monotonic())
-                                * self.cfg.rate_bps / 10 / self.cfg.buffer_bytes))
-        m = mav2.MAVLink_radio_status_message(self.rssi(), self.rssi(), free, 0, 0,
-                                              min(lost, 65535), 0)
+        free = max(
+            0,
+            100
+            - int(
+                100
+                * max(0.0, self.dirs[DOWN].tx_free_at - time.monotonic())
+                * self.cfg.rate_bps
+                / 10
+                / self.cfg.buffer_bytes
+            ),
+        )
+        m = mav2.MAVLink_radio_status_message(self.rssi(), self.rssi(), free, 0, 0, min(lost, 65535), 0)
         buf = m.pack(self._radio)
         self._radio.seq = (self._radio.seq + 1) % 256  # pack() does not advance seq
         return buf
@@ -206,8 +221,12 @@ class LinkSim:
         self._stop.set()
 
     def stats(self) -> dict:
-        return {"up": dict(self.dirs[UP].stats), "down": dict(self.dirs[DOWN].stats),
-                "distance_m": round(self.distance_m, 1), "radio_status": "synthetic"}
+        return {
+            "up": dict(self.dirs[UP].stats),
+            "down": dict(self.dirs[DOWN].stats),
+            "distance_m": round(self.distance_m, 1),
+            "radio_status": "synthetic",
+        }
 
 
 def main():
@@ -221,8 +240,9 @@ def main():
     ap.add_argument("--loss-d50", type=float, default=None)
     ap.add_argument("--seed", type=int, default=0)
     a = ap.parse_args()
-    cfg = LinkConfig(rate_bps=a.rate, latency_s=a.latency, jitter_s=a.jitter, loss=a.loss,
-                     loss_d50_m=a.loss_d50, seed=a.seed)
+    cfg = LinkConfig(
+        rate_bps=a.rate, latency_s=a.latency, jitter_s=a.jitter, loss=a.loss, loss_d50_m=a.loss_d50, seed=a.seed
+    )
     LinkSim(a.air_port, a.ground_port, cfg).run()
 
 

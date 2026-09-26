@@ -20,11 +20,28 @@ from pymavlink import mavutil
 
 # Messages the detectors depend on (spec §2.1); reported as present/missing explicitly.
 REQUIRED = [
-    "HEARTBEAT", "SYS_STATUS", "ATTITUDE", "GLOBAL_POSITION_INT", "LOCAL_POSITION_NED",
-    "GPS_RAW_INT", "RAW_IMU", "SCALED_IMU", "SCALED_IMU2", "HIGHRES_IMU",
-    "SCALED_PRESSURE", "VFR_HUD", "EKF_STATUS_REPORT", "ESTIMATOR_STATUS",
-    "POSITION_TARGET_GLOBAL_INT", "POSITION_TARGET_LOCAL_NED", "NAV_CONTROLLER_OUTPUT",
-    "SERVO_OUTPUT_RAW", "RADIO_STATUS", "AUTOPILOT_VERSION", "COMMAND_ACK", "STATUSTEXT",
+    "HEARTBEAT",
+    "SYS_STATUS",
+    "ATTITUDE",
+    "GLOBAL_POSITION_INT",
+    "LOCAL_POSITION_NED",
+    "GPS_RAW_INT",
+    "RAW_IMU",
+    "SCALED_IMU",
+    "SCALED_IMU2",
+    "HIGHRES_IMU",
+    "SCALED_PRESSURE",
+    "VFR_HUD",
+    "EKF_STATUS_REPORT",
+    "ESTIMATOR_STATUS",
+    "POSITION_TARGET_GLOBAL_INT",
+    "POSITION_TARGET_LOCAL_NED",
+    "NAV_CONTROLLER_OUTPUT",
+    "SERVO_OUTPUT_RAW",
+    "RADIO_STATUS",
+    "AUTOPILOT_VERSION",
+    "COMMAND_ACK",
+    "STATUSTEXT",
 ]
 
 
@@ -42,9 +59,17 @@ def main() -> None:
         m.target_system, m.target_component, mavutil.mavlink.MAV_DATA_STREAM_ALL, args.rate, 1
     )
     m.mav.command_long_send(
-        m.target_system, m.target_component,
-        mavutil.mavlink.MAV_CMD_REQUEST_MESSAGE, 0,
-        mavutil.mavlink.MAVLINK_MSG_ID_AUTOPILOT_VERSION, 0, 0, 0, 0, 0, 0,
+        m.target_system,
+        m.target_component,
+        mavutil.mavlink.MAV_CMD_REQUEST_MESSAGE,
+        0,
+        mavutil.mavlink.MAVLINK_MSG_ID_AUTOPILOT_VERSION,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
     )
 
     counts: dict[str, int] = defaultdict(int)

@@ -22,8 +22,20 @@ def ports(instance: int) -> dict:
 def start(instance: int, workdir: Path, home: str = HOME, extra_parm: list[Path] = ()) -> subprocess.Popen:
     workdir.mkdir(parents=True, exist_ok=True)
     defaults = ",".join(str(p) for p in (COPTER_PARM, NOISE_PARM, *extra_parm))
-    cmd = [str(BINARY), "--model", "+", "--speedup", "1", "-w", "-I", str(instance),
-           "--home", home, "--defaults", defaults]
+    cmd = [
+        str(BINARY),
+        "--model",
+        "+",
+        "--speedup",
+        "1",
+        "-w",
+        "-I",
+        str(instance),
+        "--home",
+        home,
+        "--defaults",
+        defaults,
+    ]
     log = open(workdir / "sitl.log", "w")
     return subprocess.Popen(cmd, cwd=workdir, stdout=log, stderr=subprocess.STDOUT)
 

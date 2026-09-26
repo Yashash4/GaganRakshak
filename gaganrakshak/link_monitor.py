@@ -44,8 +44,15 @@ class BandCurve:
         return self.upper[min(int(distance_m // self.bin_m), len(self.upper) - 1)]
 
     @classmethod
-    def fit(cls, samples: list[tuple[float, float]], k: float, bin_m: float = 50.0, floor: float = 0.05,
-            cap: float = 1.0, min_per_bin: int = 5) -> "BandCurve":
+    def fit(
+        cls,
+        samples: list[tuple[float, float]],
+        k: float,
+        bin_m: float = 50.0,
+        floor: float = 0.05,
+        cap: float = 1.0,
+        min_per_bin: int = 5,
+    ) -> "BandCurve":
         """samples = (distance, value). ``floor`` is the smallest band (loss: a single lost burst
         in a 10-window span is several percent; heartbeat silence: 3 s = three missed 1 Hz beats)."""
         n_bins = int(max(d for d, _ in samples) // bin_m) + 1
@@ -85,9 +92,20 @@ def load_curves(path: Path) -> dict:
 
 
 class LinkMonitor:
-    def __init__(self, commit_rx, uav_id: int = 1, curves: dict | None = None, window: int = 10,
-                 min_frames: int = 100, gap_s: float = 3.0, txbuf_min: int = 20, congestion_s: float = 3.0,
-                 vmax: float = 30.0, distrust_s: float = 60.0, budget_per_hour: float = 1.0):
+    def __init__(
+        self,
+        commit_rx,
+        uav_id: int = 1,
+        curves: dict | None = None,
+        window: int = 10,
+        min_frames: int = 100,
+        gap_s: float = 3.0,
+        txbuf_min: int = 20,
+        congestion_s: float = 3.0,
+        vmax: float = 30.0,
+        distrust_s: float = 60.0,
+        budget_per_hour: float = 1.0,
+    ):
         self.rx = commit_rx
         self.uav_id = uav_id
         curves = curves or {}  # none: record samples only (calibration); no loss/gap evidence
@@ -111,8 +129,9 @@ class LinkMonitor:
         implausibly fast, or the commitments recently showed telemetry manipulation. A spoofed
         far position must not widen the expected-loss band, so doubt means the nearest band."""
         m = getattr(self.rx, "t_last_manipulation", None)
-        doubt = ((self._t_implausible is not None and t - self._t_implausible < self.distrust_s)
-                 or (m is not None and t - m < self.distrust_s))
+        doubt = (self._t_implausible is not None and t - self._t_implausible < self.distrust_s) or (
+            m is not None and t - m < self.distrust_s
+        )
         return (0.0, False) if doubt else (self.distance_m, True)
 
     def silence_limit(self, distance_m: float, floor_s: float = 3.0) -> float:
@@ -169,9 +188,12 @@ class LinkMonitor:
                 self.samples.append((t, self.distance_m, observed))
                 if self.curve:
                     d, _ = self.trusted_distance(t)
-                    return self._onset("loss", observed > self.curve.upper_at(d), t,
-                                       lambda: self._ev(t, "excess_loss", observed_loss=round(observed, 3),
-                                                        windows_lost=lost))
+                    return self._onset(
+                        "loss",
+                        observed > self.curve.upper_at(d),
+                        t,
+                        lambda: self._ev(t, "excess_loss", observed_loss=round(observed, 3), windows_lost=lost),
+                    )
         return []
 
     def tick(self, t):
@@ -181,16 +203,28 @@ class LinkMonitor:
             if limit is not None:
                 far = self.trusted_distance(t)[0] > limit
                 if far and not self._in.get("far"):
-                    out.append(EvidenceEvent(t, self.uav_id, "link_monitor", "outside_calibrated_range", 0.0,
-                                             Severity.INFO, None, {"distance_m": round(self.distance_m, 1),
-                                                                   "calibrated_max_m": limit}))
+                    out.append(
+                        EvidenceEvent(
+                            t,
+                            self.uav_id,
+                            "link_monitor",
+                            "outside_calibrated_range",
+                            0.0,
+                            Severity.INFO,
+                            None,
+                            {"distance_m": round(self.distance_m, 1), "calibrated_max_m": limit},
+                        )
+                    )
                 self._in["far"] = far
         if self._t_hb is not None and self.curve is not None:
             silent = t - self._t_hb
             limit = self.silence_limit(self.trusted_distance(t)[0])
-            out += self._onset("gap", silent > limit, t,
-                               lambda: self._ev(t, "telemetry_gap", silent_s=round(silent, 1),
-                                                expected_silence_upper=round(limit, 1)))
+            out += self._onset(
+                "gap",
+                silent > limit,
+                t,
+                lambda: self._ev(t, "telemetry_gap", silent_s=round(silent, 1), expected_silence_upper=round(limit, 1)),
+            )
         congested = self._t_congested is not None and t - self._t_congested >= self.congestion_s
         out += self._onset("congestion", congested, t, lambda: self._ev(t, "radio_congestion"))
         return out
@@ -198,11 +232,13 @@ class LinkMonitor:
 
 # -- calibration ----------------------------------------------------------------------------
 
+
 def run_samples(run: Path) -> tuple[list, list, list]:
     """(windowed loss, heartbeat silence) vs distance seen by the ground agent in one run, and
     the commitment-vs-frame loss history used to learn the commitment loss model."""
     from .commit import CommitRx
     from .ids import Ids, run_replay
+
     rx = CommitRx(bytes.fromhex((run / "onboard_commit.pub").read_text()))
     lm = LinkMonitor(rx)
     run_replay(Ids([rx, lm]), run / "ground")
@@ -225,8 +261,12 @@ def _fit_to_budget(per_run, hours, budget_per_hour, **fit_kw) -> BandCurve:
         n = sum(onsets(s, curve) for s in per_run)
         if n / hours <= budget_per_hour:
             break
-    curve.meta = {"k": k, "false_onsets": n, "samples": len(samples),
-                  "max_distance_m": round(max(d for d, _ in samples), 1)}
+    curve.meta = {
+        "k": k,
+        "false_onsets": n,
+        "samples": len(samples),
+        "max_distance_m": round(max(d for d, _ in samples), 1),
+    }
     return curve
 
 
@@ -234,8 +274,12 @@ def fit_commit_loss(pairs: list, hours: float, budget_per_hour: float, min_lost:
     """Commitments are longer than telemetry frames and lost more often. Learn gamma in
     p_commit = 1 - (1 - p_frame)^gamma (least squares in log space), then the smallest z for
     the selective-loss test that meets the false-alarm budget on these clean flights."""
-    xy = [(math.log(1 - f), math.log(1 - c)) for run in pairs for f, c, n, _ in run
-          if n >= 20 and 0.02 < f < 0.98 and c < 0.98]
+    xy = [
+        (math.log(1 - f), math.log(1 - c))
+        for run in pairs
+        for f, c, n, _ in run
+        if n >= 20 and 0.02 < f < 0.98 and c < 0.98
+    ]
     gamma = sum(x * y for x, y in xy) / sum(x * x for x, _ in xy) if len(xy) >= 20 else 1.0
     for z in [x / 4 for x in range(4, 81)]:
         n_on = 0
@@ -249,14 +293,18 @@ def fit_commit_loss(pairs: list, hours: float, budget_per_hour: float, min_lost:
                 above = now
         if n_on / hours <= budget_per_hour:
             break
-    return {"commit_loss_exponent": round(gamma, 3), "selective_z": z,
-            "meta": {"points": len(xy), "false_onsets": n_on}}
+    return {
+        "commit_loss_exponent": round(gamma, 3),
+        "selective_z": z,
+        "meta": {"points": len(xy), "false_onsets": n_on},
+    }
 
 
 def calibrate(runs: list[Path], budget_per_hour: float, bin_m: float = 50.0) -> dict:
     """Per statistic, the smallest k (or z) meeting the false-alarm budget on the clean
     calibration flights; runs that are not clean are rejected first."""
     from .calibration import select
+
     runs = select(runs)
     per_run = [run_samples(r) for r in runs]
     hours = sum(s[-1][0] - s[0][0] for s, _, _ in per_run if s) / 3600
@@ -265,10 +313,10 @@ def calibrate(runs: list[Path], budget_per_hour: float, bin_m: float = 50.0) -> 
     # the calibration flights' longest silences compare
     lm = LinkMonitor(None, curves=curves)
     curves["loss"].meta["silence_exceedances"] = sum(
-        1 for _, g, _ in per_run for _, d, x in g if x > lm.silence_limit(d))
+        1 for _, g, _ in per_run for _, d, x in g if x > lm.silence_limit(d)
+    )
     for c in curves.values():
-        c.meta.update(calibration_hours=round(hours, 3), budget_per_hour=budget_per_hour,
-                      runs=[r.name for r in runs])
+        c.meta.update(calibration_hours=round(hours, 3), budget_per_hour=budget_per_hour, runs=[r.name for r in runs])
     commit = fit_commit_loss([p for _, _, p in per_run], hours, budget_per_hour)
     commit["meta"].update(calibration_hours=round(hours, 3), budget_per_hour=budget_per_hour)
     return {**curves, "commit": commit}
@@ -287,8 +335,14 @@ def main():
         if isinstance(c, dict):
             print(name, json.dumps(c))
             continue
-        print(name, json.dumps({k: v for k, v in c.meta.items() if k != "runs"}),
-              "\n  upper by", c.bin_m, "m bin:", [round(u, 2) for u in c.upper])
+        print(
+            name,
+            json.dumps({k: v for k, v in c.meta.items() if k != "runs"}),
+            "\n  upper by",
+            c.bin_m,
+            "m bin:",
+            [round(u, 2) for u in c.upper],
+        )
 
 
 if __name__ == "__main__":

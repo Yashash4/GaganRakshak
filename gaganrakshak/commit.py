@@ -35,9 +35,22 @@ from .evidence import EvidenceEvent, Severity
 
 # Downlink messages an attacker would alter to mislead the operator (all msgid < 256).
 # Derived duplicates (LOCAL_POSITION_NED, MISSION_CURRENT) are left out to save radio bandwidth.
-RELEVANT = {"HEARTBEAT", "SYS_STATUS", "GPS_RAW_INT", "GLOBAL_POSITION_INT", "ATTITUDE", "VFR_HUD",
-            "STATUSTEXT", "COMMAND_ACK", "PARAM_VALUE", "EKF_STATUS_REPORT", "HOME_POSITION",
-            "BATTERY_STATUS", "MISSION_ITEM_INT", "MISSION_COUNT"}
+RELEVANT = {
+    "HEARTBEAT",
+    "SYS_STATUS",
+    "GPS_RAW_INT",
+    "GLOBAL_POSITION_INT",
+    "ATTITUDE",
+    "VFR_HUD",
+    "STATUSTEXT",
+    "COMMAND_ACK",
+    "PARAM_VALUE",
+    "EKF_STATUS_REPORT",
+    "HOME_POSITION",
+    "BATTERY_STATUS",
+    "MISSION_ITEM_INT",
+    "MISSION_COUNT",
+}
 ENTRY = 6
 PER_CHUNK = 30  # 4+3+64+180 = 251-byte payload, one signature for a typical window
 CLASS = "telemetry_manipulation"
@@ -77,7 +90,7 @@ class CommitTx:
             entries, self._entries = self._entries, []
             wid = self.window_id
             self.window_id += 1
-        chunks = [entries[i:i + PER_CHUNK] for i in range(0, len(entries), PER_CHUNK)] or [[]]
+        chunks = [entries[i : i + PER_CHUNK] for i in range(0, len(entries), PER_CHUNK)] or [[]]
         out = []
         for i, c in enumerate(chunks):
             body = b"".join(c)
@@ -89,9 +102,16 @@ class CommitTx:
 
 
 class CommitRx:
-    def __init__(self, public_key: bytes, uav_id: int = 1, timeout_s: float = 5.0,
-                 loss_history: int = 60, selective_z: float = 4.0, selective_min: int = 5,
-                 commit_loss_exponent: float = 1.0):
+    def __init__(
+        self,
+        public_key: bytes,
+        uav_id: int = 1,
+        timeout_s: float = 5.0,
+        loss_history: int = 60,
+        selective_z: float = 4.0,
+        selective_min: int = 5,
+        commit_loss_exponent: float = 1.0,
+    ):
         self.pub = public_key
         self.uav_id = uav_id
         self.timeout_s = timeout_s
@@ -113,8 +133,15 @@ class CommitRx:
         self._t_congested = None  # last RADIO_STATUS with a nearly full radio buffer
         self.t_last_manipulation = None
         self.congestion_hold_s = 10.0
-        self.stats = {"match": 0, "altered": 0, "unexpected": 0, "unverified": 0, "missing": 0,
-                      "windows": 0, "windows_lost": 0}
+        self.stats = {
+            "match": 0,
+            "altered": 0,
+            "unexpected": 0,
+            "unverified": 0,
+            "missing": 0,
+            "windows": 0,
+            "windows_lost": 0,
+        }
 
     def _ev(self, t, kind, sev, **meta):
         self.t_last_manipulation = t  # other ground detectors stop trusting telemetry content
@@ -124,8 +151,16 @@ class CommitRx:
         """Commitment loss while the radio is congested is explained by the congestion: a full
         buffer drops large frames (commitments) first. Then it corroborates DoS instead."""
         congested = self._t_congested is not None and t - self._t_congested < self.congestion_hold_s
-        return EvidenceEvent(t, self.uav_id, "commit_rx", kind, 1.0, Severity.MEDIUM,
-                             "dos" if congested else CLASS, {**meta, "congested": congested})
+        return EvidenceEvent(
+            t,
+            self.uav_id,
+            "commit_rx",
+            kind,
+            1.0,
+            Severity.MEDIUM,
+            "dos" if congested else CLASS,
+            {**meta, "congested": congested},
+        )
 
     def observe(self, msg, samples, direction, t):
         if direction != "D":
@@ -136,22 +171,24 @@ class CommitRx:
         if name == "RADIO_STATUS" and msg.txbuf < 50:
             self._t_congested = t
         if name in RELEVANT:
-            self._pending.append([t, msg.get_seq(), msg.get_msgId(), tag(bytes(msg.get_msgbuf())), name,
-                                  self.last_window])
+            self._pending.append(
+                [t, msg.get_seq(), msg.get_msgId(), tag(bytes(msg.get_msgbuf())), name, self.last_window]
+            )
             self._recent_frames.append(t)
         return []
 
     def _commit(self, m, t):
-        entries = bytes(m.entries)[:m.count * ENTRY]
-        if not crypto.verify(_signed_bytes(m.window_id, m.chunk, m.n_chunks, m.count, entries),
-                             bytes(m.signature), self.pub):
+        entries = bytes(m.entries)[: m.count * ENTRY]
+        if not crypto.verify(
+            _signed_bytes(m.window_id, m.chunk, m.n_chunks, m.count, entries), bytes(m.signature), self.pub
+        ):
             return [self._ev(t, "commit_bad_signature", Severity.HIGH, window=m.window_id)]
         self._t_last_commit, self._timed_out = t, False
         w = m.window_id
         # (seq, msgid) -> tags. Not unique: at FC rates the 8-bit seq wraps several times per window.
         listed = {}
         for i in range(0, len(entries), ENTRY):
-            listed.setdefault((entries[i], entries[i + 1]), []).append(entries[i + 2:i + 6])
+            listed.setdefault((entries[i], entries[i + 1]), []).append(entries[i + 2 : i + 6])
         self._chunks.setdefault(w, {"n": m.n_chunks, "got": {}})["got"][m.chunk] = listed
         out = []
         if self.last_window is None or w > self.last_window:
@@ -224,8 +261,7 @@ class CommitRx:
     def recent_loss(self, windows: int = 10) -> tuple[int, int, int]:
         """(frames listed, listed frames missing, windows lost) over the last ``windows`` windows."""
         h = list(self._history)[-windows:]
-        return (sum(n or 0 for _, n, _ in h), sum(m or 0 for _, _, m in h),
-                sum(1 for lost, _, _ in h if lost))
+        return (sum(n or 0 for _, n, _ in h), sum(m or 0 for _, _, m in h), sum(1 for lost, _, _ in h if lost))
 
     def _selective_check(self, t):
         """Commitments lost more often than frames, beyond sampling noise: one-sided binomial
@@ -248,9 +284,16 @@ class CommitRx:
         selective = lost_w >= self.selective_min and z > self.selective_z
         out = []
         if selective and not self._selective:
-            out.append(self._loss_ev(t, "selective_commit_loss", commit_loss=round(p_commit, 3),
-                                     expected_commit_loss=round(p_exp, 3), frame_loss=round(p_frame, 3),
-                                     z=round(z, 1)))
+            out.append(
+                self._loss_ev(
+                    t,
+                    "selective_commit_loss",
+                    commit_loss=round(p_commit, 3),
+                    expected_commit_loss=round(p_exp, 3),
+                    frame_loss=round(p_frame, 3),
+                    z=round(z, 1),
+                )
+            )
         self._selective = selective
         return out
 
@@ -274,8 +317,7 @@ class CommitRx:
         while self._recent_frames and t - self._recent_frames[0] > timeout:
             self._recent_frames.popleft()
         flowing = len(self._recent_frames) >= min_rate_hz * timeout
-        if (self._t_last_commit is not None and not self._timed_out and flowing
-                and t - self._t_last_commit > timeout):
+        if self._t_last_commit is not None and not self._timed_out and flowing and t - self._t_last_commit > timeout:
             self._timed_out = True
             return [self._loss_ev(t, "commit_timeout", silent_s=round(t - self._t_last_commit, 1))]
         return []

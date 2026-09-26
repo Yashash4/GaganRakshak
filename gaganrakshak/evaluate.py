@@ -40,22 +40,41 @@ def detectors(side: str, run: Path, link_curves: Path = LINK_CURVES) -> list:
 def evaluate(run: Path, link_curves: Path = LINK_CURVES) -> dict:
     labels = json.loads((run / "labels.json").read_text())
     t0 = labels["t0_wall"]
-    out = {"run_id": labels["run_id"], "status": labels["status"], "attack": labels["attack"],
-           "attack_events": [e for e in labels["events"] if e["event"].startswith("attack")],
-           "evidence": [], "episodes": [], "adapter_unknown": {}}
+    out = {
+        "run_id": labels["run_id"],
+        "status": labels["status"],
+        "attack": labels["attack"],
+        "attack_events": [e for e in labels["events"] if e["event"].startswith("attack")],
+        "evidence": [],
+        "episodes": [],
+        "adapter_unknown": {},
+    }
     for side in ("onboard", "ground"):
         ids = Ids(detectors(side, run, link_curves))
         run_replay(ids, run / side)
         out["adapter_unknown"][side] = dict(ids.adapter.stats["unknown"])
         for a in ids.alerts:
             for e in a.evidence:
-                out["evidence"].append({"agent": side, "t": round(e.t - t0, 2), "source": e.source,
-                                        "type": e.evidence_type, "class": e.class_hint,
-                                        "severity": int(e.severity)})
+                out["evidence"].append(
+                    {
+                        "agent": side,
+                        "t": round(e.t - t0, 2),
+                        "source": e.source,
+                        "type": e.evidence_type,
+                        "class": e.class_hint,
+                        "severity": int(e.severity),
+                    }
+                )
         for ep in ids.tracker.episodes:
-            out["episodes"].append({"agent": side, "class": ep.attack_class, "t_start": round(ep.t_start - t0, 2),
-                                    "t_end": None if ep.t_end is None else round(ep.t_end - t0, 2),
-                                    "alerts": len(ep.alerts)})
+            out["episodes"].append(
+                {
+                    "agent": side,
+                    "class": ep.attack_class,
+                    "t_start": round(ep.t_start - t0, 2),
+                    "t_end": None if ep.t_end is None else round(ep.t_end - t0, 2),
+                    "alerts": len(ep.alerts),
+                }
+            )
     return out
 
 
@@ -67,10 +86,14 @@ def main():
     for run in a.runs:
         r = evaluate(run)
         att = r["attack"]
-        print(f"{r['run_id']}: {r['status']}; attack {att['type'] if att else None} "
-              f"[{att['start_s'] if att else ''}, {att['end_s'] if att else ''}]")
+        print(
+            f"{r['run_id']}: {r['status']}; attack {att['type'] if att else None} "
+            f"[{att['start_s'] if att else ''}, {att['end_s'] if att else ''}]"
+        )
         for ep in r["episodes"]:
-            print(f"   episode {ep['agent']:7s} {ep['class']:24s} {ep['t_start']:>7} .. {ep['t_end']}  ({ep['alerts']} alerts)")
+            print(
+                f"   episode {ep['agent']:7s} {ep['class']:24s} {ep['t_start']:>7} .. {ep['t_end']}  ({ep['alerts']} alerts)"
+            )
         if a.events:
             for e in r["evidence"]:
                 print("     ", e)

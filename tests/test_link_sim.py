@@ -59,6 +59,7 @@ def test_throughput_never_exceeds_cap(cleanup):
     cfg = LinkConfig(latency_s=0.0, jitter_s=0.0)
     sim, air, gnd = rig(cfg)
     cleanup.append((sim, air, gnd))
+
     def offer():  # ~2x capacity for 2 s: 11.5 kB/s vs 5.76 kB/s
         f, t0 = frame(), time.monotonic()
         while time.monotonic() - t0 < 2.0:
@@ -79,6 +80,7 @@ def test_loss_rate_reproduced(cleanup):
     # fast link: this test measures loss only, not the rate cap
     sim, air, gnd = rig(LinkConfig(rate_bps=1e8, loss=0.2, latency_s=0.0, jitter_s=0.0, seed=7))
     cleanup.append((sim, air, gnd))
+
     def offer():
         for i in range(2000):
             air.sendto(frame(i), ("127.0.0.1", AIR))
@@ -117,7 +119,7 @@ def test_distance_loss_and_rssi():
         assert sim.loss_prob() < 0.001 and sim.rssi() == 200
         sim.distance_m = 500
         assert sim.loss_prob() == pytest.approx(0.5)
-        assert sim.loss_prob(200) == pytest.approx(1 - 0.5 ** 5)  # 5x longer frame, same bit errors
+        assert sim.loss_prob(200) == pytest.approx(1 - 0.5**5)  # 5x longer frame, same bit errors
         sim.distance_m = 1000
         assert sim.loss_prob() > 0.99 and sim.rssi() == 120
     finally:

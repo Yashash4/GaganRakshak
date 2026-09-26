@@ -77,8 +77,9 @@ def test_gcs_rate_request_is_answered_locally_and_shapes_downlink(rig):
     drain(gcs, 0.1)
     gcs.mav.request_data_stream_send(1, 1, MAV.MAV_DATA_STREAM_EXTRA1, 10, 1)
     time.sleep(0.1)
-    assert not any(m.get_type() == "REQUEST_DATA_STREAM" and m.get_srcSystem() == 255
-                   for m in drain(fc, 0.2))  # the router's own request (sysid 1) is expected
+    assert not any(
+        m.get_type() == "REQUEST_DATA_STREAM" and m.get_srcSystem() == 255 for m in drain(fc, 0.2)
+    )  # the router's own request (sysid 1) is expected
     ids_frames(ids, 0.1)
     t0 = time.monotonic()
     while time.monotonic() - t0 < 1.0:  # FC streams ATTITUDE at 50 Hz for 1 s
@@ -92,8 +93,9 @@ def test_gcs_rate_request_is_answered_locally_and_shapes_downlink(rig):
 
 def test_set_message_interval_is_acked_by_router(rig):
     fc, gcs, _, r = rig
-    gcs.mav.command_long_send(1, 1, MAV.MAV_CMD_SET_MESSAGE_INTERVAL, 0,
-                              MAV.MAVLINK_MSG_ID_RAW_IMU, 200000, 0, 0, 0, 0, 0)
+    gcs.mav.command_long_send(
+        1, 1, MAV.MAV_CMD_SET_MESSAGE_INTERVAL, 0, MAV.MAVLINK_MSG_ID_RAW_IMU, 200000, 0, 0, 0, 0, 0
+    )
     acks = [m for m in drain(gcs) if m.get_type() == "COMMAND_ACK"]
     assert acks and acks[0].result == MAV.MAV_RESULT_ACCEPTED
     assert r.radio_hz["RAW_IMU"] == pytest.approx(5.0)
