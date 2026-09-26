@@ -111,11 +111,13 @@ class CommitRx:
         self._selective = self._timed_out = False
         self.last_z = 0.0
         self._t_congested = None  # last RADIO_STATUS with a nearly full radio buffer
+        self.t_last_manipulation = None
         self.congestion_hold_s = 10.0
         self.stats = {"match": 0, "altered": 0, "unexpected": 0, "unverified": 0, "missing": 0,
                       "windows": 0, "windows_lost": 0}
 
     def _ev(self, t, kind, sev, **meta):
+        self.t_last_manipulation = t  # other ground detectors stop trusting telemetry content
         return EvidenceEvent(t, self.uav_id, "commit_rx", kind, 1.0, sev, CLASS, meta)
 
     def _loss_ev(self, t, kind, **meta):

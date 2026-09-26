@@ -14,6 +14,8 @@ Evidence (class ``dos``):
                         (outage, jamming burst)
 - ``radio_congestion``  air-side radio buffer below ``txbuf_min`` % for ``congestion_s`` (flood)
 Metadata carries distance, expected and observed loss so fusion can weigh benign fades.
+Distance comes from telemetry and is only trusted while that telemetry is credible
+(``trusted_distance``); otherwise the nearest (strictest) band applies.
 
     python -m gaganrakshak.link_monitor results/raw/calib/* --out results/calibration/link_curves.json
 """
@@ -82,7 +84,8 @@ def load_curves(path: Path) -> dict:
 
 class LinkMonitor:
     def __init__(self, commit_rx, uav_id: int = 1, curves: dict | None = None, window: int = 10,
-                 min_frames: int = 100, gap_s: float = 3.0, txbuf_min: int = 20, congestion_s: float = 3.0):
+                 min_frames: int = 100, gap_s: float = 3.0, txbuf_min: int = 20, congestion_s: float = 3.0,
+                 vmax: float = 30.0, distrust_s: float = 60.0):
         self.rx = commit_rx
         self.uav_id = uav_id
         curves = curves or {}  # none: record samples only (calibration); no loss/gap evidence
@@ -90,17 +93,30 @@ class LinkMonitor:
         self.window, self.min_frames = window, min_frames
         self.gap_s, self.txbuf_min, self.congestion_s = gap_s, txbuf_min, congestion_s
         self.home = None
-        self.distance_m = 0.0
+        self.distance_m = 0.0  # reported distance (telemetry)
+        self.vmax, self.distrust_s = vmax, distrust_s
+        self._last_pos = None
+        self._t_implausible = None
         self.samples: list[tuple[float, float, float]] = []  # (t, distance, windowed loss)
         self.gap_samples: list[tuple[float, float, float]] = []  # (t, distance, heartbeat silence)
         self._t_hb = None
         self._in = {"loss": False, "gap": False, "congestion": False}
         self._t_congested = None
 
+    def trusted_distance(self, t) -> tuple[float, bool]:
+        """Reported distance, unless the telemetry that carries it is in doubt: it moved
+        implausibly fast, or the commitments recently showed telemetry manipulation. A spoofed
+        far position must not widen the expected-loss band, so doubt means the nearest band."""
+        m = getattr(self.rx, "t_last_manipulation", None)
+        doubt = ((self._t_implausible is not None and t - self._t_implausible < self.distrust_s)
+                 or (m is not None and t - m < self.distrust_s))
+        return (0.0, False) if doubt else (self.distance_m, True)
+
     def _ev(self, t, kind, **meta):
-        meta["distance_m"] = round(self.distance_m, 1)
+        d, trusted = self.trusted_distance(t)
+        meta.update(distance_m=round(self.distance_m, 1), distance_trusted=trusted)
         if self.curve:
-            meta["expected_loss_upper"] = round(self.curve.upper_at(self.distance_m), 3)
+            meta["expected_loss_upper"] = round(self.curve.upper_at(d), 3)
         return EvidenceEvent(t, self.uav_id, "link_monitor", kind, 1.0, Severity.MEDIUM, "dos", meta)
 
     def _onset(self, key, active, t, make):
@@ -123,6 +139,11 @@ class LinkMonitor:
                 self.home = (lat, lon)
             dn = math.radians(lat - self.home[0]) * 6371000
             de = math.radians(lon - self.home[1]) * 6371000 * math.cos(math.radians(lat))
+            if self._last_pos is not None and t > self._last_pos[0]:
+                speed = math.hypot(dn - self._last_pos[1], de - self._last_pos[2]) / (t - self._last_pos[0])
+                if speed > self.vmax:
+                    self._t_implausible = t
+            self._last_pos = (t, dn, de)
             self.distance_m = math.hypot(dn, de)
         elif name == "RADIO_STATUS":
             if msg.txbuf < self.txbuf_min:
@@ -135,7 +156,8 @@ class LinkMonitor:
                 observed = missing / listed
                 self.samples.append((t, self.distance_m, observed))
                 if self.curve:
-                    return self._onset("loss", observed > self.curve.upper_at(self.distance_m), t,
+                    d, _ = self.trusted_distance(t)
+                    return self._onset("loss", observed > self.curve.upper_at(d), t,
                                        lambda: self._ev(t, "excess_loss", observed_loss=round(observed, 3),
                                                         windows_lost=lost))
         return []
@@ -144,7 +166,7 @@ class LinkMonitor:
         out = []
         if self._t_hb is not None and self.gap_curve is not None:
             silent = t - self._t_hb
-            limit = self.gap_curve.upper_at(self.distance_m)
+            limit = self.gap_curve.upper_at(self.trusted_distance(t)[0])
             out += self._onset("gap", silent > limit, t,
                                lambda: self._ev(t, "telemetry_gap", silent_s=round(silent, 1),
                                                 expected_silence_upper=round(limit, 1)))

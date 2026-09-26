@@ -112,3 +112,34 @@ def test_monitor_has_no_radio_model():
 def test_heartbeat_gap_normal_at_range_is_quiet():
     stream = [x for x in downlink() if not 20 <= x[0] < 26]  # 6 s silence far out: a fade
     assert "telemetry_gap" not in run(stream, distance_m=320)[0]
+
+
+def gpi(fc, n_m, t_ms=0):
+    return mav.MAVLink_global_position_int_message(t_ms, int((-35.36 + n_m / 111320) * 1e7), 1491652300,
+                                                   584000, 20000, 0, 0, 0, 0).pack(fc)
+
+
+def test_falsified_far_position_does_not_excuse_loss():
+    """Telemetry manipulation seen by the commitments: the reported distance is not trusted,
+    so heavy loss is judged against the nearest band (A4 'far away' + jamming)."""
+    stream = lossy(downlink(), 0.5, window=(15, 30))
+    rx = CommitRx(PUB)
+    lm = LinkMonitor(rx, curves=CURVES)
+    lm.distance_m = 320  # what the falsified telemetry claims
+    rx.t_last_manipulation = 5.0
+    ev = []
+    for t, buf, _ in stream:
+        msg = parse(buf)
+        rx.observe(msg, [], "D", t)
+        ev += lm.observe(msg, [], "D", t)
+    assert [e.evidence_type for e in ev] == ["excess_loss"] and ev[0].metadata["distance_trusted"] is False
+
+
+def test_implausible_position_jump_is_not_trusted():
+    fc = mav.MAVLink(None, srcSystem=1, srcComponent=1)
+    lm = LinkMonitor(CommitRx(PUB), curves=CURVES)
+    lm.observe(parse(gpi(fc, 0)), [], "D", 0.0)
+    lm.observe(parse(gpi(fc, 5)), [], "D", 1.0)
+    assert lm.trusted_distance(1.0)[1]
+    lm.observe(parse(gpi(fc, 400)), [], "D", 2.0)  # 395 m in 1 s
+    assert lm.trusted_distance(2.0) == (0.0, False)

@@ -152,6 +152,7 @@ class Run:
         self.t0 = None  # monotonic time of the takeoff command = scenario t = 0
         self.gnss_attack_offset = lambda t: (0.0, 0.0)  # metres N/E, set by GNSS attacks
         self.link = None
+        self._home = None
         self._stop = threading.Event()
 
     def t(self) -> float:
@@ -170,8 +171,13 @@ class Run:
         gm = [rng.gauss(0, sig), rng.gauss(0, sig)]
         next_t = time.monotonic()
         while not self._stop.is_set():
-            while h.recv_msg() is not None:  # keep the TCP buffer drained
-                pass
+            while (m := h.recv_msg()) is not None:  # keep the TCP buffer drained
+                if m.get_type() == "SIMSTATE" and self.link is not None:
+                    if self._home is None:
+                        self._home = (m.lat, m.lng)
+                    dn = (m.lat - self._home[0]) / 1e7 * M_PER_DEG
+                    de = (m.lng - self._home[1]) / 1e7 * M_PER_DEG * math.cos(math.radians(HOME_LAT))
+                    self.link.set_true_distance(math.hypot(dn, de))
             if time.monotonic() < next_t:
                 time.sleep(0.01)
                 continue
@@ -299,6 +305,8 @@ class Run:
             # Address the FC itself: a broadcast (target 0) would be routed by ArduPilot onto the
             # vehicle link too.
             self.harness.target_system, self.harness.target_component = 1, 1
+            # simulator truth (SIMSTATE, EXTRA1) on the harness link only: drives the radio model
+            self.harness.mav.request_data_stream_send(1, 1, mavutil.mavlink.MAV_DATA_STREAM_EXTRA1, 4, 1)
             for k, v in {**plan["sim_params"],
                          **{f"SIM_WIND_{k.upper()}": v for k, v in plan["wind"].items()}}.items():
                 self.harness.param_set_send(k, v)

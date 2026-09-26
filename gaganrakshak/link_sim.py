@@ -124,8 +124,14 @@ class LinkSim:
         d.last_due = max(due, d.tx_free_at, d.last_due)  # a serial radio never reorders
         heapq.heappush(d.heap, (d.last_due, d.stats["in"], buf))
 
+    def set_true_distance(self, d: float):
+        """Harness: the radio fades with the TRUE distance (simulator state), not with whatever
+        position the telemetry claims (which an attack may falsify)."""
+        self.truth = True
+        self.distance_m = d
+
     def _track_distance(self, msg):
-        if msg is None or msg.get_type() != "GLOBAL_POSITION_INT":
+        if getattr(self, "truth", False) or msg is None or msg.get_type() != "GLOBAL_POSITION_INT":
             return
         lat, lon = msg.lat / 1e7, msg.lon / 1e7
         if self.home is None:
