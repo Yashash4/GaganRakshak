@@ -32,6 +32,7 @@ from pymavlink.dialects.v20 import ardupilotmega as mav2
 
 UP, DOWN = "up", "down"  # up = ground -> air (commands), down = air -> ground (telemetry)
 RADIO_SYSID, RADIO_COMPID = 51, 68  # what SiK firmware uses for its RADIO_STATUS
+REF_LEN = 40  # bytes: configured loss rates refer to a frame of this length
 
 
 @dataclass
@@ -94,12 +95,17 @@ class LinkSim:
         self._stop = threading.Event()
 
     # -- channel model ------------------------------------------------------------------
-    def loss_prob(self) -> float:
+    def loss_prob(self, nbytes: int = REF_LEN) -> float:
+        """Frame loss for a frame of ``nbytes``. The configured loss (constant + distance) is the
+        loss of a REF_LEN-byte frame; per-bit errors make longer frames fail more often:
+        p(len) = 1 - (1 - ber)^(8·len)."""
         p = self.cfg.loss
         if self.cfg.loss_d50_m is not None:
             pd = 1 / (1 + math.exp(-(self.distance_m - self.cfg.loss_d50_m) / self.cfg.loss_scale_m))
             p = 1 - (1 - p) * (1 - pd)
-        return p
+        if p <= 0.0 or p >= 1.0:
+            return p
+        return 1 - (1 - p) ** (nbytes / REF_LEN)  # same bit error rate, different length
 
     def rssi(self) -> int:
         """SiK-style 0..254 scale: 200 at <= 10 m, falling 40 units per decade of distance."""
@@ -111,7 +117,7 @@ class LinkSim:
             d.stats["overflow"] += 1
             return
         d.tx_free_at = max(now, d.tx_free_at) + self.cfg.airtime(len(buf))
-        if self.rng.random() < self.loss_prob():
+        if self.rng.random() < self.loss_prob(len(buf)):
             d.stats["lost"] += 1
             return
         due = d.tx_free_at + self.cfg.latency_s + self.rng.uniform(-self.cfg.jitter_s, self.cfg.jitter_s)

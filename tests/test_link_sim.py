@@ -90,7 +90,8 @@ def test_loss_rate_reproduced(cleanup):
     s = sim.dirs[DOWN].stats
     assert s["overflow"] == 0
     assert len(got) == s["sent"] == 2000 - s["lost"]
-    assert 0.17 <= s["lost"] / 2000 <= 0.23, s["lost"]
+    expect = 1 - (1 - 0.2) ** (len(frame()) / 40)  # 20 % is stated for a 40-byte frame
+    assert abs(s["lost"] / 2000 - expect) < 0.03, (s["lost"], expect)
 
 
 def test_latency_reproduced(cleanup):
@@ -116,6 +117,7 @@ def test_distance_loss_and_rssi():
         assert sim.loss_prob() < 0.001 and sim.rssi() == 200
         sim.distance_m = 500
         assert sim.loss_prob() == pytest.approx(0.5)
+        assert sim.loss_prob(200) == pytest.approx(1 - 0.5 ** 5)  # 5x longer frame, same bit errors
         sim.distance_m = 1000
         assert sim.loss_prob() > 0.99 and sim.rssi() == 120
     finally:
