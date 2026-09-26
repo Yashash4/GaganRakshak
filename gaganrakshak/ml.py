@@ -1,6 +1,13 @@
 """Anomaly-model competition: which learned model best separates attacks from clean flight,
 judged fairly (same features, same false-alarm budget, same validation set).
 
+    python -m gaganrakshak.ml --calibration results/raw/<clean>/* --validation results/raw/<dev>/* \
+        [--budget 1.0] [--out results/ml]
+replays every run through both agents (``run_features``: the physics engine's normalised
+residuals and per-window evidence counts per detector), fits all models on the guard-selected
+clean calibration flights, picks the winner on the validation flights (clean and development
+attacks only), and writes each model with its threshold and a summary to ``results/ml/``.
+
 Protocol
 - Features: one vector per ``window_s`` window (``vectors``) from the physics residual windows
   (``cpce.Residuals.observe`` dicts, or their ``cpce.nis`` values) and per-window counts of
@@ -327,3 +334,136 @@ def evidence(rec: dict, x: np.ndarray, t: float, uav_id: int = 1) -> EvidenceEve
         return None
     score = s / rec["threshold"] if rec["threshold"] > 0 else 1.0
     return EvidenceEvent(t, uav_id, f"ml.{rec['meta']['name']}", "ml_anomaly", score, Severity.LOW, None)
+
+
+# --- end-to-end: features from recorded runs, competition, artefacts ------------------------
+
+SOURCES = ("protocol", "cmd_sign", "integrity", "commit_rx", "link_monitor", "response")  # counted per window
+SETTLE_S = 30.0  # windows from attack end to this much later are neither clean nor attack
+
+
+class _Recorder:
+    """Detector proxy that keeps every evidence event (t, source), whatever its severity."""
+
+    def __init__(self, det, events: list):
+        self.det, self.events = det, events
+
+    def observe(self, msg, samples, direction, t):
+        out = self.det.observe(msg, samples, direction, t)
+        self.events += [(e.t, e.source) for e in out]
+        return out
+
+    def __getattr__(self, name):
+        return getattr(self.det, name)
+
+
+def run_features(run: Path) -> dict:
+    """Feature vectors of one recorded run (1 s windows, scenario time, takeoff to touchdown) with
+    labels y: 0 clean, 1 attack (attack start to end), -1 settling after the attack (not scored)."""
+    from .cpce import Cpce
+    from .evaluate import detectors
+    from .ids import Ids, run_replay
+
+    labels = json.loads((run / "labels.json").read_text())
+    t0 = labels["t0_wall"]
+    events: list = []
+    residuals: list = []
+    for side in ("onboard", "ground"):
+        dets = detectors(side, run)
+        for d in dets:
+            if isinstance(d, Cpce):
+                d.record = residuals  # type: ignore[assignment]  # normalised residuals of every window
+        run_replay(Ids([_Recorder(d, events) for d in dets]), run / side)
+    nis_rows = [{**z, "t": t - t0} for t, z in residuals]
+    t, X = vectors(nis_rows, [(te - t0, s) for te, s in events], SOURCES)
+    ev = {e["event"]: e["t"] for e in labels["events"]}
+    end = ev.get("touchdown", t[-1] if len(t) else 0.0)
+    keep = (t >= 0.0) & (t <= end)
+    t, X = t[keep], X[keep]
+    y = np.zeros(len(t), dtype=int)
+    a = labels.get("attack")
+    if a:
+        y[(t >= a["start_s"]) & (t <= a["end_s"])] = 1
+        y[(t > a["end_s"]) & (t <= a["end_s"] + SETTLE_S)] = -1
+    variant = None if not a else ("held_out" if labels.get("split") == "heldout" else "dev")
+    return {"run": run.name, "t": t, "X": X, "y": y, "variant": variant, "split": labels.get("split")}
+
+
+def run_competition(cal: list[dict], val: list[dict], budget_per_hour: float, models: dict | None = None) -> dict:
+    """Fit every candidate on the calibration windows, thresholds at ``budget_per_hour``
+    over-threshold windows per clean hour (on the held-back calibration part), winner on validation."""
+    X_cal = np.vstack([f["X"] for f in cal])
+    validation = []
+    for k, f in enumerate(val, start=1):
+        validation.append((f["X"], np.where(f["y"] == 1, k, f["y"]), f["variant"]))  # one attack instance per run
+    out = compete(X_cal, validation, budget_per_hour / 3600.0, models)  # 1 s windows
+    n_thr = max(1, int(len(X_cal) * 0.3))
+    for rec in out["models"].values():
+        over = rec["model"].score(X_cal[-n_thr:]) > rec["threshold"]
+        rec["meta"]["calibration_heldback_hours"] = round(n_thr / 3600, 3)
+        rec["meta"]["calibration_heldback_alarm_windows_per_hour"] = round(float(over.sum()) / (n_thr / 3600), 3)
+        rec["meta"]["features"] = {
+            "window_s": 1.0,
+            "horizons": list(HORIZONS),
+            "channels": CHANNELS,
+            "sources": SOURCES,
+        }
+    return out
+
+
+def main() -> None:
+    import argparse
+    from concurrent.futures import ProcessPoolExecutor
+
+    ap = argparse.ArgumentParser(description="Anomaly-model competition on recorded runs (see module docstring).")
+    ap.add_argument("--calibration", nargs="+", type=Path, required=True, help="clean calibration runs")
+    ap.add_argument("--validation", nargs="+", type=Path, required=True, help="clean and development-attack runs")
+    ap.add_argument("--budget", type=float, default=1.0, help="over-threshold windows per clean hour")
+    ap.add_argument("--out", type=Path, default=Path(__file__).resolve().parent.parent / "results" / "ml")
+    ap.add_argument("--workers", type=int, default=4)
+    ap.add_argument("--no-guard", action="store_true", help="skip the calibration guard (dry runs only)")
+    a = ap.parse_args()
+    from .calibration import select
+    from .export import calibration_used
+
+    cal_runs = [r for r in a.calibration if (r / "labels.json").exists()]
+    if not a.no_guard:
+        cal_runs = select(cal_runs, workers=a.workers)
+    val_runs = []
+    for r in a.validation:
+        split = json.loads((r / "labels.json").read_text()).get("split") if (r / "labels.json").exists() else "?"
+        if split in (None, "development"):
+            val_runs.append(r)
+        else:  # held-out variants and test seeds stay unseen
+            print(f"validation skip {r.name}: split {split}")
+    with ProcessPoolExecutor(a.workers) as ex:
+        cal = list(ex.map(run_features, cal_runs))
+        val = list(ex.map(run_features, val_runs))
+    out = run_competition(cal, val, a.budget)
+    a.out.mkdir(parents=True, exist_ok=True)
+    for name, rec in out["models"].items():
+        save(rec, a.out / f"{name}.joblib")
+    summary = {
+        "winner": out["winner"],
+        "ranking": out["ranking"],
+        "budget_alarm_windows_per_hour": a.budget,
+        "calibration": calibration_used(),
+        "calibration_runs": [f["run"] for f in cal],
+        "validation_runs": [f["run"] for f in val],
+        "models": {n: r["meta"] for n, r in out["models"].items()},
+    }
+    (a.out / "summary.json").write_text(json.dumps(summary, indent=1))
+    for n in out["ranking"]:
+        m = out["models"][n]["meta"]
+        v = m["validation"]
+        print(
+            f"{n:18s} detection {v['detection']}  window recall {v['window_recall']}  val FA/window "
+            f"{v['false_alarm_rate']}  cal held-back alarms/h {m['calibration_heldback_alarm_windows_per_hour']}  "
+            f"{m.get('device', 'cpu')}  fit {m['fit_s']} s"
+        )
+
+
+if __name__ == "__main__":
+    from gaganrakshak.ml import main as _main  # models must pickle as gaganrakshak.ml classes, not __main__ ones
+
+    _main()

@@ -87,3 +87,23 @@ def test_ml_evidence_is_low_without_class_so_never_an_alert_alone():
     assert ev is not None and ev.severity == Severity.LOW and ev.class_hint is None
     assert PassThroughFusion().update([ev], 5.0) == []
     assert ml.evidence(rec, np.zeros(D), t=5.0) is None
+
+
+def test_run_competition_scores_runs_as_attack_instances_and_ignores_settling_windows(tmp_path):
+    cal = [{"run": f"c{i}", "X": clean(1800), "y": np.zeros(1800, dtype=int), "variant": None} for i in range(2)]
+    X, y = clean(90), np.zeros(90, dtype=int)
+    X[20:40, 0] += 8.0
+    y[20:40] = 1
+    X[40:70, 0] += 8.0  # the attack's after-effect: settling windows, scored neither way
+    y[40:70] = -1
+    val = [{"run": "a", "X": X, "y": y, "variant": "dev"}, {"run": "b", "X": clean(90), "y": np.zeros(90, dtype=int)}]
+    val[1]["variant"] = None
+    models = {"isolation_forest": ml.candidates(torch_models=False)["isolation_forest"]}
+    out = ml.run_competition(cal, val, budget_per_hour=36.0, models=models)
+    m = out["models"]["isolation_forest"]["meta"]
+    assert m["validation"]["attacks"] == 1 and m["validation"]["detection"] == 1.0
+    assert m["validation"]["windows"] == 180 and m["validation"]["false_alarm_rate"] < 0.05
+    assert m["calibration_heldback_hours"] == 0.3 and m["calibration_heldback_alarm_windows_per_hour"] <= 50
+    assert m["features"]["sources"] == ml.SOURCES
+    path = ml.save(out["models"]["isolation_forest"], tmp_path / "m.joblib")
+    assert ml.load(path)["threshold"] == out["models"]["isolation_forest"]["threshold"]
