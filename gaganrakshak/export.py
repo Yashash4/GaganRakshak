@@ -11,6 +11,7 @@ seed, split, variant
 events (labels, scenario time t), flight_s (takeoff to touchdown) and episodes
 [{agent, class, severity, t_start, t_end}] from replaying the run through both agents, and
 baseline_episodes in the same format: what stock ArduPilot itself flagged (see baseline.py).
+The command exports only runs with status "ok" and lists the others with their status.
 --guard exports only the runs the calibration guard accepts (calibration.select). A run recorded
 as a test seed is exported only into the test split.
 """
@@ -106,7 +107,13 @@ def main() -> None:
     ap.add_argument("--guard", action="store_true", help="only runs the calibration guard accepts")
     ap.add_argument("--workers", type=int, default=4)
     a = ap.parse_args()
-    runs = [r for r in a.runs if (r / "labels.json").exists()]
+    runs = []
+    for r in a.runs:  # only flights that ran as planned; any other status is listed, not exported
+        status = json.loads((r / "labels.json").read_text())["status"] if (r / "labels.json").exists() else None
+        if status == "ok":
+            runs.append(r)
+        else:
+            print(f"{a.split} skip {r}: status {status}")
     if a.guard:
         from .calibration import select
 
