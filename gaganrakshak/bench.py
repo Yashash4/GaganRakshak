@@ -56,6 +56,9 @@ EXPECTED = {  # attack type -> (expected class, agent that must raise it or None
     "fc_impersonation": ("telemetry_manipulation", "ground"),
     "link_flood": ("dos", None),
     "jamming": ("dos", None),
+    # drift then jamming (development only): a spoofed far distance must not excuse the jamming.
+    # Latency counts from the drift's start, so it includes the jam's delay (jam_after_s).
+    "gps_drift_jam": ("dos", None),
     "param_tamper": ("integrity_violation", None),
     "replay": ("replay", None),
 }
