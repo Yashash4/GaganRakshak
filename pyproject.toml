@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gaganrakshak"
+version = "0.1.0"
+description = "Two-point cyber-physical intrusion detection system for UAVs (MAVLink / ArduPilot)"
+requires-python = ">=3.10"
+dependencies = [
+    "pymavlink>=2.4.41",
+    "numpy>=1.26",
+    "scipy>=1.11",
+    "scikit-learn>=1.4",
+    "cryptography>=42",
+    "pyyaml>=6",
+    "rich>=13",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "MAVProxy>=1.8"]
+
+[tool.setuptools.packages.find]
+include = ["gaganrakshak*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

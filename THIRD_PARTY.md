@@ -1,0 +1,24 @@
+# Third-party components and Background IP
+
+## Third-party software (used, not modified)
+
+| Component | Use | Licence |
+|---|---|---|
+| ArduPilot (Copter SITL) | Simulated flight controller for all experiments; runs as a separate process, talks MAVLink | GPL-3.0 |
+| pymavlink | MAVLink encoding/decoding | LGPL-3.0 |
+| MAVProxy | Ground control station in the test setup | GPL-3.0 |
+| NumPy, SciPy | Numerics | BSD-3-Clause |
+| scikit-learn | Isolation Forest (supporting anomaly score) | BSD-3-Clause |
+| cryptography (pyca) | Ed25519, SHA-256 | Apache-2.0 / BSD |
+| PyYAML | Scenario files | MIT |
+| rich | Terminal dashboard | MIT |
+| pytest | Tests | MIT |
+
+## Background IP (team's own prior work)
+
+| Component | Origin | Used in |
+|---|---|---|
+| Ed25519 signing over canonical JSON | Reef (https://github.com/Yashash4/reef-mcp-registry), team's prior project | `gaganrakshak/crypto.py` |
+| Hash-chained, signed-Merkle-root audit log design | Reef audit log | `gaganrakshak/evidence_log.py` (reimplemented in Python) |
+
+Background IP remains the property of its existing owner (Terms & Conditions §7).
