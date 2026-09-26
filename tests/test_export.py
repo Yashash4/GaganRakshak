@@ -84,3 +84,66 @@ def test_flown_at_uses_the_code_version_else_the_signature_sizing_fix_time():
     assert flown_at({"t0_wall": 1790463214.0}) == "unknown"  # the rehearsal: after the fix, untagged
     assert flown_at({"t0_wall": SIGNATURE_SIZING_FIX_T}) == "unknown"
     assert flown_at({}) == "unknown"
+
+
+def _uplink(tmp_path, onboard, ground, t0=1000.0):
+    """Synthetic uplink recordings: (scenario t, frame) lists for onboard_U and ground_U."""
+    import struct
+
+    for name, frames in (("onboard_U.tlog", onboard), ("ground_U.tlog", ground)):
+        with open(tmp_path / name, "wb") as f:
+            for t, buf in frames:
+                f.write(struct.pack(">Q", int((t0 + t) * 1e6)) + buf)
+    return t0
+
+
+def _cmd(seq, command=400, gcs=True):  # 400 = MAV_CMD_COMPONENT_ARM_DISARM
+    from pymavlink.dialects.v20 import ardupilotmega as mav2
+
+    m = mav2.MAVLink(None, srcSystem=255 if gcs else 254, srcComponent=190)
+    m.seq = seq
+    return mav2.MAVLink_command_long_message(1, 1, command, 0, 0, 0, 0, 0, 0, 0, 0).pack(m)
+
+
+def _episode(types, t=50.0):
+    return {
+        "agent": "onboard",
+        "class": "command_injection",
+        "severity": 2,
+        "t_start": t,
+        "t_end": t,
+        "evidence_types": types,
+    }
+
+
+def test_a_genuine_lost_signature_is_an_old_sizing_artefact_with_its_matched_frames(tmp_path):
+    import hashlib
+
+    from gaganrakshak.export import lost_signature_evidence, old_sizing, uplink_commands
+
+    disarm = _cmd(7)
+    t0 = _uplink(tmp_path, onboard=[(49.6, disarm)], ground=[(49.5, disarm)])
+    on, gnd = uplink_commands(tmp_path, t0)
+    for types in (["unsigned_command"], ["unsafe_command", "unsigned_command"]):  # lost signature; genuine disarm
+        ep = _episode(types)
+        assert lost_signature_evidence(ep)
+        matched, why = old_sizing(ep, on, gnd)
+        assert why == "matched" and matched == [
+            {"frame_sha256_8": hashlib.sha256(disarm).hexdigest()[:8], "onboard_t": 49.6, "ground_t": 49.5}
+        ]
+    assert not lost_signature_evidence(_episode(["unsafe_command"]))  # no lost signature involved
+    assert not lost_signature_evidence(_episode(["unsigned_command", "bad_signature"]))
+
+
+def test_an_injected_or_replayed_frame_is_never_an_artefact(tmp_path):
+    from gaganrakshak.export import old_sizing, uplink_commands
+
+    genuine, injected = _cmd(7), _cmd(8, command=21, gcs=False)  # an attacker's LAND
+    t0 = _uplink(tmp_path, onboard=[(49.6, genuine), (49.9, injected)], ground=[(49.5, genuine)])
+    matched, why = old_sizing(_episode(["unsigned_command"]), *uplink_commands(tmp_path, t0))
+    assert matched == [] and why == "a received command frame the GCS never sent"
+    t0 = _uplink(tmp_path, onboard=[(49.6, genuine), (49.8, genuine)], ground=[(49.5, genuine)])  # an extra copy
+    matched, why = old_sizing(_episode(["unsigned_command"]), *uplink_commands(tmp_path, t0))
+    assert matched == [] and why == "a command frame received more often than the GCS sent it"
+    t0 = _uplink(tmp_path, onboard=[], ground=[(49.5, genuine)])
+    assert old_sizing(_episode(["unsigned_command"]), *uplink_commands(tmp_path, t0))[0] == []  # nothing to match

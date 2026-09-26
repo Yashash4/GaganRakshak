@@ -14,9 +14,9 @@ armed_s} (when the physics engine's heading became observable and its longest ho
 distance_track [[t, d_m], ...] (about 1 Hz, see distance_track) and episodes
 [{agent, class, severity, t_start, t_end, evidence_types}] from replaying the run through both agents, and
 baseline_episodes in the same format: what stock ArduPilot itself flagged (see baseline.py).
-On a run flown before the signature-sizing fix, an episode formed only by unsigned_command
-evidence carries "artefact": "old_sizing". The command exports only runs with status "ok" and lists
-the others with their status.
+An episode carries "artefact": "old_sizing" (a genuine command whose signature copies were all
+lost under the old 2-copy sizing) only when ``old_sizing`` proves it: see there. The command
+exports only runs with status "ok" and lists the others with their status.
 --guard exports only the runs the calibration guard accepts (calibration.select). A run recorded
 as a test seed is exported only into the test split.
 """
@@ -48,6 +48,63 @@ def flown_at(labels: dict) -> str:
         return str(labels["code_version"])
     t0 = labels.get("t0_wall")
     return "before-b747b3e" if t0 is not None and t0 < SIGNATURE_SIZING_FIX_T else "unknown"
+
+
+SIGNATURE_EVIDENCE = {"unsigned_command", "unsafe_command"}
+MATCH_S = 2.0  # onboard/ground reception of the same frame; also how far before an episode to look
+
+
+def lost_signature_evidence(ep: dict) -> bool:
+    """Formed by a missing command signature (and, for a safety-relevant command, its consequence)."""
+    types = set(ep.get("evidence_types") or [])
+    return "unsigned_command" in types and types <= SIGNATURE_EVIDENCE
+
+
+def uplink_commands(run: Path, t0: float) -> tuple[list, list]:
+    """Command frames (scenario time, exact bytes) as the onboard agent received them from the radio
+    (onboard_U.tlog) and as the GCS sent them, before the radio (ground_U.tlog)."""
+    from pymavlink import mavutil
+
+    from .cmd_sign import is_command
+
+    def read(name):
+        path = run / name
+        if not path.exists():
+            return []
+        log = mavutil.mavlink_connection(str(path), robust_parsing=True)
+        out = []
+        while (m := log.recv_msg()) is not None:
+            if m.get_type() != "BAD_DATA" and is_command(m):
+                out.append((m._timestamp - t0, bytes(m.get_msgbuf())))
+        return out
+
+    return read("onboard_U.tlog"), read("ground_U.tlog")
+
+
+def old_sizing(ep: dict, onboard: list, ground: list) -> tuple[list, str]:
+    """Is this episode a genuine command whose signature was lost (old 2-copy sizing)? Every command
+    frame the onboard agent received from t_start - MATCH_S to t_end must be byte-identical to a
+    frame the GCS sent within MATCH_S, and received no more often than the GCS sent it (a replay
+    would be an extra copy). An injected frame has no ground copy. Returns (matched_uplink entries,
+    reason); entries are empty unless every condition holds."""
+    t1 = ep["t_end"] if ep.get("t_end") is not None else ep["t_start"]
+    frames = [(t, b) for t, b in onboard if ep["t_start"] - MATCH_S <= t <= t1]
+    if not frames:
+        return [], "no command frame received in the interval"
+    matched = []
+    for t, b in frames:
+        near = [tg for tg, bg in ground if bg == b and abs(tg - t) <= MATCH_S]
+        if not near:
+            return [], "a received command frame the GCS never sent"
+        received = sum(1 for _, x in frames if x == b)
+        sent = len({tg for tg, bg in ground if bg == b and any(abs(tg - to) <= MATCH_S for to, x in frames if x == b)})
+        if received > sent:
+            return [], "a command frame received more often than the GCS sent it"
+        tg = min(near, key=lambda x: abs(x - t))
+        matched.append(
+            {"frame_sha256_8": hashlib.sha256(b).hexdigest()[:8], "onboard_t": round(t, 2), "ground_t": round(tg, 2)}
+        )
+    return matched, "matched"
 
 
 KEEP = (
@@ -143,10 +200,15 @@ def export_run(run: Path, split: str, out_root: Path = ROOT / "results" / "runs"
             {k: ep[k] for k in ("agent", "class", "severity", "t_start", "t_end", "evidence_types")}
             for ep in ev["episodes"]
         ]
-        if doc["flown_at"] == "before-b747b3e":  # old 2-copy signature sizing: a lost signature is not an attack
+        if doc["flown_at"] == "before-b747b3e":
+            uplink = None
             for ep in doc["episodes"]:
-                if ep["evidence_types"] == ["unsigned_command"]:
-                    ep["artefact"] = "old_sizing"
+                if lost_signature_evidence(ep):
+                    uplink = uplink or uplink_commands(run, labels["t0_wall"])
+                    matched, _ = old_sizing(ep, *uplink)
+                    if matched:
+                        ep["artefact"] = "old_sizing"
+                        ep["matched_uplink"] = matched
         doc["baseline_episodes"] = baseline_episodes(run)
         doc["distance_track"] = distance_track(run, labels["t0_wall"])
     out = out_root / split / f"{source}.json"
