@@ -74,3 +74,13 @@ def test_distance_track_is_about_1hz_from_home_after_takeoff(tmp_path):
     tr = distance_track(tmp_path, t0)
     assert [t for t, _ in tr] == [float(k) for k in range(11)]
     assert [d for _, d in tr] == pytest.approx([2.0 * k for k in range(11)], abs=0.1)
+
+
+def test_flown_at_uses_the_code_version_else_the_signature_sizing_fix_time():
+    from gaganrakshak.export import SIGNATURE_SIZING_FIX_T, flown_at
+
+    assert flown_at({"code_version": "abc1234", "t0_wall": 1.0}) == "abc1234"
+    assert flown_at({"t0_wall": 1790458553.0}) == "before-b747b3e"  # a calib4 flight
+    assert flown_at({"t0_wall": 1790463214.0}) == "unknown"  # the rehearsal: after the fix, untagged
+    assert flown_at({"t0_wall": SIGNATURE_SIZING_FIX_T}) == "unknown"
+    assert flown_at({}) == "unknown"

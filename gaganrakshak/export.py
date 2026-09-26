@@ -5,7 +5,8 @@ ground truth and the IDS's final output, and no computed metrics.
     python -m gaganrakshak.export --split calibration --guard --raw-root results/raw results/raw/calib3/*
 writes results/runs/<split>/<source>.json (source = the run's path under --raw-root, so runs of
 the same scenario and seed from different batches stay apart; else the run id) with: run_id,
-source, calibration (the calibration files the IDS used, with their git blob hashes), scenario,
+source, flown_at (the code version the run was flown with, see flown_at), calibration (the
+calibration files the IDS used, with their git blob hashes), scenario,
 seed, split, variant
 ("dev" | "held_out" | null for runs without an attack), status, attack {type, params},
 events (labels, scenario time t), flight_s (takeoff to touchdown), physics {observable_s,
@@ -13,7 +14,9 @@ armed_s} (when the physics engine's heading became observable and its longest ho
 distance_track [[t, d_m], ...] (about 1 Hz, see distance_track) and episodes
 [{agent, class, severity, t_start, t_end, evidence_types}] from replaying the run through both agents, and
 baseline_episodes in the same format: what stock ArduPilot itself flagged (see baseline.py).
-The command exports only runs with status "ok" and lists the others with their status.
+On a run flown before the signature-sizing fix, an episode formed only by unsigned_command
+evidence carries "artefact": "old_sizing". The command exports only runs with status "ok" and lists
+the others with their status.
 --guard exports only the runs the calibration guard accepts (calibration.select). A run recorded
 as a test seed is exported only into the test split.
 """
@@ -32,6 +35,21 @@ from .evaluate import CPCE_CALIB, ESTIMATOR_CALIB, LINK_CURVES, evaluate
 
 ROOT = Path(__file__).resolve().parent.parent
 SPLITS = ("calibration", "validation", "test")
+# Commit b747b3e (2026-09-27 04:09:14 +0530) sized the command-signature copies from the measured
+# uplink loss; flights recorded before it sent 2 copies, so a lossy uplink could leave a genuine
+# command without a verifiable signature ("unsigned_command").
+SIGNATURE_SIZING_FIX_T = 1790462354
+
+
+def flown_at(labels: dict) -> str:
+    """The code version a run was flown with: its recorded code_version; otherwise
+    "before-b747b3e" if it was recorded before that commit, else "unknown"."""
+    if labels.get("code_version"):
+        return str(labels["code_version"])
+    t0 = labels.get("t0_wall")
+    return "before-b747b3e" if t0 is not None and t0 < SIGNATURE_SIZING_FIX_T else "unknown"
+
+
 KEEP = (
     "takeoff",
     "touchdown",
@@ -93,6 +111,7 @@ def export_run(run: Path, split: str, out_root: Path = ROOT / "results" / "runs"
     doc = {
         "run_id": labels["run_id"],
         "source": source,
+        "flown_at": flown_at(labels),
         "calibration": calibration_used(),
         "scenario": labels["scenario"],
         "seed": labels["seed"],
@@ -124,6 +143,10 @@ def export_run(run: Path, split: str, out_root: Path = ROOT / "results" / "runs"
             {k: ep[k] for k in ("agent", "class", "severity", "t_start", "t_end", "evidence_types")}
             for ep in ev["episodes"]
         ]
+        if doc["flown_at"] == "before-b747b3e":  # old 2-copy signature sizing: a lost signature is not an attack
+            for ep in doc["episodes"]:
+                if ep["evidence_types"] == ["unsigned_command"]:
+                    ep["artefact"] = "old_sizing"
         doc["baseline_episodes"] = baseline_episodes(run)
         doc["distance_track"] = distance_track(run, labels["t0_wall"])
     out = out_root / split / f"{source}.json"

@@ -138,3 +138,20 @@ def test_test_plan_covers_every_group_with_test_split_and_unique_ids():
     assert next(p for p in plans if p["run_id"].startswith("a3h_set_mode"))["variant"] == "held_out"
     assert next(p for p in plans if p["run_id"] == "a2_gps_drift-r0.1-s5002")["attack"]["params"]["rate_ms"] == 0.1
     assert len(plans) == 2 * (10 + 4 + 10 + 5) + 7
+
+
+def test_old_sizing_artefacts_are_reported_apart_not_as_alarms_or_detections():
+    lost = {**ep(20.0, "command_injection", 2, "onboard", ["unsigned_command"]), "artefact": "old_sizing"}
+    inj = {"type": "command_injection", "start_s": 40.0, "end_s": 60.0, "params": {}}
+    in_window = {**ep(45.0, "command_injection", 3, "onboard", ["unsigned_command"]), "artefact": "old_sizing"}
+    counted = ep(20.0, "command_injection", 2, "onboard", ["unsigned_command"])  # flown_at "unknown": no mark
+    runs = [
+        doc("b1_calm-s1", None, [lost]),  # before the fix: a lost signature, not an alarm
+        doc("b1_calm-s2", None, [counted]),
+        doc("a3_cmd_injection-s1", inj, [in_window]),  # an artefact is not a detection either
+    ]
+    m = bench.score(runs, "episodes", agent_check=True)
+    assert m["false_alarms"]["count"] == 1 and m["false_alarms"]["list"][0]["run"] == "b1_calm-s2"
+    assert m["recording_artefacts"]["count"] == 2
+    assert {a["run"] for a in m["recording_artefacts"]["list"]} == {"b1_calm-s1", "a3_cmd_injection-s1"}
+    assert m["detection"]["a3_cmd_injection"]["detected_during"] == 0

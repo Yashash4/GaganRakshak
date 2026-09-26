@@ -8,6 +8,7 @@ RAW=$(realpath "${1:-results/raw}")
 WORKERS=${WORKERS:-4}
 rm -rf results/runs/calibration results/runs/validation
 nice -n 19 python -m gaganrakshak.export --split validation --raw-root "$RAW" --workers "$WORKERS" \
-  "$RAW"/val/*/ "$RAW"/val2/*/ "$RAW"/a2dev/*/ "$RAW"/gnssdev/*/ "$RAW"/inject/*/*/ "$RAW"/att/*/
+  "$RAW"/val/*/ "$RAW"/val2/*/ "$RAW"/a2dev/*/ "$RAW"/gnssdev/*/ "$RAW"/inject/*/*/ "$RAW"/att/*/ \
+  "$RAW"/rehearsal/*/
 nice -n 19 python -m gaganrakshak.export --split calibration --guard --raw-root "$RAW" --workers "$WORKERS" \
   "$RAW"/phys1/*/ "$RAW"/calib3/*/ "$RAW"/calib4/*/

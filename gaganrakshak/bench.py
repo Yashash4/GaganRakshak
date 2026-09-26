@@ -25,6 +25,9 @@ t = 0 at the takeoff command:
   to the hours, and are also listed as ground_phase_false_alarms (distance band "on_ground").
 - Splits: attack start before / after the physics engine's longest horizon armed, and distance
   from home at attack start (bands in BANDS_M); false alarms per band use the clean time spent in it.
+- Recording artefacts: episodes an export marks with "artefact" (e.g. "old_sizing": a lost command
+  signature on a flight recorded with the old 2-copy signature sizing) are neither detections nor
+  false alarms; they are counted and listed apart (recording_artefacts).
 The same metrics are computed for stock ArduPilot's own indicators (baseline_episodes).
 """
 
@@ -243,9 +246,10 @@ def score(docs: list[dict], key: str, agent_check: bool) -> dict:
     hours = 0.0
     band_s: dict[str, float] = defaultdict(float)
     fa_band: dict[str, int] = defaultdict(int)
-    false_alarms, ground = [], []
+    false_alarms, ground, artefacts = [], [], []
     for doc in docs:
-        eps = doc[key]
+        eps = [ep for ep in doc[key] if "artefact" not in ep]  # marked recording artefacts: reported apart
+        artefacts += [{"run": doc["run_id"], **ep} for ep in doc[key] if "artefact" in ep]
         if doc["attack"]:
             r = detection(doc, eps, agent_check)
             s = doc["attack"]["start_s"]
@@ -278,6 +282,7 @@ def score(docs: list[dict], key: str, agent_check: bool) -> dict:
             else:
                 fa_band[band(distance_at(track, ep["t_start"])) or "?"] += 1
     return {
+        "recording_artefacts": {"count": len(artefacts), "list": artefacts},
         "detection": {g: _summary(v) for g, v in sorted(groups.items())},
         "detection_by_arming": {g: _summary(v) for g, v in sorted(by_arming.items())},
         "detection_by_distance": {g: _summary(v) for g, v in sorted(by_band.items())},
@@ -362,6 +367,8 @@ def markdown(m: dict) -> str:
     ]
     for b, f in m["ids"]["false_alarms"]["by_distance"].items():
         out.append(f"| {b} | {f['clean_hours']} | {f['count']} | {f['per_hour']} | {f['upper95_per_hour']} |")
+    n = m["ids"]["recording_artefacts"]["count"]
+    out.append(f"\nRecording artefacts reported apart (not alarms, not detections): {n}.")
     return "\n".join(out) + "\n"
 
 
