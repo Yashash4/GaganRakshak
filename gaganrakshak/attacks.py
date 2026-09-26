@@ -17,6 +17,7 @@ logs its actual timeline into the run labels: ``attack_start``, ``attack_end`` a
 | gps_jump           A1  | A1    | GNSS position offset step, held (SIM_GPS1_GLTCH over the harness link) |
 | gps_drift_naive    A2n | A2n   | GNSS position ramp only; GNSS velocity untouched (labelled naive)  |
 | gps_drift          A2  | A2    | coherent: position ramp plus the matching GNSS velocity offset     |
+| gps_drift_accel    A2a | A2a   | coherent, accelerating: offset a t^2/2 and velocity offset a t     |
 
 GNSS attacks set ``run.gnss_attack_offset(t) -> (north_m, east_m)``, which the harness adds to
 its GNSS error model at 1 Hz over the simulator-only port.
@@ -278,6 +279,25 @@ class GpsDriftCoherent(GpsDriftNaive):
         return r * self.unit[0], r * self.unit[1]
 
 
+class GpsDriftAccel(GpsDriftNaive):
+    """A2 (accelerating, coherent): the fake trajectory accelerates at accel_ms2 in NED: position
+    offset a t^2 / 2 and the matching GNSS velocity offset a t. A constant NED-fixed acceleration
+    is what an accelerometer bias estimate could absorb, so this probes the bias guard."""
+
+    def __init__(self, run):
+        super().__init__(run)
+        run.gnss_attack_velocity = self.velocity
+
+    def magnitude(self, dt):
+        return 0.5 * self.p.get("accel_ms2", 0.01) * dt * dt
+
+    def velocity(self, t: float):
+        if not self.start <= t < self.end:
+            return 0.0, 0.0
+        v = self.p.get("accel_ms2", 0.01) * (t - self.start)
+        return v * self.unit[0], v * self.unit[1]
+
+
 ATTACKS = {
     "command_injection": CommandInjection,
     "telemetry_manipulation": TelemetryManipulation,
@@ -289,4 +309,5 @@ ATTACKS = {
     "gps_jump": GpsJump,
     "gps_drift_naive": GpsDriftNaive,
     "gps_drift": GpsDriftCoherent,
+    "gps_drift_accel": GpsDriftAccel,
 }

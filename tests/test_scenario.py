@@ -83,3 +83,31 @@ def test_every_scenario_attack_type_is_registered():
     for f in sorted(SCEN.glob("*.yaml")):
         attack = yaml.safe_load(f.read_text()).get("attack")
         assert attack is None or attack["type"] in ATTACKS, f.name
+
+
+def test_accelerating_spoof_offset_and_velocity_are_consistent():
+    """Position offset a t^2/2 and velocity offset a t along the bearing, only inside the window."""
+    import threading
+
+    from gaganrakshak.attacks import ATTACKS
+
+    class Run:
+        plan = {
+            "attack": {
+                "type": "gps_drift_accel",
+                "start_s": 10.0,
+                "end_s": 110.0,
+                "params": {"accel_ms2": 0.02, "bearing_deg": 90.0},
+            }
+        }
+        t0, _stop = None, threading.Event()
+        gnss_attack_offset = gnss_attack_velocity = None
+
+    run = Run()
+    ATTACKS["gps_drift_accel"](run)
+    assert run.gnss_attack_offset(5.0) == (0.0, 0.0) and run.gnss_attack_velocity(5.0) == (0.0, 0.0)
+    n, e = run.gnss_attack_offset(60.0)
+    vn, ve = run.gnss_attack_velocity(60.0)
+    assert abs(n) < 1e-9 and abs(e - 0.5 * 0.02 * 50**2) < 1e-9  # due east
+    assert abs(vn) < 1e-9 and abs(ve - 0.02 * 50) < 1e-9
+    assert run.gnss_attack_offset(120.0) == (0.0, 0.0)

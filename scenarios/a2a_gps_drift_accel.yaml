@@ -1,0 +1,9 @@
+# A2 (accelerating variant) — coherent GNSS spoof whose fake trajectory accelerates slowly
+# for five minutes: position offset a t^2/2 and the matching velocity offset a t. Probes whether
+# the physics' accelerometer-bias estimate can be made to absorb the spoof.
+name: a2a_gps_drift_accel
+duration_s: 380
+mission: {legs: 6, radius_m: [40, 80], alt_m: [15, 25], speed_ms: [3, 6]}
+wind: {spd: [0, 2], dir: [0, 360], turb: 0}
+gnss_noise: {sigma_m: 2.1, tau_s: 60}
+attack: {type: gps_drift_accel, start_s: [30, 40], duration_s: [300, 310], params: {accel_ms2: [0.005, 0.02], bearing_deg: [0, 360]}}
