@@ -55,16 +55,22 @@ class ProtocolDetector:
         self.verifier = verifier  # cmd_sign.CmdVerifier: decides whether an unsafe command is the operator's
         self.check_unsafe = check_unsafe
         self.max_wait_s = max_wait_s  # safety bound only: the verifier concludes every command it sees
-        self._unsafe = []  # (t, command key, command, sysid) awaiting the signature verdict
+        self._unsafe: list[
+            tuple[float, tuple[int, int, int, int], int, int]
+        ] = []  # (t, command key, command, sysid) awaiting the signature verdict
         self.seq_dirs = set(seq_dirs)
         self.allowed = allowed or {"D": {FC_SYSID, RADIO_SYSID}, "U": {GCS_SYSID}}
         self.dup_window = dup_window
         self.uplink_max_per_s = uplink_max_per_s
         self.airborne_m = airborne_m
-        self._recent = defaultdict(lambda: deque(maxlen=dup_window))  # (dir, sys, comp) -> seqs
-        self._last_seq = {}
-        self.gaps = defaultdict(int)  # (dir, sys, comp) -> frames missing (link statistics)
-        self._uplink = deque()  # timestamps of uplink messages in the last second
+        self._recent: defaultdict[tuple[str, int, int], deque[int]] = defaultdict(
+            lambda: deque(maxlen=dup_window)
+        )  # (dir, sys, comp) -> seqs
+        self._last_seq: dict[tuple[str, int, int], int] = {}
+        self.gaps: defaultdict[tuple[str, int, int], int] = defaultdict(
+            int
+        )  # (dir, sys, comp) -> frames missing (link statistics)
+        self._uplink: deque[float] = deque()  # timestamps of uplink messages in the last second
         self._flooding = False
         self.airborne = False
         self._t_alt = -1e9  # airborne state older than 2 s is unknown (e.g. lossy ground downlink)
@@ -155,7 +161,7 @@ class ProtocolDetector:
             and t - self._t_alt < 2.0
             and not (msg.command == MAV.MAV_CMD_COMPONENT_ARM_DISARM and msg.param1 == 1)
         ):
-            key = (sysid, compid, seq, msg.get_msgId())
+            cmd_key = (sysid, compid, seq, msg.get_msgId())
             if self.verifier is None:
                 out.append(
                     self._ev(
@@ -170,7 +176,7 @@ class ProtocolDetector:
                     )
                 )
             else:
-                self._unsafe.append((t, key, int(msg.command), sysid))
+                self._unsafe.append((t, cmd_key, int(msg.command), sysid))
         return out
 
     def tick(self, t):

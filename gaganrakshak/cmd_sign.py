@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import time
 from collections import deque
+from typing import Any
 
 from pymavlink.dialects.v20 import ardupilotmega as mav2
 
@@ -63,13 +64,17 @@ class CmdVerifier:
         self.uav_id = uav_id
         self.wait_s = wait_s
         self.last_counter = -1
-        self._cmds = {}  # key -> (t, frame bytes, name)
-        self._sigs = {}  # key -> list of GR_CMD_SIG
+        self._cmds: dict[tuple[int, int, int, int], tuple[float, bytes, str]] = {}  # key -> (t, frame bytes, name)
+        self._sigs: dict[tuple[int, int, int, int], list[Any]] = {}  # key -> list of GR_CMD_SIG
         self.verified = 0
-        self._gcs_seq = None
-        self._uplink = deque()  # (t, frames received, frames missing) from the GCS's own seq gaps
+        self._gcs_seq: int | None = None
+        self._uplink: deque[tuple[float, int, int]] = (
+            deque()
+        )  # (t, frames received, frames missing) from the GCS's own seq gaps
         self.alpha = 1e-3
-        self.outcome = {}  # command key -> "verified" | "bad_signature" | "replayed" | "unsigned"
+        self.outcome: dict[
+            tuple[int, int, int, int], str
+        ] = {}  # command key -> "verified" | "bad_signature" | "replayed" | "unsigned"
 
     @staticmethod
     def _key(sysid, compid, seq, msgid):

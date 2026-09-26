@@ -85,7 +85,7 @@ def save_curves(path: Path, curves: dict):
 def load_curves(path: Path) -> dict:
     """{"loss": BandCurve, "gap": BandCurve, "commit": {CommitRx settings}}"""
     d = json.loads(Path(path).read_text())
-    out = {k: BandCurve.from_dict(v) for k, v in d.items() if k != "commit"}
+    out: dict[str, BandCurve | dict] = {k: BandCurve.from_dict(v) for k, v in d.items() if k != "commit"}
     if "commit" in d:
         out["commit"] = {k: v for k, v in d["commit"].items() if k != "meta"}
     return out
@@ -109,18 +109,18 @@ class LinkMonitor:
         self.rx = commit_rx
         self.uav_id = uav_id
         curves = curves or {}  # none: record samples only (calibration); no loss/gap evidence
-        self.curve = curves.get("loss")
+        self.curve: BandCurve | None = curves.get("loss")
         self.budget_per_hour = budget_per_hour
         self.window, self.min_frames = window, min_frames
         self.gap_s, self.txbuf_min, self.congestion_s = gap_s, txbuf_min, congestion_s
-        self.home = None
+        self.home: tuple[float, float] | None = None
         self.distance_m = 0.0  # reported distance (telemetry)
         self.vmax, self.distrust_s = vmax, distrust_s
-        self._last_pos = None
-        self._t_implausible = None
+        self._last_pos: tuple[float, float, float] | None = None
+        self._t_implausible: float | None = None
         self.samples: list[tuple[float, float, float]] = []  # (t, distance, windowed loss)
         self.gap_samples: list[tuple[float, float, float]] = []  # (t, distance, heartbeat silence)
-        self._t_hb = None
+        self._t_hb: float | None = None
         self._in = {"loss": False, "gap": False, "congestion": False}
         self._t_congested = None
 
@@ -137,6 +137,7 @@ class LinkMonitor:
     def silence_limit(self, distance_m: float, floor_s: float = 3.0) -> float:
         """Heartbeat (1 Hz) silence that random loss explains less often than the budget:
         P(silence >= s) ~ p^(s-1) with p the learned per-frame loss band at this distance."""
+        assert self.curve is not None, "silence_limit needs a calibrated loss curve"
         p = min(self.curve.upper_at(distance_m), 0.999)
         if p <= 0:
             return floor_s

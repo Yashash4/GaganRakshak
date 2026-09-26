@@ -27,6 +27,7 @@ import math
 import statistics
 import threading
 from collections import deque
+from typing import Any
 
 from pymavlink.dialects.v20 import ardupilotmega as mav2
 
@@ -70,7 +71,7 @@ class CommitTx:
         self.window_s = window_s
         self.window_id = 0
         self._entries: list[bytes] = []
-        self._t_close = None
+        self._t_close: float | None = None
         self._lock = threading.Lock()  # both router threads may forward downlink frames
         self._mav = mav2.MAVLink(None, srcSystem=sysid, srcComponent=compid)
 
@@ -121,13 +122,13 @@ class CommitRx:
         self.gamma = commit_loss_exponent
         self.loss_pairs: list[tuple] = []  # (frame loss, commit loss, n, lost windows) for calibration
         self.selective_min = selective_min
-        self.last_window = None  # highest window id seen (any chunk)
-        self._pending = []  # [t, seq, msgid, tag, name, prev_window]
+        self.last_window: int | None = None  # highest window id seen (any chunk)
+        self._pending: list[list[Any]] = []  # [t, seq, msgid, tag, name, prev_window]
         self._chunks: dict[int, dict] = {}  # window -> {"n": n_chunks, "got": {chunk: {(seq,msgid): tag}}}
-        self._history = deque(maxlen=loss_history)  # per window: [lost_window, listed, missing]
-        self._lost_pending = []
+        self._history: deque[list[Any]] = deque(maxlen=loss_history)  # per window: [lost_window, listed, missing]
+        self._lost_pending: list[list[Any]] = []  # _history entries of lost windows
         self._t_last_commit = None
-        self._recent_frames = deque()  # arrival times of relevant frames within timeout_s
+        self._recent_frames: deque[float] = deque()  # arrival times of relevant frames within timeout_s
         self._selective = self._timed_out = False
         self.last_z = 0.0
         self._t_congested = None  # last RADIO_STATUS with a nearly full radio buffer
@@ -186,7 +187,7 @@ class CommitRx:
         self._t_last_commit, self._timed_out = t, False
         w = m.window_id
         # (seq, msgid) -> tags. Not unique: at FC rates the 8-bit seq wraps several times per window.
-        listed = {}
+        listed: dict[tuple[int, int], list[bytes]] = {}
         for i in range(0, len(entries), ENTRY):
             listed.setdefault((entries[i], entries[i + 1]), []).append(entries[i + 2 : i + 6])
         self._chunks.setdefault(w, {"n": m.n_chunks, "got": {}})["got"][m.chunk] = listed
@@ -210,7 +211,7 @@ class CommitRx:
     def _resolve(self, w, t, final):
         c = self._chunks.pop(w)
         complete = len(c["got"]) == c["n"]
-        listed = {}
+        listed: dict[tuple[int, int], list[bytes]] = {}
         for part in c["got"].values():
             for k, tags in part.items():
                 listed.setdefault(k, []).extend(tags)

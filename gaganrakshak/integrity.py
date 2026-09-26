@@ -148,9 +148,11 @@ class IntegrityMonitor:
         self.uav_id = uav_id
         self.settle_s = settle_s
         self.allowed = {k: {v} for k, v in baseline["params"].items()}  # name -> acceptable values
-        self._writes = []  # (t, key, kind, param, value)
-        self._reports = []  # (t, name, value)
-        self._alarmed = set()
+        self._writes: list[
+            tuple[float, tuple[int, int, int, int], str, str | None, float | None]
+        ] = []  # (t, key, kind, param, value)
+        self._reports: list[tuple[float, str, float]] = []  # (t, name, value)
+        self._alarmed: set[tuple[str, str | float]] = set()
 
     def _ev(self, t, kind, sev, cls, **meta):
         return EvidenceEvent(t, self.uav_id, "integrity", kind, 1.0, sev, cls, meta)
@@ -204,9 +206,9 @@ class IntegrityMonitor:
                     )
                 )
         # parameter reports are judged after the writes that may have caused them
-        due = [r for r in self._reports if t - r[0] >= self.settle_s + 0.2]
+        reports = [r for r in self._reports if t - r[0] >= self.settle_s + 0.2]
         self._reports = [r for r in self._reports if t - r[0] < self.settle_s + 0.2]
-        for _, name, value in due:
+        for _, name, value in reports:
             ok = self.allowed.get(name)
             if ok is None:
                 continue  # not in the baseline (e.g. new parameter): nothing to compare against
