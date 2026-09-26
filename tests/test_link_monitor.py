@@ -164,9 +164,11 @@ def test_silence_limit_follows_loss_band():
 
 def test_onboard_gnss_evidence_makes_the_ground_distrust_the_reported_distance():
     """A slow GNSS spoof moves the reported position plausibly; only the onboard physics sees it.
-    Its forwarded evidence (one window later) makes the ground use the nearest band for a while."""
-    lm = LinkMonitor(None, onboard_gnss=[100.0], forward_latency_s=1.0, distrust_s=60.0)
+    While its confirmed spoof is open (forwarded one window later) the ground uses the nearest band,
+    however long the spoof lasts; once cleared, the reported distance is trusted again."""
+    lm = LinkMonitor(None, onboard_gnss=[[100.0, 400.0], [500.0, None]], forward_latency_s=1.0)
     lm.distance_m = 350.0
     assert lm.trusted_distance(100.5) == (350.0, True)  # not yet received
-    assert lm.trusted_distance(101.5) == (0.0, False)
-    assert lm.trusted_distance(159.0) == (0.0, False) and lm.trusted_distance(161.0) == (350.0, True)
+    assert lm.trusted_distance(101.5) == (0.0, False) and lm.trusted_distance(390.0) == (0.0, False)
+    assert lm.trusted_distance(402.0) == (350.0, True)  # cleared
+    assert lm.trusted_distance(900.0) == (0.0, False)  # still open

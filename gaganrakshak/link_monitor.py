@@ -25,7 +25,6 @@ Distance comes from telemetry and is only trusted while that telemetry is credib
 from __future__ import annotations
 
 import argparse
-import bisect
 import json
 import math
 import statistics
@@ -106,13 +105,15 @@ class LinkMonitor:
         vmax: float = 30.0,
         distrust_s: float = 60.0,
         budget_per_hour: float = 1.0,
-        onboard_gnss: list[float] | None = None,
+        onboard_gnss: list[list] | None = None,
         forward_latency_s: float = 1.0,
     ):
         self.rx = commit_rx
-        # times of GNSS evidence raised by the onboard agent and forwarded to this (ground) agent:
-        # a GNSS spoof can move the reported position plausibly, which the implausible-speed check
-        # cannot see; the onboard physics can. Forwarding arrives one commitment window later.
+        # [confirmed, cleared or None] intervals of GNSS spoofing the onboard agent confirmed, forwarded
+        # to this (ground) agent: a spoof moves the reported position plausibly, which the
+        # implausible-speed check cannot see; the onboard physics can. Distrust lasts while the
+        # spoof is open (a fixed time after confirmation would expire mid-attack). Forwarding
+        # arrives one commitment window later.
         self.onboard_gnss = onboard_gnss if onboard_gnss is not None else []
         self.forward_latency_s = forward_latency_s
         self.uav_id = uav_id
@@ -140,8 +141,8 @@ class LinkMonitor:
         implausibly fast, or the commitments recently showed telemetry manipulation. A spoofed
         far position must not widen the expected-loss band, so doubt means the nearest band."""
         m = getattr(self.rx, "t_last_manipulation", None)
-        i = bisect.bisect_right(self.onboard_gnss, t - self.forward_latency_s)  # evidence already received
-        gnss = i > 0 and t - self.onboard_gnss[i - 1] < self.distrust_s
+        lat = self.forward_latency_s
+        gnss = any(a + lat <= t and (b is None or t <= b + lat) for a, b in self.onboard_gnss)
         doubt = (
             (self._t_implausible is not None and t - self._t_implausible < self.distrust_s)
             or (m is not None and t - m < self.distrust_s)

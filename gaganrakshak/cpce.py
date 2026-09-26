@@ -552,9 +552,14 @@ class Cpce:
         self.states: deque = deque()  # (t, n, e, vn, ve) GNSS history for anchoring
         self.record = None  # list -> residual z values are appended (calibration)
         self._trend_reported = False
+        # [confirmed at, cleared at or None]: a confirmed spoof stays open until the physics clears
+        # it (forwarded to the ground agent, which then distrusts the reported distance)
+        self.spoof_intervals: list[list] = []
         self._reset()
 
-    def _reset(self):
+    def _reset(self, t: float | None = None):
+        if t is not None and self.spoof_intervals and self.spoof_intervals[-1][1] is None:
+            self.spoof_intervals[-1][1] = t
         self.suspect: dict | None = None  # while a suspicion is open
         self._quiet = 0
         self.res.freeze_bias = False
@@ -643,6 +648,7 @@ class Cpce:
         persistent = t - self.suspect["t"] >= self.persist_s
         if not self.suspect["reported"] and persistent and coherent and mag > gate:
             self.suspect["reported"] = True
+            self.spoof_intervals.append([t, None])
             sub = "jump" if self.suspect["first"][1] == min(self.res.horizons) else "drift"
             out.append(
                 self._ev(
@@ -663,7 +669,7 @@ class Cpce:
         quiet = all(v == 0.0 for v in self.S.values()) and mag <= gate
         self._quiet = self._quiet + 1 if quiet else 0
         if self._quiet >= self.clear_n:
-            self._reset()
+            self._reset(t)
         return out
 
 

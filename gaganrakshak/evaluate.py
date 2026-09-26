@@ -39,7 +39,7 @@ def detectors(
     cpce_calib: Path = CPCE_CALIB,
     estimator_calib: Path = ESTIMATOR_CALIB,
     uncalibrated: bool = False,
-    onboard_gnss: list[float] | None = None,
+    onboard_gnss: list[list] | None = None,
 ) -> list:
     """Each agent's detector set for a recorded run, with the learned link, physics and estimator
     settings. A missing artefact is an error: silently falling back to defaults would produce
@@ -82,12 +82,12 @@ def evaluate(
         "adapter_unknown": {},
         "physics": {"observable_s": None, "armed_s": None},
     }
-    onboard_gnss: list[float] = []  # wall times of onboard GNSS evidence, forwarded to the ground agent
+    onboard_gnss: list[list] = []  # onboard confirmed-spoof intervals, forwarded to the ground agent
     for side in ("onboard", "ground"):
         ids = Ids(detectors(side, run, link_curves, cpce_calib, estimator_calib, uncalibrated, onboard_gnss))
         run_replay(ids, run / side)
-        if side == "onboard":  # confirmed GNSS spoofing, forwarded for the ground agent's distance trust
-            onboard_gnss += sorted(e.t for a in ids.alerts for e in a.evidence if e.class_hint == "gps_spoofing")
+        if side == "onboard":  # confirmed GNSS spoofing, open until cleared, for the ground agent's distance trust
+            onboard_gnss += [iv for d in ids.detectors if isinstance(d, Cpce) for iv in d.spoof_intervals]
         out["adapter_unknown"][side] = dict(ids.adapter.stats["unknown"])
         for d in ids.detectors:
             if isinstance(d, Cpce):  # when the heading became observable and the longest horizon armed
