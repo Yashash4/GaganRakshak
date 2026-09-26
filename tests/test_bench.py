@@ -50,8 +50,18 @@ RUNS = [  # attack 40-60 s, flight 100 s: clean time 0-40 s and 90-100 s (attack
         gps(),
         [ep(45.0, "gps_spoofing", 3, "ground"), ep(75.0, "gps_spoofing", 3), ep(50.0, "gnss_integrity_advisory", 1)],
     ),
-    # benign flight: one false alarm at 150 m (after t = 50 s), one advisory, one before takeoff (not judged)
-    doc("b1_calm-s5001", None, [ep(60.0, "telemetry_manipulation", 2, "ground"), ep(30.0, "x", 1), ep(-5.0, "x", 3)]),
+    # benign flight: one false alarm at 150 m (after t = 50 s), one advisory, and ground-phase false
+    # alarms before takeoff and after touchdown (flight 100 s)
+    doc(
+        "b1_calm-s5001",
+        None,
+        [
+            ep(60.0, "telemetry_manipulation", 2, "ground"),
+            ep(30.0, "x", 1),
+            ep(-5.0, "x", 3),
+            ep(105.0, "dos", 2, "ground", ["telemetry_gap"]),
+        ],
+    ),
 ]
 
 
@@ -66,18 +76,22 @@ def test_detection_during_incl_release_missed_advisory_and_secondary():
     assert (b["detected_during"], b["at_release"], b["latency_incl_release_s"]["min"]) == (0, 1, 22.0)
 
 
-def test_false_alarms_before_the_attack_after_settling_and_on_benign_flights():
+def test_false_alarms_before_the_attack_after_settling_on_benign_flights_and_on_the_ground():
     f = bench.score(RUNS, "episodes", agent_check=True)["false_alarms"]
-    hours = (3 * (40 + 10) + 100) / 3600  # attack flights: 0-40 s and 90-100 s; benign: 0-100 s
-    assert f["count"] == 3 and f["advisories"] == 1 and f["clean_hours"] == round(hours, 3)
-    assert sorted(a["t_start"] for a in f["list"]) == [20.0, 60.0, 95.0]  # 95 s: after end + 30 s
-    assert f["per_hour"] == round(3 / hours, 3)
-    assert f["upper95_per_hour"] == round(7.7536565 / hours, 3)  # chi2(0.95, 8) / 2 for 3 events
+    hours = (3 * (40 + 10) + 100) / 3600  # airborne clean time: attack flights 0-40 s and 90-100 s; benign 0-100 s
+    assert f["count"] == 5 and f["advisories"] == 1 and f["clean_hours"] == round(hours, 3)
+    assert sorted(a["t_start"] for a in f["list"]) == [-5.0, 20.0, 60.0, 95.0, 105.0]  # 95 s: after end + 30 s
+    g = f["ground_phase_false_alarms"]
+    assert g["count"] == 2 and sorted(a["t_start"] for a in g["list"]) == [-5.0, 105.0]
+    assert {a["evidence_types"][0] for a in g["list"]} == {"x", "telemetry_gap"}
+    assert f["per_hour"] == round(5 / hours, 3)  # ground-phase alarms add to the count, not to the hours
+    assert f["upper95_per_hour"] == round(10.5130349 / hours, 3)  # chi2(0.95, 12) / 2 for 5 events
     by = f["by_distance"]
     assert by["0-100 m"]["count"] == 1 and by["100-200 m"]["count"] == 2  # 20 s at 0 m; 60 s, 95 s at 150 m
+    assert by["on_ground"]["count"] == 2 and by["on_ground"]["clean_hours"] == 0.0
     assert by["0-100 m"]["clean_hours"] == round((3 * 40 + 50) / 3600, 3)
     assert by["100-200 m"]["clean_hours"] == round((3 * 10 + 50) / 3600, 3)
-    assert {a["evidence_types"][0] for a in f["list"]} == {"excess_loss", "x", "commit_timeout"}
+    assert {a["evidence_types"][0] for a in f["list"]} == {"excess_loss", "x", "commit_timeout", "telemetry_gap"}
 
 
 def test_an_alarm_inside_the_settling_time_is_not_false_but_one_after_it_is():

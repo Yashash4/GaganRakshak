@@ -19,8 +19,10 @@ t = 0 at the takeoff command:
   attack_end + SETTLE_S]; counted per attack type, neither detections nor false alarms.
 - False alarms: MEDIUM+ episodes of any class starting in clean flight time: benign flights from
   takeoff to touchdown; attack flights from takeoff to attack start and from attack_end +
-  SETTLE_S to touchdown. Rate per clean flight-hour with its 95 % one-sided Poisson upper bound;
-  advisories (LOW) are counted apart. Episodes before takeoff or after touchdown are not judged.
+  SETTLE_S to touchdown. Rate per clean (airborne) flight-hour with its 95 % one-sided Poisson
+  upper bound; advisories (LOW) are counted apart. Episodes before takeoff or after touchdown
+  (outside [attack_start, attack_end + SETTLE_S]) are false alarms too; they add to the count, not
+  to the hours, and are also listed as ground_phase_false_alarms (distance band "on_ground").
 - Splits: attack start before / after the physics engine's longest horizon armed, and distance
   from home at attack start (bands in BANDS_M); false alarms per band use the clean time spent in it.
 The same metrics are computed for stock ArduPilot's own indicators (baseline_episodes).
@@ -160,14 +162,15 @@ def clean_intervals(doc: dict) -> list[tuple[float, float]]:
     return [iv for iv in ((0.0, min(s, f)), (e + SETTLE_S, f)) if iv[1] > iv[0]]
 
 
-def in_clean_time(doc: dict, t: float) -> bool:
-    """An episode starting at t is judged as a possible false alarm: airborne and not within
-    [attack_start, attack_end + SETTLE_S]."""
-    f = doc["flight_s"]
-    if f is None or not 0.0 <= t <= f:
-        return False
+def phase(doc: dict, t: float) -> str | None:
+    """Where an episode starting at t is judged as a possible false alarm: "airborne" (takeoff to
+    touchdown), "on_ground" (before takeoff or after touchdown), or None inside [attack_start,
+    attack_end + SETTLE_S] on an attack flight."""
     a = doc["attack"]
-    return not a or t < a["start_s"] or t > a["end_s"] + SETTLE_S
+    if a and a["start_s"] <= t <= a["end_s"] + SETTLE_S:
+        return None
+    f = doc["flight_s"]
+    return "on_ground" if t < 0.0 or (f is not None and t > f) else "airborne"
 
 
 def group_of(doc: dict) -> str:
@@ -237,7 +240,7 @@ def score(docs: list[dict], key: str, agent_check: bool) -> dict:
     hours = 0.0
     band_s: dict[str, float] = defaultdict(float)
     fa_band: dict[str, int] = defaultdict(int)
-    false_alarms = []
+    false_alarms, ground = [], []
     for doc in docs:
         eps = doc[key]
         if doc["attack"]:
@@ -257,15 +260,20 @@ def score(docs: list[dict], key: str, agent_check: bool) -> dict:
             for b, sec in band_time(track, c0, c1).items():
                 band_s[b] += sec
         for ep in eps:
-            t = ep["t_start"]
-            if in_clean_time(doc, t):
-                if ep["severity"] >= 2:
-                    fa += 1
-                    fa_band[band(distance_at(track, ep["t_start"])) or "?"] += 1
-                    false_alarms.append({"run": doc["run_id"], **{k: ep.get(k) for k in ("agent", "class", "t_start")}})
-                    false_alarms[-1]["evidence_types"] = ep.get("evidence_types")
-                else:
-                    adv += 1
+            where = phase(doc, ep["t_start"])
+            if where is None:
+                continue
+            if ep["severity"] < 2:
+                adv += 1
+                continue
+            fa += 1
+            item = {"run": doc["run_id"], **{k: ep.get(k) for k in ("agent", "class", "t_start", "evidence_types")}}
+            false_alarms.append(item)
+            if where == "on_ground":
+                ground.append(item)
+                fa_band["on_ground"] += 1
+            else:
+                fa_band[band(distance_at(track, ep["t_start"])) or "?"] += 1
     return {
         "detection": {g: _summary(v) for g, v in sorted(groups.items())},
         "detection_by_arming": {g: _summary(v) for g, v in sorted(by_arming.items())},
@@ -273,7 +281,11 @@ def score(docs: list[dict], key: str, agent_check: bool) -> dict:
         "false_alarms": {
             **_rate(fa, hours),
             "advisories": adv,
-            "by_distance": {b: _rate(fa_band.get(b, 0), sec / 3600) for b, sec in sorted(band_s.items())},
+            "by_distance": {
+                **{b: _rate(fa_band.get(b, 0), sec / 3600) for b, sec in sorted(band_s.items())},
+                "on_ground": _rate(fa_band.get("on_ground", 0), 0.0),
+            },
+            "ground_phase_false_alarms": {"count": len(ground), "list": ground},
             "list": false_alarms,
         },
     }
@@ -331,13 +343,14 @@ def markdown(m: dict) -> str:
             out.append(f"| {g} | {s['runs']} | {s['detected_during']} | {m['baseline'][k][g]['detected_during']} |")
     out += [
         "\n## False alarms (MEDIUM+, clean flight time)\n",
-        "| | clean hours | false alarms | per hour | 95 % upper bound | advisories |",
-        "|---|---|---|---|---|---|",
+        "| | clean hours | false alarms | of which on ground | per hour | 95 % upper bound | advisories |",
+        "|---|---|---|---|---|---|---|",
     ]
     for name in ("ids", "baseline"):
         f = m[name]["false_alarms"]
         label = "IDS" if name == "ids" else "ArduPilot"
-        cells = [label, f["clean_hours"], f["count"], f["per_hour"], f["upper95_per_hour"], f["advisories"]]
+        g = f["ground_phase_false_alarms"]["count"]
+        cells = [label, f["clean_hours"], f["count"], g, f["per_hour"], f["upper95_per_hour"], f["advisories"]]
         out.append("| " + " | ".join(str(c) for c in cells) + " |")
     out += [
         "\n### IDS false alarms by distance\n",
