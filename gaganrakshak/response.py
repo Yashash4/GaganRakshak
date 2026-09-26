@@ -13,6 +13,10 @@ an injected mode change. With commitments unavailable (``rx`` None) only corrobo
 Evidence:
 - ``uncommanded_mode_change``  the autopilot's mode changed with no matching GCS command in
   the last ``window_s`` and no trustworthy failsafe notice   [command_injection, HIGH]
+- ``excused_mode_change``      an unrequested mode change excused by a notice, with why (verified
+  frame, or the corroborating condition). Some corroborators can be induced by an attacker
+  (a GNSS spoof raises EKF ratios, jamming causes an outage); the autopilot failing over is then
+  genuine, the attack itself raises its own alarm, and this record keeps the chain   [INFO]
 """
 
 from __future__ import annotations
@@ -72,25 +76,31 @@ class ResponseMonitor:
         elif name == "FENCE_STATUS" and msg.breach_status:
             self._t_fence = t
 
-    def _corroborated(self, text: str, t: float) -> bool:
-        recent = lambda t_cond: t - t_cond <= CORROBORATION_S  # noqa: E731
-        if "battery" in text:
-            return recent(self._t_battery_low)
-        if "fence" in text:
-            return recent(self._t_fence)
-        if "ekf" in text or "gps" in text:
-            return recent(self._t_ekf_high)
-        if "radio" in text or "gcs" in text:
-            return recent(self._t_outage)
-        return False  # e.g. "crash": only a verified notice excuses it
+    def _corroboration(self, text: str, t: float) -> str | None:
+        """The telemetry condition that corroborates the notice, or None."""
+        for words, t_cond, cond in (
+            (("battery",), self._t_battery_low, "battery_low"),
+            (("fence",), self._t_fence, "fence_breach"),
+            (("ekf", "gps"), self._t_ekf_high, "ekf_ratio_near_gate"),
+            (("radio", "gcs"), self._t_outage, "telemetry_outage"),
+        ):
+            if any(w in text for w in words):
+                return cond if t - t_cond <= CORROBORATION_S else None
+        return None  # e.g. "crash": only a verified notice excuses it
 
     def _judge(self, held: dict, t: float, final: bool) -> list[EvidenceEvent] | None:
         """[] once excused; [evidence] once no notice can excuse it; None while undecided."""
         waiting = False
         for tn, seq, msgid, text in held["notices"]:
             v = self.rx.verdict(tn, seq, msgid) if self.rx is not None else "unverified"
-            if v == "match" or self._corroborated(text, t):
-                return []
+            why = "verified" if v == "match" else self._corroboration(text, t)
+            if why:
+                meta = {"from": held["from"], "to": held["to"], "notice": text, "excused_by": why, "notice_verdict": v}
+                return [
+                    EvidenceEvent(
+                        held["t"], self.uav_id, "response", "excused_mode_change", 0.0, Severity.INFO, None, meta
+                    )
+                ]
             waiting |= v is None
         if waiting and not final:
             return None
