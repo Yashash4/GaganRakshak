@@ -285,6 +285,9 @@ class Run:
                                                 "--b", f"udpout:127.0.0.1:{p['gcs']}",
                                                 "--ids-port", str(p["ids_gnd"])]))
             self.harness = mavutil.mavlink_connection(f"tcp:127.0.0.1:{p['harness']}", source_system=250)
+            # Address the FC itself: a broadcast (target 0) would be routed by ArduPilot onto the
+            # vehicle link too.
+            self.harness.target_system, self.harness.target_component = 1, 1
             for k, v in {**plan["sim_params"],
                          **{f"SIM_WIND_{k.upper()}": v for k, v in plan["wind"].items()}}.items():
                 self.harness.param_set_send(k, v)

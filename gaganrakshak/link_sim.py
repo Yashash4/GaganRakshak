@@ -159,7 +159,9 @@ class LinkSim:
                                 * self.cfg.rate_bps / 10 / self.cfg.buffer_bytes))
         m = mav2.MAVLink_radio_status_message(self.rssi(), self.rssi(), free, 0, 0,
                                               min(lost, 65535), 0)
-        return m.pack(self._radio)
+        buf = m.pack(self._radio)
+        self._radio.seq = (self._radio.seq + 1) % 256  # pack() does not advance seq
+        return buf
 
     def run(self):
         next_status = time.monotonic() + 1.0

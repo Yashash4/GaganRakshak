@@ -61,6 +61,7 @@ def test_sim_traffic_never_reaches_radio_or_ids(rig):
     fc, gcs, ids, _ = rig
     fc.mav.simstate_send(*[0] * 11)
     fc.mav.param_value_send(b"SIM_GPS1_GLTCH_X", 1.0, 9, 1000, 5)
+    fc.mav.param_set_send(1, 1, b"SIM_WIND_SPD", 3.0, 9)  # a harness write routed onto this link
     fc.mav.param_value_send(b"FENCE_ENABLE", 1.0, 2, 1000, 6)
     got_gcs = [m.get_type() + getattr(m, "param_id", "") for m in drain(gcs)]
     got_ids = names(ids_frames(ids))

@@ -161,4 +161,5 @@ def test_synthetic_radio_status(cleanup):
     got = [mav2.MAVLink(None).parse_char(b) for _, b in recv_all(gnd, 2.2)]
     rs = [m for m in got if m.get_type() == "RADIO_STATUS"]
     assert len(rs) == 2 and rs[0].get_srcSystem() == 51 and rs[0].rssi == 200
+    assert rs[1].get_seq() == (rs[0].get_seq() + 1) % 256
     assert sim.stats()["radio_status"] == "synthetic"

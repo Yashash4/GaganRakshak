@@ -56,7 +56,7 @@ DEFAULT_RADIO_HZ = 2.0  # until the GCS asks for something else
 def sim_only(msg) -> bool:
     """Simulator-only traffic: never forwarded to the radio or shown to the IDS."""
     t = msg.get_type()
-    return t == "SIMSTATE" or (t == "PARAM_VALUE" and msg.param_id.startswith("SIM_"))
+    return t == "SIMSTATE" or (t in ("PARAM_VALUE", "PARAM_SET") and msg.param_id.startswith("SIM_"))
 
 
 class Router:
