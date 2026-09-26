@@ -100,3 +100,21 @@ def test_signed_unsafe_command_is_the_operators():
     ev += verifier.tick(1.8) + det.tick(2.5)
     kinds = [(e.evidence_type, e.class_hint) for e in ev if e.source == "protocol"]
     assert kinds == [("operator_unsafe_command", None), ("unsafe_command", "command_injection")]
+
+
+def test_unsafe_command_waits_for_a_slow_signature_verdict():
+    """A signed disarm whose signature arrives 1.5 s later is still the operator's."""
+    from gaganrakshak import crypto
+    from gaganrakshak.cmd_sign import CmdVerifier, Signer
+    seed, pub = crypto.generate_keypair()
+    fc, gcs = Sender(1), Sender(255, 190)
+    signer, verifier = Signer(seed), CmdVerifier(pub, wait_s=2.0)
+    det = ProtocolDetector(verifier=verifier)
+    det.observe(fc(mav.MAVLink_global_position_int_message(0, 0, 0, 0, 15000, 0, 0, 0, 0)), [], "D", 0)
+    cmd = gcs(mav.MAVLink_command_long_message(1, 1, MAV.MAV_CMD_COMPONENT_ARM_DISARM, 0, 0, 21196, 0, 0, 0, 0, 0))
+    ev = det.observe(cmd, [], "U", 1.0) + verifier.observe(cmd, [], "U", 1.0)
+    ev += det.tick(2.2) + verifier.tick(2.2)  # past the old fixed 1 s: must still wait
+    for sig in signer.sign(bytes(cmd.get_msgbuf()), cmd):
+        ev += verifier.observe(mav.MAVLink(None).parse_char(sig), [], "U", 2.5)
+    ev += det.tick(2.6)
+    assert [e.evidence_type for e in ev if e.source == "protocol"] == ["operator_unsafe_command"]

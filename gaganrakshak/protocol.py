@@ -41,11 +41,11 @@ FC_SYSID, GCS_SYSID, RADIO_SYSID = 1, 255, 51
 class ProtocolDetector:
     def __init__(self, uav_id: int = 1, allowed: dict | None = None, dup_window: int = 32,
                  uplink_max_per_s: int = 50, airborne_m: float = 1.0, seq_dirs=("D", "U"),
-                 verifier=None, check_unsafe: bool = True, settle_s: float = 1.0):
+                 verifier=None, check_unsafe: bool = True, max_wait_s: float = 60.0):
         self.uav_id = uav_id
         self.verifier = verifier  # cmd_sign.CmdVerifier: decides whether an unsafe command is the operator's
         self.check_unsafe = check_unsafe
-        self.settle_s = settle_s
+        self.max_wait_s = max_wait_s  # safety bound only: the verifier concludes every command it sees
         self._unsafe = []  # (t, command key, command, sysid) awaiting the signature verdict
         self.seq_dirs = set(seq_dirs)
         self.allowed = allowed or {"D": {FC_SYSID, RADIO_SYSID}, "U": {GCS_SYSID}}
@@ -110,19 +110,21 @@ class ProtocolDetector:
         return out
 
     def tick(self, t):
-        """Unsafe commands are judged once the signature check has concluded."""
+        """Unsafe commands are judged once the signature check has a final outcome for that
+        command (no fixed delay: on a slow link the verdict takes longer)."""
         out, keep = [], []
         for item in self._unsafe:
             t0, key, command, sysid = item
-            if t - t0 < self.settle_s:
+            verdict = self.verifier.outcome.get(key)
+            if verdict is None and t - t0 < self.max_wait_s:
                 keep.append(item)
-            elif self.verifier.outcome.get(key) == "verified":
+            elif verdict == "verified":
                 out.append(self._ev(t, "operator_unsafe_command", 0.0, Severity.INFO, None,
                                     command=command, sysid=sysid))
             else:
                 out.append(self._ev(t, "unsafe_command", 1.0, Severity.HIGH, "command_injection",
-                                    command=command, sysid=sysid,
-                                    signature=self.verifier.outcome.get(key, "unsigned")))
+                                    command=command, sysid=sysid, signature=verdict or "no verdict",
+                                    uplink_loss=round(self.verifier.uplink_loss(t), 3)))
         self._unsafe = keep
         return out
 
