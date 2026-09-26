@@ -18,6 +18,7 @@ CALIBRATED_EVIDENCE = {
     "gnss_inertial_inconsistency",
     "gps_spoofing",
     "inertial_trend",
+    "estimator_innovation_high",
 }
 # Link-loss corroboration (class dos, e.g. a signature lost on a fading link) and physics advisories
 # are consequences of the statistics being calibrated, not anomalies of the flight.
@@ -41,7 +42,7 @@ def usable(run: Path, check_ids: bool = True) -> tuple[bool, str]:
         # judged without any earlier calibration: a stale artefact must not decide what is clean
         ev = [
             e
-            for e in evaluate(run, link_curves=Path("/nonexistent"), cpce_calib=Path("/nonexistent"))["evidence"]
+            for e in evaluate(run, *[Path("/nonexistent")] * 3)["evidence"]
             if e["type"] not in CALIBRATED_EVIDENCE and e["class"] not in CALIBRATED_CLASSES
         ]
         if ev:

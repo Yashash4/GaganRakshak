@@ -47,6 +47,7 @@ def test_export_records_calibration_files_and_keeps_test_seeds_out(tmp_path, mon
     calib.write_bytes(b"{}\n")
     monkeypatch.setattr(ex, "CPCE_CALIB", calib)
     monkeypatch.setattr(ex, "LINK_CURVES", tmp_path / "absent.json")
+    monkeypatch.setattr(ex, "ESTIMATOR_CALIB", tmp_path / "absent.json")
     assert ex.calibration_used() == {"cpce.json": "0967ef424bce6791893e9a57bb952f80fd536e93"}  # git hash-object
     run = tmp_path / "t"
     run.mkdir()

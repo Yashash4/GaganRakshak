@@ -25,7 +25,7 @@ from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 
 from .baseline import baseline_episodes
-from .evaluate import CPCE_CALIB, LINK_CURVES, evaluate
+from .evaluate import CPCE_CALIB, ESTIMATOR_CALIB, LINK_CURVES, evaluate
 
 ROOT = Path(__file__).resolve().parent.parent
 SPLITS = ("calibration", "validation", "test")
@@ -47,7 +47,7 @@ KEEP = (
 def calibration_used() -> dict:
     """{file name: git blob hash} of the calibration files the IDS loads (present ones only)."""
     out = {}
-    for f in (CPCE_CALIB, LINK_CURVES):
+    for f in (CPCE_CALIB, LINK_CURVES, ESTIMATOR_CALIB):
         if f.exists():
             data = f.read_bytes()
             out[f.name] = hashlib.sha1(b"blob %d\0" % len(data) + data).hexdigest()
