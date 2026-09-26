@@ -1,0 +1,16 @@
+# Install once: pip install pre-commit && pre-commit install
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.9  # keep in step with ruff in requirements.lock
+    hooks:
+      - id: ruff
+      - id: ruff-format
+
+  - repo: local
+    hooks:
+      - id: pytest-fast
+        name: pytest (fast subset, no SITL)
+        entry: pytest -q -m "not sitl" -x tests/test_evidence.py tests/test_commit.py tests/test_protocol.py
+        language: system
+        pass_filenames: false
+        types: [python]
