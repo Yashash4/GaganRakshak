@@ -44,6 +44,7 @@ IGNORED = {
     "MISSION_CURRENT": "housekeeping", "HOME_POSITION": "static reference",
     "GPS_GLOBAL_ORIGIN": "static reference", "COMMAND_ACK": "handled by the protocol layer",
     "REQUEST_DATA_STREAM": "read-only request; handled by the router",
+    "PARAM_ERROR": "rejected-write reply; the write attempt itself is seen as PARAM_SET",
     "PARAM_REQUEST_LIST": "read-only request", "PARAM_REQUEST_READ": "read-only request",
     "MISSION_REQUEST_LIST": "read-only request", "MISSION_REQUEST_INT": "read-only request",
     "MISSION_REQUEST": "read-only request", "MISSION_ACK": "handshake", "MISSION_ITEM_REACHED": "housekeeping",
