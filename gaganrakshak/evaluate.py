@@ -17,6 +17,7 @@ from .ids import Ids, run_replay
 from .integrity import IntegrityMonitor, load_baseline
 from .link_monitor import LinkMonitor, load_curves
 from .protocol import for_agent
+from .response import ResponseMonitor
 
 ROOT = Path(__file__).resolve().parent.parent
 BASELINE = ROOT / "configs" / "baseline" / "ardupilot_copter_sitl"
@@ -39,7 +40,7 @@ def detectors(side: str, run: Path, link_curves: Path = LINK_CURVES) -> list:
         return onboard
     curves = load_curves(link_curves) if link_curves.exists() else {}
     rx = CommitRx(_pub(run, "onboard_commit"), **curves.pop("commit", {}))
-    return [for_agent("ground"), rx, LinkMonitor(rx, curves=curves or None)]
+    return [for_agent("ground"), rx, LinkMonitor(rx, curves=curves or None), ResponseMonitor()]
 
 
 def evaluate(run: Path, link_curves: Path = LINK_CURVES) -> dict:
