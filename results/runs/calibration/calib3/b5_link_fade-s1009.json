@@ -2,7 +2,9 @@
  "run_id": "b5_link_fade-s1009",
  "source": "calib3/b5_link_fade-s1009",
  "calibration": {
-  "cpce.json": "9b2fa54b946e03d12f2d568c43541da45d7fc0f7"
+  "cpce.json": "9b2fa54b946e03d12f2d568c43541da45d7fc0f7",
+  "link_curves.json": "88f6436d81827342ed9736ad15e50ab4182ac299",
+  "estimator.json": "3a4aecceb19611abf4b4d31a313136fd3f016a7e"
  },
  "scenario": "b5_link_fade",
  "seed": 1009,
@@ -49,21 +51,20 @@
    "class": "dos",
    "severity": 1,
    "t_start": 94.26,
-   "t_end": 94.26
-  },
-  {
-   "agent": "ground",
-   "class": "telemetry_manipulation",
-   "severity": 2,
-   "t_start": 47.02,
-   "t_end": 47.02
+   "t_end": 94.26,
+   "evidence_types": [
+    "unsigned_command"
+   ]
   },
   {
    "agent": "ground",
    "class": "telemetry_manipulation",
    "severity": 2,
    "t_start": 159.26,
-   "t_end": 159.26
+   "t_end": 159.26,
+   "evidence_types": [
+    "commit_timeout"
+   ]
   }
  ],
  "baseline_episodes": []

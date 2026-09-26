@@ -2,7 +2,9 @@
  "run_id": "b4_gnss_glitch-s21",
  "source": "gnssdev/b4_gnss_glitch-s21",
  "calibration": {
-  "cpce.json": "9b2fa54b946e03d12f2d568c43541da45d7fc0f7"
+  "cpce.json": "9b2fa54b946e03d12f2d568c43541da45d7fc0f7",
+  "link_curves.json": "88f6436d81827342ed9736ad15e50ab4182ac299",
+  "estimator.json": "3a4aecceb19611abf4b4d31a313136fd3f016a7e"
  },
  "scenario": "b4_gnss_glitch",
  "seed": 21,
@@ -93,7 +95,30 @@
    "class": "gnss_integrity_advisory",
    "severity": 1,
    "t_start": 28.16,
-   "t_end": 28.16
+   "t_end": 28.16,
+   "evidence_types": [
+    "gnss_inertial_inconsistency"
+   ]
+  },
+  {
+   "agent": "onboard",
+   "class": "gnss_integrity_advisory",
+   "severity": 1,
+   "t_start": 59.78,
+   "t_end": 59.78,
+   "evidence_types": [
+    "estimator_innovation_high"
+   ]
+  },
+  {
+   "agent": "onboard",
+   "class": "gnss_integrity_advisory",
+   "severity": 1,
+   "t_start": 89.78,
+   "t_end": 89.78,
+   "evidence_types": [
+    "estimator_innovation_high"
+   ]
   }
  ],
  "baseline_episodes": [
@@ -102,21 +127,39 @@
    "class": "gps_spoofing",
    "severity": 2,
    "t_start": 25.77,
-   "t_end": 37.75
+   "t_end": 37.75,
+   "evidence_types": [
+    "ekf_gps_glitching",
+    "ekf_pos_horiz_variance_above_1",
+    "statustext_gps_glitch",
+    "statustext_lane_switch"
+   ]
   },
   {
    "agent": "baseline",
    "class": "gps_spoofing",
    "severity": 2,
    "t_start": 57.78,
-   "t_end": 71.94
+   "t_end": 71.94,
+   "evidence_types": [
+    "ekf_gps_glitching",
+    "ekf_pos_horiz_variance_above_1",
+    "statustext_gps_glitch",
+    "statustext_lane_switch"
+   ]
   },
   {
    "agent": "baseline",
    "class": "gps_spoofing",
    "severity": 2,
    "t_start": 87.78,
-   "t_end": 101.76
+   "t_end": 101.76,
+   "evidence_types": [
+    "ekf_gps_glitching",
+    "ekf_pos_horiz_variance_above_1",
+    "statustext_gps_glitch",
+    "statustext_lane_switch"
+   ]
   }
  ]
 }

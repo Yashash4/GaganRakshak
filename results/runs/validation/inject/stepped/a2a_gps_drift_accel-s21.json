@@ -2,7 +2,9 @@
  "run_id": "a2a_gps_drift_accel-s21",
  "source": "inject/stepped/a2a_gps_drift_accel-s21",
  "calibration": {
-  "cpce.json": "9b2fa54b946e03d12f2d568c43541da45d7fc0f7"
+  "cpce.json": "9b2fa54b946e03d12f2d568c43541da45d7fc0f7",
+  "link_curves.json": "88f6436d81827342ed9736ad15e50ab4182ac299",
+  "estimator.json": "3a4aecceb19611abf4b4d31a313136fd3f016a7e"
  },
  "scenario": "a2a_gps_drift_accel",
  "seed": 21,
@@ -59,14 +61,21 @@
    "class": "gnss_integrity_advisory",
    "severity": 1,
    "t_start": 334.77,
-   "t_end": 334.77
+   "t_end": 336.4,
+   "evidence_types": [
+    "estimator_innovation_high",
+    "gnss_inertial_inconsistency"
+   ]
   },
   {
    "agent": "onboard",
    "class": "gps_spoofing",
    "severity": 3,
    "t_start": 339.78,
-   "t_end": 339.78
+   "t_end": 339.78,
+   "evidence_types": [
+    "gps_spoofing"
+   ]
   }
  ],
  "baseline_episodes": [
@@ -75,7 +84,16 @@
    "class": "gps_spoofing",
    "severity": 3,
    "t_start": 334.8,
-   "t_end": 346.96
+   "t_end": 346.96,
+   "evidence_types": [
+    "ekf_gps_glitching",
+    "ekf_pos_horiz_variance_above_1",
+    "ekf_velocity_variance_above_1",
+    "statustext_ekf_failsafe",
+    "statustext_ekf_variance",
+    "statustext_gps_glitch",
+    "statustext_lane_switch"
+   ]
   }
  ]
 }

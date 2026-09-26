@@ -2,7 +2,9 @@
  "run_id": "a5_link_flood-s201",
  "source": "val/a5_link_flood-s201",
  "calibration": {
-  "cpce.json": "9b2fa54b946e03d12f2d568c43541da45d7fc0f7"
+  "cpce.json": "9b2fa54b946e03d12f2d568c43541da45d7fc0f7",
+  "link_curves.json": "88f6436d81827342ed9736ad15e50ab4182ac299",
+  "estimator.json": "3a4aecceb19611abf4b4d31a313136fd3f016a7e"
  },
  "scenario": "a5_link_flood",
  "seed": 201,
@@ -63,35 +65,44 @@
    "class": "mavlink_anomaly",
    "severity": 3,
    "t_start": 39.06,
-   "t_end": 63.41
+   "t_end": 63.41,
+   "evidence_types": [
+    "unknown_source"
+   ]
   },
   {
    "agent": "onboard",
    "class": "dos",
    "severity": 3,
    "t_start": 39.24,
-   "t_end": 39.24
+   "t_end": 39.24,
+   "evidence_types": [
+    "uplink_flood"
+   ]
   },
   {
    "agent": "ground",
    "class": "mavlink_anomaly",
    "severity": 3,
    "t_start": 39.06,
-   "t_end": 63.41
+   "t_end": 63.41,
+   "evidence_types": [
+    "unknown_source"
+   ]
   },
   {
    "agent": "ground",
    "class": "dos",
    "severity": 2,
    "t_start": 42.71,
-   "t_end": 43.91
-  },
-  {
-   "agent": "ground",
-   "class": "dos",
-   "severity": 2,
-   "t_start": 63.48,
-   "t_end": 63.48
+   "t_end": 63.48,
+   "evidence_types": [
+    "commit_timeout",
+    "excess_loss",
+    "radio_congestion",
+    "selective_commit_loss",
+    "telemetry_gap"
+   ]
   }
  ],
  "baseline_episodes": []

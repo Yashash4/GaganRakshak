@@ -2,7 +2,9 @@
  "run_id": "b5_link_fade-s2004",
  "source": "phys1/b5_link_fade-s2004",
  "calibration": {
-  "cpce.json": "9b2fa54b946e03d12f2d568c43541da45d7fc0f7"
+  "cpce.json": "9b2fa54b946e03d12f2d568c43541da45d7fc0f7",
+  "link_curves.json": "88f6436d81827342ed9736ad15e50ab4182ac299",
+  "estimator.json": "3a4aecceb19611abf4b4d31a313136fd3f016a7e"
  },
  "scenario": "b5_link_fade",
  "seed": 2004,
@@ -36,22 +38,11 @@
    "agent": "ground",
    "class": "telemetry_manipulation",
    "severity": 2,
-   "t_start": 32.87,
-   "t_end": 32.87
-  },
-  {
-   "agent": "ground",
-   "class": "telemetry_manipulation",
-   "severity": 2,
    "t_start": 106.74,
-   "t_end": 106.74
-  },
-  {
-   "agent": "ground",
-   "class": "telemetry_manipulation",
-   "severity": 2,
-   "t_start": 155.34,
-   "t_end": 155.34
+   "t_end": 106.74,
+   "evidence_types": [
+    "commit_timeout"
+   ]
   }
  ],
  "baseline_episodes": []

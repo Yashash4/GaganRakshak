@@ -2,7 +2,9 @@
  "run_id": "a2_gps_drift-s21",
  "source": "a2dev/a2_gps_drift-s21",
  "calibration": {
-  "cpce.json": "9b2fa54b946e03d12f2d568c43541da45d7fc0f7"
+  "cpce.json": "9b2fa54b946e03d12f2d568c43541da45d7fc0f7",
+  "link_curves.json": "88f6436d81827342ed9736ad15e50ab4182ac299",
+  "estimator.json": "3a4aecceb19611abf4b4d31a313136fd3f016a7e"
  },
  "scenario": "a2_gps_drift",
  "seed": 21,
@@ -59,14 +61,21 @@
    "class": "gnss_integrity_advisory",
    "severity": 1,
    "t_start": 83.17,
-   "t_end": 83.17
+   "t_end": 84.81,
+   "evidence_types": [
+    "estimator_innovation_high",
+    "gnss_inertial_inconsistency"
+   ]
   },
   {
    "agent": "onboard",
    "class": "gps_spoofing",
    "severity": 3,
    "t_start": 88.17,
-   "t_end": 88.17
+   "t_end": 88.17,
+   "evidence_types": [
+    "gps_spoofing"
+   ]
   }
  ],
  "baseline_episodes": [
@@ -75,7 +84,13 @@
    "class": "gps_spoofing",
    "severity": 2,
    "t_start": 82.79,
-   "t_end": 102.77
+   "t_end": 102.77,
+   "evidence_types": [
+    "ekf_gps_glitching",
+    "ekf_pos_horiz_variance_above_1",
+    "statustext_gps_glitch",
+    "statustext_lane_switch"
+   ]
   }
  ]
 }

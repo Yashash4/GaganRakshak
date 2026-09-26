@@ -2,7 +2,9 @@
  "run_id": "b5_link_fade-s1003",
  "source": "calib3/b5_link_fade-s1003",
  "calibration": {
-  "cpce.json": "9b2fa54b946e03d12f2d568c43541da45d7fc0f7"
+  "cpce.json": "9b2fa54b946e03d12f2d568c43541da45d7fc0f7",
+  "link_curves.json": "88f6436d81827342ed9736ad15e50ab4182ac299",
+  "estimator.json": "3a4aecceb19611abf4b4d31a313136fd3f016a7e"
  },
  "scenario": "b5_link_fade",
  "seed": 1003,
@@ -49,42 +51,50 @@
    "class": "dos",
    "severity": 1,
    "t_start": 178.5,
-   "t_end": 179.0
+   "t_end": 179.0,
+   "evidence_types": [
+    "unsigned_command"
+   ]
   },
   {
    "agent": "onboard",
    "class": "gnss_integrity_advisory",
    "severity": 1,
    "t_start": 197.56,
-   "t_end": 197.56
+   "t_end": 197.56,
+   "evidence_types": [
+    "inertial_trend"
+   ]
   },
   {
    "agent": "onboard",
    "class": "gnss_integrity_advisory",
    "severity": 1,
    "t_start": 253.16,
-   "t_end": 253.16
+   "t_end": 253.16,
+   "evidence_types": [
+    "gnss_inertial_inconsistency"
+   ]
   },
   {
    "agent": "ground",
    "class": "telemetry_manipulation",
    "severity": 2,
-   "t_start": 39.84,
-   "t_end": 39.84
-  },
-  {
-   "agent": "ground",
-   "class": "telemetry_manipulation",
-   "severity": 2,
-   "t_start": 69.21,
-   "t_end": 69.21
+   "t_start": 72.71,
+   "t_end": 72.71,
+   "evidence_types": [
+    "commit_timeout"
+   ]
   },
   {
    "agent": "ground",
    "class": "telemetry_manipulation",
    "severity": 2,
    "t_start": 171.87,
-   "t_end": 171.87
+   "t_end": 171.87,
+   "evidence_types": [
+    "selective_commit_loss"
+   ]
   }
  ],
  "baseline_episodes": []

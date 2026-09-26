@@ -2,7 +2,9 @@
  "run_id": "b5_link_fade-s2002",
  "source": "phys1/b5_link_fade-s2002",
  "calibration": {
-  "cpce.json": "9b2fa54b946e03d12f2d568c43541da45d7fc0f7"
+  "cpce.json": "9b2fa54b946e03d12f2d568c43541da45d7fc0f7",
+  "link_curves.json": "88f6436d81827342ed9736ad15e50ab4182ac299",
+  "estimator.json": "3a4aecceb19611abf4b4d31a313136fd3f016a7e"
  },
  "scenario": "b5_link_fade",
  "seed": 2002,
@@ -37,28 +39,40 @@
    "class": "dos",
    "severity": 1,
    "t_start": 125.59,
-   "t_end": 125.59
-  },
-  {
-   "agent": "ground",
-   "class": "telemetry_manipulation",
-   "severity": 2,
-   "t_start": 47.98,
-   "t_end": 47.98
+   "t_end": 125.59,
+   "evidence_types": [
+    "unsigned_command"
+   ]
   },
   {
    "agent": "ground",
    "class": "telemetry_manipulation",
    "severity": 2,
    "t_start": 74.22,
-   "t_end": 74.22
+   "t_end": 74.22,
+   "evidence_types": [
+    "commit_timeout"
+   ]
   },
   {
    "agent": "ground",
    "class": "telemetry_manipulation",
    "severity": 2,
    "t_start": 141.93,
-   "t_end": 141.93
+   "t_end": 141.93,
+   "evidence_types": [
+    "selective_commit_loss"
+   ]
+  },
+  {
+   "agent": "ground",
+   "class": "dos",
+   "severity": 2,
+   "t_start": 206.95,
+   "t_end": 206.95,
+   "evidence_types": [
+    "excess_loss"
+   ]
   }
  ],
  "baseline_episodes": []
