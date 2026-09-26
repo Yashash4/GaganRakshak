@@ -49,6 +49,7 @@ class ProtocolDetector:
         self._uplink = deque()  # timestamps of uplink messages in the last second
         self._flooding = False
         self.airborne = False
+        self._t_alt = -1e9  # airborne state older than 2 s is unknown (e.g. lossy ground downlink)
 
     def _ev(self, t, kind, score, sev, cls, **meta):
         return EvidenceEvent(t, self.uav_id, "protocol", kind, score, sev, cls, meta)
@@ -62,6 +63,7 @@ class ProtocolDetector:
         sysid, compid, seq = msg.get_srcSystem(), msg.get_srcComponent(), msg.get_seq()
         if name == "GLOBAL_POSITION_INT" and sysid == FC_SYSID:
             self.airborne = msg.relative_alt / 1000.0 > self.airborne_m
+            self._t_alt = t
 
         if sysid not in self.allowed.get(direction, ()):
             out.append(self._ev(t, "unknown_source", 1.0, Severity.HIGH, "mavlink_anomaly",
@@ -88,7 +90,7 @@ class ProtocolDetector:
             self._flooding = flooding
 
         if (name in ("COMMAND_LONG", "COMMAND_INT") and msg.command in UNSAFE_IN_FLIGHT
-                and self.airborne and not (msg.command == MAV.MAV_CMD_COMPONENT_ARM_DISARM
+                and self.airborne and t - self._t_alt < 2.0 and not (msg.command == MAV.MAV_CMD_COMPONENT_ARM_DISARM
                                            and msg.param1 == 1)):
             out.append(self._ev(t, "unsafe_command", 1.0, Severity.HIGH, "command_injection",
                                 direction=direction, command=int(msg.command), sysid=sysid))
