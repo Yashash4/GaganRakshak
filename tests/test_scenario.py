@@ -5,6 +5,7 @@ import pytest
 import yaml
 
 from gaganrakshak import sitl
+from gaganrakshak.ids import Ids, run_replay
 from gaganrakshak.scenario import resolve, run_many, run_ports
 
 SCEN = Path(__file__).parent.parent / "scenarios"
@@ -42,3 +43,7 @@ def test_eight_parallel_runs(tmp_path):
         assert {k: l[k] for k in p} == p  # labels carry the exact resolved plan
         assert l["recorded_frames"]["onboard"] > 1000 and l["recorded_frames"]["ground"] > 100
         assert [e["event"] for e in l["events"]][0] == "takeoff" and l["events"][-1]["event"] == "end"
+        for side in ("onboard", "ground"):  # recorded traffic replays cleanly through the IDS
+            ids = run_replay(Ids([]), tmp_path / p["run_id"] / side)
+            assert not ids.adapter.stats["unknown"], (p["run_id"], side, ids.adapter.stats["unknown"])
+            assert sum(ids.adapter.stats["mapped"].values()) > 50

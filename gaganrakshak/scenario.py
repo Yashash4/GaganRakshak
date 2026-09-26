@@ -106,6 +106,7 @@ class Recorder:
         self.sock.settimeout(0.2)
         self.files = {d: open(f"{prefix}_{d.decode()}.tlog", "wb") for d in (b"D", b"U")}
         self.count = 0
+        self.non_mavlink = 0
         self._stop = threading.Event()
         self._t = threading.Thread(target=self._run, daemon=True)
         self._t.start()
@@ -117,9 +118,15 @@ class Recorder:
             except socket.timeout:
                 continue
             out = self.files.get(f[:1])
-            if out:
-                out.write(struct.pack(">Q", int(time.time() * 1e6)) + f[1:])
-                self.count += 1
+            if out is None:
+                continue
+            if f[1:2] not in (b"\xfd", b"\xfe"):
+                # tlog has no framing of its own: non-MAVLink bytes (e.g. SITL boot text)
+                # would desync every reader. Counted, not written.
+                self.non_mavlink += 1
+                continue
+            out.write(struct.pack(">Q", int(time.time() * 1e6)) + f[1:])
+            self.count += 1
 
     def close(self):
         self._stop.set()
@@ -309,8 +316,8 @@ class Run:
                 self.gnss_log.close()
         labels = {**plan, "instance": self.instance, "status": status, "t0_wall": self.events[0]["wall"]
                   if self.events else None, "events": self.events,
-                  "recorded_frames": {"onboard": recs[0].count if recs else 0,
-                                      "ground": recs[1].count if len(recs) > 1 else 0},
+                  "recorded_frames": {r_name: r.count for r_name, r in zip(("onboard", "ground"), recs)},
+                  "non_mavlink_frames": {r_name: r.non_mavlink for r_name, r in zip(("onboard", "ground"), recs)},
                   "link_stats": self.link.stats() if self.link else None}
         (out / "labels.json").write_text(json.dumps(labels, indent=1))
         return labels
