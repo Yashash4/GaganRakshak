@@ -9,9 +9,13 @@ ARDUPILOT_DIR="${ARDUPILOT_DIR:-$HOME/ardupilot}"
 ARDUPILOT_TAG="${ARDUPILOT_TAG:-Copter-4.7.1}"
 CODE_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 
-sudo apt-get update
-sudo apt-get install -y git build-essential python3-dev python3-venv python3-pip \
-  libxml2-dev libxslt1-dev zlib1g-dev pkg-config
+APT_PKGS="git build-essential python3-dev python3-venv python3-pip libxml2-dev libxslt1-dev zlib1g-dev pkg-config"
+MISSING=""
+for p in $APT_PKGS; do dpkg -s "$p" >/dev/null 2>&1 || MISSING="$MISSING $p"; done
+if [ -n "$MISSING" ]; then
+  sudo apt-get update
+  sudo apt-get install -y $MISSING
+fi
 
 if [ ! -d "$ARDUPILOT_DIR" ]; then
   git clone --depth 1 --branch "$ARDUPILOT_TAG" --recurse-submodules --shallow-submodules \
