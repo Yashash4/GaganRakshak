@@ -28,6 +28,10 @@ class RollFlagger:
         ]
 
 
+def toy_detectors(side, run):  # module level: the agent process imports it by name
+    return [RollFlagger()]
+
+
 def test_fast_and_paced_replay_measure_latency_backlog_and_alert_latency(tmp_path):
     mav = mav2.MAVLink(None)
     att = [(T0 + i / 50, mav.attitude_encode(i * 20, 0.9 if i >= 50 else 0.0, 0, 0, 0, 0, 0)) for i in range(75)]
@@ -41,14 +45,26 @@ def test_fast_and_paced_replay_measure_latency_backlog_and_alert_latency(tmp_pat
     }
     (tmp_path / "labels.json").write_text(json.dumps(labels))
 
-    fast = stress.measure(tmp_path, make=lambda side, run: [RollFlagger()])
+    fast = stress.measure(tmp_path, make=toy_detectors)
     assert fast["platform"] == "DGX Spark" and fast["mode"] == "fast"
     on = fast["agents"]["onboard"]
-    assert on["messages"] == 75 and set(on["latency"]) == {"p50_ms", "p95_ms", "p99_ms", "max_ms"}
+    assert on["messages"] == 75 and set(on["latency"]) == {"p50_ms", "p95_ms", "p99_ms", "max_ms", "n"}
+    assert on["latency_by_type"]["ATTITUDE"]["n"] == 75 and on["recorded_s"] == 1.48
+    assert set(on["detector_s"]) == {"RollFlagger"} and "physics" not in on
     assert on["first_alert"] == {"latency_s": 0.1, "class": "toy_class"}  # roll 0.9 from t = 1.0 s
-    assert fast["agents"]["ground"]["first_alert"] is None and fast["peak_rss_mb"] > 0
+    assert fast["agents"]["ground"]["first_alert"] is None and on["peak_rss_mb"] >= on["rss_start_mb"] > 0
 
-    paced = stress.measure(tmp_path, paced=True, make=lambda side, run: [RollFlagger()])
+    paced = stress.measure(tmp_path, paced=True, make=toy_detectors)
     on = paced["agents"]["onboard"]
     assert on["wall_s"] >= 1.4  # 1.48 s of traffic released in real time, never faster
-    assert on["lateness"]["p50_ms"] >= 0 and len(on["lateness_max_per_10s_s"]) == 1  # value: machine load
+    assert (
+        on["lateness"]["p50_ms"] >= 0 and len(on["lateness_max_per_10s_s"]) == 1
+    )  # value depends on the machine's load
+
+
+def test_physics_cost_is_split_into_new_gnss_fixes_and_repeats():
+    mav = mav2.MAVLink(None)
+    timed = stress.Timed(RollFlagger())
+    for usec in (1, 1, 2, 2, 2, 3):
+        timed.observe(mav.gps_raw_int_encode(usec, 3, 0, 0, 0, 0, 0, 0, 0, 10), [], "D", 0.0)
+    assert len(timed.times["GPS_RAW_INT(new fix)"]) == 3 and len(timed.times["GPS_RAW_INT(repeat)"]) == 3

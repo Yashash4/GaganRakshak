@@ -10,18 +10,26 @@ Modes
   release to processed, so it includes waiting behind earlier messages. ``lateness`` (how far
   behind real time the IDS is when it takes a message) is the input backlog in seconds; if it
   grows over the run, the IDS cannot keep up with that traffic.
-Per agent: message count, latency p50/p95/p99/max, throughput, CPU % of one core (user + system
-time / wall time, from getrusage), peak RSS of the process, and the alert latency: first episode
-opened between attack start and attack end + ``ALERT_WINDOW_S``, in scenario time. Tlog reading
-and parsing are outside the timed section in fast mode.
+
+Each agent runs in its own process (a fresh interpreter, one after the other), so its CPU and
+memory are its own. Per agent: message count, latency p50/p95/p99/max overall and per message type, throughput,
+CPU % of one core (user + system time / wall time), resident memory at start and peak, time per
+detector, and the alert latency (first episode opened between attack start and attack end +
+``ALERT_WINDOW_S``, scenario time). Onboard, the physics engine's cost is reported per new GNSS
+fix (all horizons) and per IMU sample, with the IMU rate of the run. Tlog reading and parsing are
+outside the timed section. The machine's load average is recorded: numbers from a busy machine
+are not comparable with numbers from an idle one.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import multiprocessing as mp
+import os
 import resource
 import time
+from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
@@ -39,16 +47,46 @@ def _pct(xs: list[float]) -> dict:
         return {}
     a = np.array(xs) * 1000.0
     return {f"p{q}_ms": round(float(np.percentile(a, q)), 4) for q in (50, 95, 99)} | {
-        "max_ms": round(float(a.max()), 4)
+        "max_ms": round(float(a.max()), 4),
+        "n": len(xs),
     }
+
+
+def _rss_mb() -> float:
+    return int(Path("/proc/self/statm").read_text().split()[1]) * os.sysconf("SC_PAGE_SIZE") / 2**20
+
+
+class Timed:
+    """Detector proxy: time spent in observe() per message type. GPS_RAW_INT is split into new
+    fixes and repeats of the last fix (the stream is faster than the receiver's fix rate)."""
+
+    def __init__(self, det):
+        self.det = det
+        self.times: dict[str, list[float]] = defaultdict(list)
+        self._fix = None
+
+    def observe(self, msg, samples, direction, t):
+        s = time.perf_counter()
+        out = self.det.observe(msg, samples, direction, t)
+        dt = time.perf_counter() - s
+        key = msg.get_type()
+        if key == "GPS_RAW_INT" and direction == "D":
+            key = "GPS_RAW_INT(new fix)" if msg.time_usec != self._fix else "GPS_RAW_INT(repeat)"
+            self._fix = msg.time_usec
+        self.times[key].append(dt)
+        return out
+
+    def __getattr__(self, name):  # tick() and anything else: the detector's own
+        return getattr(self.det, name)
 
 
 def replay(ids: Ids, prefix: Path, paced: bool, tick_s: float = 0.1) -> dict:
     """Feed a tlog pair through ``ids`` (ticks as ``ids.run_replay``); timing per message."""
     lat: list[float] = []
+    by_type: dict[str, list[float]] = defaultdict(list)
     late: list[tuple[float, float]] = []  # (run time, lateness)
     t_first: float | None = None
-    next_tick = 0.0
+    next_tick = t = 0.0
     ru0, w0 = resource.getrusage(resource.RUSAGE_SELF), time.perf_counter()
     for t, direction, msg in replay_tlogs(prefix):
         if t_first is None:
@@ -66,16 +104,20 @@ def replay(ids: Ids, prefix: Path, paced: bool, tick_s: float = 0.1) -> dict:
             ids.tick(next_tick)
             next_tick += tick_s
         ids.feed(msg, direction, t)
-        lat.append(time.perf_counter() - due)
+        dt = time.perf_counter() - due
+        lat.append(dt)
+        by_type[msg.get_type()].append(dt)
     wall = time.perf_counter() - w0
     ru1 = resource.getrusage(resource.RUSAGE_SELF)
     cpu = (ru1.ru_utime - ru0.ru_utime) + (ru1.ru_stime - ru0.ru_stime)
     out: dict[str, Any] = {
         "messages": len(lat),
+        "recorded_s": round(t - t_first, 3) if t_first is not None else 0.0,
         "wall_s": round(wall, 3),
         "msgs_per_s": round(len(lat) / wall, 1) if wall else None,
-        "latency": _pct(lat),
         "cpu_pct_one_core": round(100.0 * cpu / wall, 1) if wall else None,
+        "latency": _pct(lat),
+        "latency_by_type": {k: _pct(v) for k, v in sorted(by_type.items(), key=lambda kv: -len(kv[1]))},
     }
     if paced and late:
         bins: dict[int, float] = {}
@@ -86,31 +128,52 @@ def replay(ids: Ids, prefix: Path, paced: bool, tick_s: float = 0.1) -> dict:
     return out
 
 
+def _agent(side: str, run: Path, paced: bool, make, t0: float, start, end, q) -> None:
+    rss0 = _rss_mb()
+    dets = [Timed(d) for d in make(side, run)]
+    ids = Ids(dets)
+    r = replay(ids, run / side, paced)
+    r["rss_start_mb"] = round(rss0, 1)
+    r["peak_rss_mb"] = round(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024.0, 1)  # Linux: KiB
+    r["detector_s"] = {type(d.det).__name__: round(sum(sum(v) for v in d.times.values()), 3) for d in dets}
+    physics = next((d for d in dets if type(d.det).__name__ == "Cpce"), None)
+    if physics is not None:
+        imu = physics.times.get("RAW_IMU", [])
+        r["physics"] = {
+            "horizons_s": list(physics.det.res.horizons),
+            "per_gnss_fix": _pct(physics.times.get("GPS_RAW_INT(new fix)", [])),
+            "per_imu_sample": _pct(imu),
+            "imu_rate_hz": round(len(imu) / r["recorded_s"], 1) if r["recorded_s"] else None,
+        }
+    first = None
+    if start is not None:
+        stop = (end if end is not None else start) + ALERT_WINDOW_S
+        eps = sorted((ep.t_start - t0, ep.attack_class) for ep in ids.tracker.episodes)
+        first = next(({"latency_s": round(ts - start, 3), "class": c} for ts, c in eps if start <= ts <= stop), None)
+    r["first_alert"] = first
+    q.put(r)
+
+
 def measure(run: Path, paced: bool = False, make=detectors) -> dict:
     labels = json.loads((run / "labels.json").read_text())
-    t0 = labels["t0_wall"]
     start = next((e["t"] for e in labels["events"] if e["event"] == "attack_start"), None)
     end = next((e["t"] for e in labels["events"] if e["event"] == "attack_end"), None)
     out: dict[str, Any] = {
         "platform": PLATFORM,
+        "cpus": os.cpu_count(),
+        "load_avg_1m_at_start": round(os.getloadavg()[0], 2),
         "run_id": labels["run_id"],
         "attack": labels["attack"]["type"] if labels.get("attack") else None,
         "mode": "paced" if paced else "fast",
         "agents": {},
     }
+    ctx = mp.get_context("spawn")  # fresh process: its own memory; fork is unsafe in a threaded parent
     for side in ("onboard", "ground"):
-        ids = Ids(make(side, run))
-        r = replay(ids, run / side, paced)
-        first = None
-        if start is not None:
-            stop = (end if end is not None else start) + ALERT_WINDOW_S
-            eps = sorted((ep.t_start - t0, ep.attack_class) for ep in ids.tracker.episodes)
-            first = next(
-                ({"latency_s": round(ts - start, 3), "class": c} for ts, c in eps if start <= ts <= stop), None
-            )
-        r["first_alert"] = first
-        out["agents"][side] = r
-    out["peak_rss_mb"] = round(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024.0, 1)  # Linux: KiB
+        q = ctx.Queue()
+        p = ctx.Process(target=_agent, args=(side, run, paced, make, labels["t0_wall"], start, end, q))
+        p.start()
+        out["agents"][side] = q.get()
+        p.join()
     return out
 
 
