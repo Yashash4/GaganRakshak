@@ -48,11 +48,83 @@ pytest -q -m "not sitl"          # tests that do not need a SITL build
 The lock is regenerated from `pyproject.toml` with
 `uv pip compile pyproject.toml --extra dev -o requirements.lock --python-version 3.12 --universal`.
 
-## Run
-_Demo and benchmark commands are added as the build lands._
+Optional: the autoencoder models of the anomaly-model comparison (`gaganrakshak/ml.py`) need
+PyTorch, `pip install -e ".[ml]"`; everything else runs without it.
+
+All attacks are simulated in ArduPilot SITL: GNSS spoofing is applied to the simulated
+receiver, and link attacks run in a simulated radio link between the two agents. Nothing is
+transmitted over the air.
+
+## Quick demo
+Fly one scenario in SITL (real time, about three minutes), then replay the recording through
+both IDS agents and through stock ArduPilot's own indicators:
+```bash
+python -m gaganrakshak.scenario scenarios/a3_cmd_injection.yaml --seeds 1 --out results/raw/demo
+python -m gaganrakshak.evaluate results/raw/demo/a3_cmd_injection-s1 --events
+python -m gaganrakshak.baseline results/raw/demo/a3_cmd_injection-s1
+```
+`scenarios/` holds the attack scenarios (`a*`; `a3h_*` and `a5h_*` are held-out variants) and
+the benign ones (`b*`: calm, wind, aggressive flying, GNSS glitches, link fade, operator
+commands, takeoff and landing). Every recorded run has `labels.json` with its ground truth.
+
+## Calibration
+The IDS learns its thresholds from clean flights only; nothing is tuned on attack runs. Three
+artefacts in `results/calibration/` hold what was learned:
+
+| File | What |
+|---|---|
+| `cpce.json` | physics engine: residual noise levels, CUSUM threshold, anchored-offset gate, drift-trend threshold |
+| `link_curves.json` | link statistics: expected frame loss versus distance, commitment-loss statistics |
+| `estimator.json` | thresholds on the autopilot's EKF innovation test ratios (advisory evidence) |
+
+```bash
+python -m gaganrakshak.calibration results/raw/<clean-flight-batch>/*   # writes all three
+```
+A guard admits a flight only if it flew as planned, contains no attack and raises no IDS
+evidence other than the statistics being learned; every decision is printed with its reason.
+The artefacts are required: evaluation refuses to run without them.
+
+## Benchmark
+```bash
+python -m gaganrakshak.bench plan --n 10 --m 20      # the test-split flight plan
+python -m gaganrakshak.bench fly --n 10 --m 20       # fly it in SITL -> results/raw/test
+python -m gaganrakshak.export --split test --raw-root results/raw results/raw/test/*/
+python -m gaganrakshak.bench metrics results/runs/test   # -> results/bench/summary.{json,md}
+```
+The metrics are computed from the per-run exports only, so they can be checked independently:
+detection of the expected attack class during the attack (and including its release), latency,
+secondary detections, and false alarms per clean flight-hour with a 95 % upper bound, for the
+IDS and for stock ArduPilot's own indicators alike (definitions in `gaganrakshak/bench.py`).
+
+Resource use of both agents (latency per message and per message type, CPU, memory, physics
+cost per GNSS fix and per IMU sample), back to back or paced at recorded time:
+```bash
+python -m gaganrakshak.stress results/raw/<batch>/<run> [--paced] --out results/stress
+```
+
+## Per-run exports
+`scripts/export_runs.sh [RAW_DIR]` replays every calibration and validation flight with the
+current calibration and writes one JSON per run to `results/runs/<split>/`: ground truth, the IDS
+episodes and the stock-ArduPilot episodes, each with the evidence behind it, the physics
+arming times, a distance track and the hashes of the calibration files used. No metrics are
+computed in these files.
+
+## Splits and seeds
+| Split | Seeds | Use |
+|---|---|---|
+| development | 1–999 | building and debugging detectors |
+| calibration | 1001–2999 | learning thresholds (clean flights only) |
+| test | 5001–5999 | the benchmark; flown once, never used for tuning |
 
 ## Results
-_Populated from `results/` by the benchmark runner._
+| Directory | Contents |
+|---|---|
+| `results/calibration/` | the learned calibration artefacts |
+| `results/runs/` | per-run exports (calibration, validation, test) |
+| `results/bench/` | benchmark summary (`summary.json`, `summary.md`) |
+| `results/stress/` | resource measurements, labelled with platform and load average |
+
+Raw recordings (`results/raw/`: tlogs, keys, SITL DataFlash logs) are not in the repository.
 
 ## Third-party components
 See [THIRD_PARTY.md](THIRD_PARTY.md).
