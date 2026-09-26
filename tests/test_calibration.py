@@ -23,8 +23,17 @@ def test_rejects_failed_attacked_or_anomalous_runs(tmp_path):
     assert not usable(run_dir(tmp_path, "d", events=("takeoff", "touchdown_not_seen", "end")), check_ids=False)[0]
 
 
-@pytest.mark.skipif(not (RAW / "calib" / "b5_link_fade-s103").exists(), reason="recorded run not present")
-def test_rejects_run_with_ids_episode():
-    """b5-s103 was flown with the old harness, which force-disarmed in flight: the IDS flags it."""
-    ok, why = usable(RAW / "calib" / "b5_link_fade-s103")
-    assert not ok and "unsafe_command" in why
+A3_RUN = RAW / "att" / "a3_cmd_injection-s1"
+
+
+@pytest.mark.skipif(not A3_RUN.exists(), reason="recorded injection run not present")
+def test_rejects_run_with_unauthorised_evidence(tmp_path):
+    """An injected command is rejected by the IDS evidence alone, even with the attack label removed."""
+    import shutil
+    run = tmp_path / "unlabelled"
+    shutil.copytree(A3_RUN, run, ignore=shutil.ignore_patterns("sitl"))
+    labels = json.loads((run / "labels.json").read_text())
+    labels["attack"] = None
+    (run / "labels.json").write_text(json.dumps(labels))
+    ok, why = usable(run)
+    assert not ok and "unsigned_command" in why
