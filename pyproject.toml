@@ -25,6 +25,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+ml = ["torch>=2.4"]  # autoencoder models in gaganrakshak.ml; CUDA used when available
 dev = ["pytest>=8", "pytest-cov>=5", "MAVProxy>=1.8", "ruff>=0.6", "mypy>=1.11", "types-PyYAML"]
 
 [tool.setuptools.packages.find]
