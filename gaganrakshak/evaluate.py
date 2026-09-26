@@ -31,7 +31,7 @@ def detectors(side: str, run: Path, link_curves: Path = LINK_CURVES) -> list:
     if side == "onboard":
         verifier = CmdVerifier(_pub(run, "ground_sign"))
         baseline = load_baseline(BASELINE.with_suffix(".json"), bytes.fromhex(BASELINE.with_suffix(".pub").read_text()))
-        return [for_agent("onboard"), verifier, IntegrityMonitor(baseline, verifier)]
+        return [for_agent("onboard", verifier=verifier), verifier, IntegrityMonitor(baseline, verifier)]
     curves = load_curves(link_curves) if link_curves.exists() else {}
     rx = CommitRx(_pub(run, "onboard_commit"), **curves.pop("commit", {}))
     return [for_agent("ground"), rx, LinkMonitor(rx, curves=curves or None)]

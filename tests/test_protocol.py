@@ -77,3 +77,26 @@ def test_disarm_in_flight_is_unsafe_but_not_on_ground():
     assert kinds(det, [disarm()]) == []  # operator disarm after landing (harness does this)
     det.observe(pos(15), [], "D", 1)
     assert kinds(det, [disarm()], t0=2) == ["unsafe_command"]
+
+
+def test_signed_unsafe_command_is_the_operators():
+    """Onboard: a disarm in flight is an alarm unless the ground agent signed it."""
+    from gaganrakshak import crypto
+    from gaganrakshak.cmd_sign import CmdVerifier, Signer
+    seed, pub = crypto.generate_keypair()
+    fc, gcs = Sender(1), Sender(255, 190)
+    signer, verifier = Signer(seed), CmdVerifier(pub)
+    det = ProtocolDetector(verifier=verifier)
+    det.observe(fc(mav.MAVLink_global_position_int_message(0, 0, 0, 0, 15000, 0, 0, 0, 0)), [], "D", 0)
+    ev = []
+    for i, signed in enumerate((True, False)):
+        cmd = gcs(mav.MAVLink_command_long_message(1, 1, MAV.MAV_CMD_COMPONENT_ARM_DISARM, 0, 0, 21196, 0, 0, 0, 0, 0))
+        t = 1.0 + i * 0.1
+        for d in (det, verifier):
+            ev += d.observe(cmd, [], "U", t)
+        if signed:
+            for sig in signer.sign(bytes(cmd.get_msgbuf()), cmd):
+                ev += verifier.observe(mav.MAVLink(None).parse_char(sig), [], "U", t)
+    ev += verifier.tick(1.8) + det.tick(2.5)
+    kinds = [(e.evidence_type, e.class_hint) for e in ev if e.source == "protocol"]
+    assert kinds == [("operator_unsafe_command", None), ("unsafe_command", "command_injection")]

@@ -7,7 +7,11 @@ Evidence it emits (class hint in brackets):
 - ``unknown_source``  a system id that should not be on this path in this direction. [mavlink_anomaly]
 - ``malformed``       bytes that are not a valid MAVLink frame (bad CRC / framing). [mavlink_anomaly]
 - ``uplink_flood``    more uplink messages per second than any GCS sends. [dos]
-- ``unsafe_command``  disarm / reboot / calibration / flight termination while airborne. [command_injection]
+- ``unsafe_command``  disarm / reboot / calibration / flight termination while airborne,
+                      not verified as a signed GCS command (cmd_sign). [command_injection]
+                      A verified one is the operator's: logged as INFO ``operator_unsafe_command``.
+                      Only the onboard agent judges this: the ground agent's uplink comes from
+                      its own GCS, and injection happens on the radio link after it.
 Sequence gaps are counted (link statistics) but are not attack evidence on their own.
 
 Duplicate checks need the sender's full stream. The onboard router thins the downlink to the
@@ -36,8 +40,13 @@ FC_SYSID, GCS_SYSID, RADIO_SYSID = 1, 255, 51
 
 class ProtocolDetector:
     def __init__(self, uav_id: int = 1, allowed: dict | None = None, dup_window: int = 32,
-                 uplink_max_per_s: int = 50, airborne_m: float = 1.0, seq_dirs=("D", "U")):
+                 uplink_max_per_s: int = 50, airborne_m: float = 1.0, seq_dirs=("D", "U"),
+                 verifier=None, check_unsafe: bool = True, settle_s: float = 1.0):
         self.uav_id = uav_id
+        self.verifier = verifier  # cmd_sign.CmdVerifier: decides whether an unsafe command is the operator's
+        self.check_unsafe = check_unsafe
+        self.settle_s = settle_s
+        self._unsafe = []  # (t, command key, command, sysid) awaiting the signature verdict
         self.seq_dirs = set(seq_dirs)
         self.allowed = allowed or {"D": {FC_SYSID, RADIO_SYSID}, "U": {GCS_SYSID}}
         self.dup_window = dup_window
@@ -89,14 +98,38 @@ class ProtocolDetector:
                                     Severity.HIGH, "dos", rate=len(self._uplink)))
             self._flooding = flooding
 
-        if (name in ("COMMAND_LONG", "COMMAND_INT") and msg.command in UNSAFE_IN_FLIGHT
+        if (self.check_unsafe and name in ("COMMAND_LONG", "COMMAND_INT") and msg.command in UNSAFE_IN_FLIGHT
                 and self.airborne and t - self._t_alt < 2.0 and not (msg.command == MAV.MAV_CMD_COMPONENT_ARM_DISARM
                                            and msg.param1 == 1)):
-            out.append(self._ev(t, "unsafe_command", 1.0, Severity.HIGH, "command_injection",
-                                direction=direction, command=int(msg.command), sysid=sysid))
+            key = (sysid, compid, seq, msg.get_msgId())
+            if self.verifier is None:
+                out.append(self._ev(t, "unsafe_command", 1.0, Severity.HIGH, "command_injection",
+                                    direction=direction, command=int(msg.command), sysid=sysid))
+            else:
+                self._unsafe.append((t, key, int(msg.command), sysid))
+        return out
+
+    def tick(self, t):
+        """Unsafe commands are judged once the signature check has concluded."""
+        out, keep = [], []
+        for item in self._unsafe:
+            t0, key, command, sysid = item
+            if t - t0 < self.settle_s:
+                keep.append(item)
+            elif self.verifier.outcome.get(key) == "verified":
+                out.append(self._ev(t, "operator_unsafe_command", 0.0, Severity.INFO, None,
+                                    command=command, sysid=sysid))
+            else:
+                out.append(self._ev(t, "unsafe_command", 1.0, Severity.HIGH, "command_injection",
+                                    command=command, sysid=sysid,
+                                    signature=self.verifier.outcome.get(key, "unsigned")))
+        self._unsafe = keep
         return out
 
 
 def for_agent(agent: str, **kw) -> ProtocolDetector:
-    """onboard: full streams both ways. ground: downlink is thinned by the onboard router."""
-    return ProtocolDetector(seq_dirs=("D", "U") if agent == "onboard" else ("U",), **kw)
+    """onboard: full streams both ways; unsafe commands judged with the signature verdict.
+    ground: downlink thinned by the onboard router; uplink is its own GCS (no unsafe check)."""
+    if agent == "onboard":
+        return ProtocolDetector(seq_dirs=("D", "U"), **kw)
+    return ProtocolDetector(seq_dirs=("U",), check_unsafe=False, **kw)
