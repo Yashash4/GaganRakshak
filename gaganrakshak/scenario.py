@@ -450,6 +450,7 @@ class Run:
                 self.gnss_log.close()
         labels = {
             **plan,
+            "code_version": code_version(),
             "instance": self.instance,
             "status": status,
             "t0_wall": self.events[0]["wall"] if self.events else None,
@@ -462,6 +463,21 @@ class Run:
         }
         (out / "labels.json").write_text(json.dumps(labels, indent=1))
         return labels
+
+
+def code_version() -> str:
+    """The commit of the code a run was flown with ("+dirty" with local changes), so every result
+    can be traced to the harness, routers and link model that produced it."""
+    root = Path(__file__).resolve().parent
+    try:
+        git = ["git", "-C", str(root)]
+        head = subprocess.run([*git, "rev-parse", "--short", "HEAD"], capture_output=True, text=True)
+        dirty = subprocess.run([*git, "status", "--porcelain", "--", "."], capture_output=True, text=True)
+    except OSError:
+        return "unknown"
+    if head.returncode != 0:
+        return "unknown"
+    return head.stdout.strip() + ("+dirty" if dirty.stdout.strip() else "")
 
 
 # -- parallel runner ------------------------------------------------------------------------
