@@ -107,6 +107,26 @@ def old_sizing(ep: dict, onboard: list, ground: list) -> tuple[list, str]:
     return matched, "matched"
 
 
+def old_sizing_marks(run: Path, episodes: list[dict], flown_at: str) -> dict[int, list[dict]]:
+    """The old-sizing rule, in one place for every scorer: {episode index: matched_uplink} for the
+    episodes of a recorded run that are a genuine command whose signature copies were all lost —
+    the run was flown before the sizing fix ("before-b747b3e"), the episode is formed by
+    unsigned_command (with at most unsafe_command beside it), and ``old_sizing`` matches every
+    command frame received around it to one the ground station sent."""
+    if flown_at != "before-b747b3e":
+        return {}
+    cand = [i for i, ep in enumerate(episodes) if lost_signature_evidence(ep)]
+    if not cand:
+        return {}
+    uplink = uplink_commands(run, json.loads((run / "labels.json").read_text())["t0_wall"])
+    out = {}
+    for i in cand:
+        matched, _ = old_sizing(episodes[i], *uplink)
+        if matched:
+            out[i] = matched
+    return out
+
+
 KEEP = (
     "takeoff",
     "touchdown",
@@ -200,15 +220,9 @@ def export_run(run: Path, split: str, out_root: Path = ROOT / "results" / "runs"
             {k: ep[k] for k in ("agent", "class", "severity", "t_start", "t_end", "evidence_types")}
             for ep in ev["episodes"]
         ]
-        if doc["flown_at"] == "before-b747b3e":
-            uplink = None
-            for ep in doc["episodes"]:
-                if lost_signature_evidence(ep):
-                    uplink = uplink or uplink_commands(run, labels["t0_wall"])
-                    matched, _ = old_sizing(ep, *uplink)
-                    if matched:
-                        ep["artefact"] = "old_sizing"
-                        ep["matched_uplink"] = matched
+        for i, matched in old_sizing_marks(run, doc["episodes"], doc["flown_at"]).items():
+            doc["episodes"][i]["artefact"] = "old_sizing"
+            doc["episodes"][i]["matched_uplink"] = matched
         doc["baseline_episodes"] = baseline_episodes(run)
         doc["distance_track"] = distance_track(run, labels["t0_wall"])
     out = out_root / split / f"{source}.json"

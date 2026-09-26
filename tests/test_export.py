@@ -147,3 +147,19 @@ def test_an_injected_or_replayed_frame_is_never_an_artefact(tmp_path):
     assert matched == [] and why == "a command frame received more often than the GCS sent it"
     t0 = _uplink(tmp_path, onboard=[], ground=[(49.5, genuine)])
     assert old_sizing(_episode(["unsigned_command"]), *uplink_commands(tmp_path, t0))[0] == []  # nothing to match
+
+
+def test_old_sizing_marks_applies_the_whole_rule_to_a_recorded_run(tmp_path):
+    from gaganrakshak.export import old_sizing_marks
+
+    disarm, injected = _cmd(7), _cmd(9, command=21, gcs=False)
+    t0 = _uplink(tmp_path, onboard=[(49.6, disarm), (80.2, injected)], ground=[(49.5, disarm)])
+    (tmp_path / "labels.json").write_text(json.dumps({"t0_wall": t0}))
+    eps = [
+        _episode(["unsafe_command", "unsigned_command"], 50.0),  # genuine disarm, signature lost: marked
+        _episode(["unsigned_command"], 80.5),  # injected frame: kept
+        _episode(["unsafe_command"], 50.0),  # no lost signature: kept
+    ]
+    marks = old_sizing_marks(tmp_path, eps, "before-b747b3e")
+    assert list(marks) == [0] and marks[0][0]["onboard_t"] == 49.6
+    assert old_sizing_marks(tmp_path, eps, "unknown") == {}  # flown after the fix: every alarm counts
