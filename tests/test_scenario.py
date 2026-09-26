@@ -8,10 +8,12 @@ from gaganrakshak import sitl
 from gaganrakshak.cmd_sign import CmdVerifier
 from gaganrakshak.commit import CommitRx
 from gaganrakshak.ids import Ids, run_replay
+from gaganrakshak.integrity import IntegrityMonitor, load_baseline
 from gaganrakshak.protocol import for_agent
 from gaganrakshak.scenario import resolve, run_many, run_ports
 
 SCEN = Path(__file__).parent.parent / "scenarios"
+BASE = Path(__file__).parent.parent / "configs" / "baseline" / "ardupilot_copter_sitl"
 ATTACK_SPEC = {"name": "x", "attack": {"type": "gps_jump", "start_s": [30, 60], "duration_s": [10, 20],
                                        "params": {"offset_m": [20, 50]}}}
 
@@ -49,7 +51,9 @@ def test_eight_parallel_runs(tmp_path):
         pub = lambda name: bytes.fromhex((tmp_path / p["run_id"] / f"{name}.pub").read_text())
         verifier, commit_rx = CmdVerifier(pub("ground_sign")), CommitRx(pub("onboard_commit"))
         for side in ("onboard", "ground"):  # recorded traffic replays cleanly through the IDS
-            dets = [for_agent(side), verifier if side == "onboard" else commit_rx]
+            baseline = load_baseline(BASE.with_suffix(".json"), bytes.fromhex(BASE.with_suffix(".pub").read_text()))
+            dets = ([for_agent(side), verifier, IntegrityMonitor(baseline, verifier)] if side == "onboard"
+                    else [for_agent(side), commit_rx])
             ids = run_replay(Ids(dets), tmp_path / p["run_id"] / side)
             assert ids.alerts == [], (p["run_id"], side, ids.alerts[:3])  # clean runs: no alarms
             assert not ids.adapter.stats["unknown"], (p["run_id"], side, ids.adapter.stats["unknown"])

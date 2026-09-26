@@ -62,10 +62,20 @@ class CmdVerifier:
         self._cmds = {}  # key -> (t, frame bytes, name)
         self._sigs = {}  # key -> list of GR_CMD_SIG
         self.verified = 0
+        self.outcome = {}  # command key -> "verified" | "bad_signature" | "replayed" | "unsigned"
 
     @staticmethod
     def _key(sysid, compid, seq, msgid):
         return sysid, compid, seq, msgid
+
+    @classmethod
+    def key_of(cls, msg):
+        return cls._key(msg.get_srcSystem(), msg.get_srcComponent(), msg.get_seq(), msg.get_msgId())
+
+    def _set(self, k, result):
+        self.outcome[k] = result
+        if len(self.outcome) > 4096:  # bounded: consumers read outcomes within seconds
+            del self.outcome[next(iter(self.outcome))]
 
     def _ev(self, t, kind, sev, cls, **meta):
         return EvidenceEvent(t, self.uav_id, "cmd_sign", kind, 1.0, sev, cls, meta)
@@ -77,7 +87,7 @@ class CmdVerifier:
             k = self._key(msg.cmd_sysid, msg.cmd_compid, msg.cmd_seq, msg.cmd_msgid)
             self._sigs.setdefault(k, []).append(msg)
         elif is_command(msg):
-            k = self._key(msg.get_srcSystem(), msg.get_srcComponent(), msg.get_seq(), msg.get_msgId())
+            k = self.key_of(msg)
             self._cmds[k] = (t, bytes(msg.get_msgbuf()), msg.get_type())
         else:
             return []
@@ -89,6 +99,8 @@ class CmdVerifier:
             t_cmd, frame, name = self._cmds.pop(k)
             sigs = self._sigs.pop(k)
             ok = [s for s in sigs if crypto.verify(_signed_bytes(s.counter, frame), bytes(s.signature), self.pub)]
+            self._set(k, "bad_signature" if not ok else "replayed" if ok[0].counter <= self.last_counter
+                      else "verified")
             if not ok:
                 out.append(self._ev(t, "bad_signature", Severity.HIGH, "command_injection", command=name))
             elif ok[0].counter <= self.last_counter:
@@ -104,6 +116,7 @@ class CmdVerifier:
         for k, (t_cmd, _, name) in list(self._cmds.items()):
             if t - t_cmd > self.wait_s:
                 del self._cmds[k]
+                self._set(k, "unsigned")
                 out.append(self._ev(t, "unsigned_command", Severity.MEDIUM, "command_injection",
                                     command=name, sysid=k[0]))
         for k in list(self._sigs):  # signatures whose command was lost on the radio
