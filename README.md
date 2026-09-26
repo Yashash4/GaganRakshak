@@ -1,5 +1,14 @@
 # GaganRakshak
 
+[![CI](https://github.com/Yashash4/GaganRakshak/actions/workflows/ci.yml/badge.svg)](https://github.com/Yashash4/GaganRakshak/actions/workflows/ci.yml)
+[![Licence: Apache-2.0](https://img.shields.io/badge/licence-Apache--2.0-blue.svg)](LICENSE)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](pyproject.toml)
+[![Coverage 62%](https://img.shields.io/badge/coverage-62%25-yellow.svg)](.github/workflows/ci.yml)
+
+<sub>Coverage: line coverage of `gaganrakshak` from `pytest -m "not sitl" --cov=gaganrakshak`
+(SITL flight tests excluded), measured when this badge was last updated; CI prints the current
+figure in each run's summary.</sub>
+
 A two-point, cyber-physical intrusion detection system for drones. PUSHPAK Grand
 Challenge 2026, GC3 "Security of Drones", Objective 2 (Drone IDS). Team: Eagle Vision.
 
