@@ -70,10 +70,13 @@ def test_uplink_flood_once_per_onset():
 
 def test_disarm_in_flight_is_unsafe_but_not_on_ground():
     fc, gcs, det = Sender(1), Sender(255), ProtocolDetector()
-    disarm = lambda: gcs(
-        mav.MAVLink_command_long_message(1, 1, MAV.MAV_CMD_COMPONENT_ARM_DISARM, 0, 0, 21196, 0, 0, 0, 0, 0)
-    )
-    pos = lambda alt_m: fc(mav.MAVLink_global_position_int_message(0, 0, 0, 0, int(alt_m * 1000), 0, 0, 0, 0))
+
+    def disarm():
+        return gcs(mav.MAVLink_command_long_message(1, 1, MAV.MAV_CMD_COMPONENT_ARM_DISARM, 0, 0, 21196, 0, 0, 0, 0, 0))
+
+    def pos(alt_m):
+        return fc(mav.MAVLink_global_position_int_message(0, 0, 0, 0, int(alt_m * 1000), 0, 0, 0, 0))
+
     det.observe(pos(0.1), [], "D", 0)
     assert kinds(det, [disarm()]) == []  # operator disarm after landing (harness does this)
     det.observe(pos(15), [], "D", 1)

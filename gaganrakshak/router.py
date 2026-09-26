@@ -239,7 +239,10 @@ def main():
     ap.add_argument("--sign-key", type=Path, help="ground agent: file with the hex Ed25519 private seed")
     ap.add_argument("--commit-key", type=Path, help="onboard agent: file with the hex Ed25519 private seed")
     args = ap.parse_args()
-    load = lambda p: bytes.fromhex(p.read_text().strip()) if p else None
+
+    def load(p):
+        return bytes.fromhex(p.read_text().strip()) if p else None
+
     r = Router(
         args.a,
         args.b,

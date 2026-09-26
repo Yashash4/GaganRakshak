@@ -58,9 +58,12 @@ def test_injected_command_is_unsigned():
 
 def test_unsigned_on_a_lossy_uplink_is_link_evidence():
     gcs = Gcs()
-    hb = lambda: mav.MAVLink_heartbeat_message(6, 8, 0, 0, 0, 3)
+
+    def hb():
+        return mav.MAVLink_heartbeat_message(6, 8, 0, 0, 0, 3)
+
     frames = []
-    for i in range(40):  # GCS heartbeats with every other one lost: 50 % uplink loss
+    for _ in range(40):  # GCS heartbeats with every other one lost: 50 % uplink loss
         buf = hb().pack(gcs.m)
         gcs.m.seq = (gcs.m.seq + 2) % 256
         frames.append(buf)

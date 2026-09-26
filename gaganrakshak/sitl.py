@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import os
-import time
 import subprocess
+import time
 from pathlib import Path
 
 ARDUPILOT_DIR = Path(os.environ.get("ARDUPILOT_DIR", Path.home() / "ardupilot"))

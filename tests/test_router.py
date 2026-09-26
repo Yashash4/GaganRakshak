@@ -46,7 +46,7 @@ def ids_frames(sock, seconds=0.3):
     while time.monotonic() - t0 < seconds:
         try:
             out.append(sock.recv(4096))
-        except socket.timeout:
+        except TimeoutError:
             pass
     return out
 

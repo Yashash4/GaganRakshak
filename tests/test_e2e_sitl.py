@@ -16,7 +16,7 @@ from pymavlink.dialects.v20 import ardupilotmega as mav2
 from gaganrakshak import crypto, sitl
 
 MAV = mavutil.mavlink
-I = 5  # SITL instance: link tcp 5810, harness tcp 5812
+INST = 5  # SITL instance: link tcp 5810, harness tcp 5812
 RADIO_AIR, RADIO_GND, GCS, IDS_ON, IDS_GND = 16300, 16302, 16301, 16310, 16311
 RADIO_BYTES_PER_S = 57600 / 10  # 57.6 kbps serial, 8N1 = 10 bits on the wire per byte
 
@@ -43,7 +43,7 @@ class Mirror:
         while self.alive:
             try:
                 self.frames.append(self.sock.recv(4096))
-            except socket.timeout:
+            except TimeoutError:
                 pass
 
     def take(self):
@@ -67,7 +67,7 @@ class Mirror:
 @pytest.fixture(scope="module")
 def chain(tmp_path_factory):
     work = tmp_path_factory.mktemp("sitl")
-    procs = [sitl.start(I, work)]
+    procs = [sitl.start(INST, work)]
     sitl.wait_ready(work)
     ids_on, ids_gnd = Mirror(IDS_ON), Mirror(IDS_GND)
     for name in ("sign", "commit"):  # full IDS traffic on the radio: signatures + commitments
@@ -77,7 +77,7 @@ def chain(tmp_path_factory):
             "router",
             "--onboard",
             "--a",
-            f"tcp:127.0.0.1:{sitl.ports(I)['link']}",
+            f"tcp:127.0.0.1:{sitl.ports(INST)['link']}",
             "--b",
             f"udpout:127.0.0.1:{RADIO_AIR}",
             "--ids-port",
@@ -157,7 +157,7 @@ def test_gcs_command_reaches_fc(chain):
 def test_sim_params_never_reach_radio_or_ids(chain):
     """SIM_ params are set over the harness port; the FC echoes PARAM_VALUE on every link."""
     gcs, ids_on, ids_gnd, _ = chain
-    h = mavutil.mavlink_connection(f"tcp:127.0.0.1:{sitl.ports(I)['harness']}", source_system=250)
+    h = mavutil.mavlink_connection(f"tcp:127.0.0.1:{sitl.ports(INST)['harness']}", source_system=250)
     h.wait_heartbeat(timeout=10)
     ids_on.take()
     for x in (0.5, 1.0, 0.0):

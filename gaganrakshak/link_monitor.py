@@ -52,7 +52,7 @@ class BandCurve:
         floor: float = 0.05,
         cap: float = 1.0,
         min_per_bin: int = 5,
-    ) -> "BandCurve":
+    ) -> BandCurve:
         """samples = (distance, value). ``floor`` is the smallest band (loss: a single lost burst
         in a 10-window span is several percent; heartbeat silence: 3 s = three missed 1 Hz beats)."""
         n_bins = int(max(d for d, _ in samples) // bin_m) + 1
@@ -70,7 +70,7 @@ class BandCurve:
         return {"bin_m": self.bin_m, "upper": self.upper, "meta": self.meta}
 
     @classmethod
-    def from_dict(cls, d: dict) -> "BandCurve":
+    def from_dict(cls, d: dict) -> BandCurve:
         return cls(d["bin_m"], d["upper"], d.get("meta"))
 
 

@@ -91,9 +91,8 @@ def main():
             f"[{att['start_s'] if att else ''}, {att['end_s'] if att else ''}]"
         )
         for ep in r["episodes"]:
-            print(
-                f"   episode {ep['agent']:7s} {ep['class']:24s} {ep['t_start']:>7} .. {ep['t_end']}  ({ep['alerts']} alerts)"
-            )
+            span = f"{ep['t_start']:>7} .. {ep['t_end']}"
+            print(f"   episode {ep['agent']:7s} {ep['class']:24s} {span}  ({ep['alerts']} alerts)")
         if a.events:
             for e in r["evidence"]:
                 print("     ", e)

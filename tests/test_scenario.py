@@ -4,7 +4,6 @@ from pathlib import Path
 import pytest
 import yaml
 
-from gaganrakshak import sitl
 from gaganrakshak.cmd_sign import CmdVerifier
 from gaganrakshak.commit import CommitRx
 from gaganrakshak.ids import Ids, run_replay
@@ -46,13 +45,14 @@ def test_eight_parallel_runs(tmp_path):
     results = run_many(plans, tmp_path, workers=8)
     assert [r[1] for r in results] == ["ok"] * 8, results
     labels = [json.loads((tmp_path / p["run_id"] / "labels.json").read_text()) for p in plans]
-    assert len({l["instance"] for l in labels}) == 8
-    for p, l in zip(plans, labels):
-        assert {k: l[k] for k in p} == p  # labels carry the exact resolved plan
-        assert l["recorded_frames"]["onboard"] > 1000 and l["recorded_frames"]["ground"] > 100
-        assert [e["event"] for e in l["events"]][0] == "takeoff" and l["events"][-1]["event"] == "end"
-        pub = lambda name: bytes.fromhex((tmp_path / p["run_id"] / f"{name}.pub").read_text())
-        verifier, commit_rx = CmdVerifier(pub("ground_sign")), CommitRx(pub("onboard_commit"))
+    assert len({lab["instance"] for lab in labels}) == 8
+    for p, lab in zip(plans, labels, strict=True):
+        assert {k: lab[k] for k in p} == p  # labels carry the exact resolved plan
+        assert lab["recorded_frames"]["onboard"] > 1000 and lab["recorded_frames"]["ground"] > 100
+        assert [e["event"] for e in lab["events"]][0] == "takeoff" and lab["events"][-1]["event"] == "end"
+        run = tmp_path / p["run_id"]
+        verifier = CmdVerifier(bytes.fromhex((run / "ground_sign.pub").read_text()))
+        commit_rx = CommitRx(bytes.fromhex((run / "onboard_commit.pub").read_text()))
         for side in ("onboard", "ground"):  # recorded traffic replays cleanly through the IDS
             baseline = load_baseline(BASE.with_suffix(".json"), bytes.fromhex(BASE.with_suffix(".pub").read_text()))
             dets = (

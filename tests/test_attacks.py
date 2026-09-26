@@ -6,7 +6,6 @@ from pathlib import Path
 import pytest
 import yaml
 
-from gaganrakshak import sitl
 from gaganrakshak.evaluate import evaluate
 from gaganrakshak.scenario import resolve, run_many
 

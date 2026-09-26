@@ -33,7 +33,7 @@ def recv_all(sock, seconds):
     while time.monotonic() - t0 < seconds:
         try:
             buf = sock.recv(4096)
-        except socket.timeout:
+        except TimeoutError:
             continue
         out.append((time.monotonic(), buf))  # stamp after recv returns = arrival time
     return out

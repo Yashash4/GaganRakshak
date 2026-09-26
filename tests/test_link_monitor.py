@@ -1,5 +1,7 @@
 import math
 import random
+import subprocess
+import sys
 from pathlib import Path
 
 from pymavlink.dialects.v20 import ardupilotmega as mav
@@ -7,9 +9,6 @@ from pymavlink.dialects.v20 import ardupilotmega as mav
 import gaganrakshak  # noqa: F401
 from gaganrakshak import crypto
 from gaganrakshak.commit import CommitRx, CommitTx
-import subprocess
-import sys
-
 from gaganrakshak.link_monitor import LinkMonitor, LossCurve, onsets
 
 SEED, PUB = crypto.generate_keypair()

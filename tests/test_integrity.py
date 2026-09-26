@@ -102,7 +102,10 @@ def test_unsigned_mission_and_ftp_writes():
 
 def test_reported_version_mismatch_is_separate_and_lower():
     L = Link()
-    v = lambda h: mav.MAVLink_autopilot_version_message(0, 67568127, 0, 0, 0, h, bytes(8), bytes(8), 0, 0, 0)
+
+    def v(h):
+        return mav.MAVLink_autopilot_version_message(0, 67568127, 0, 0, 0, h, bytes(8), bytes(8), 0, 0, 0)
+
     L.down(v(b"dbe79216"))
     L.down(v(b"deadbeef"))
     L.down(v(b"deadbeef"))

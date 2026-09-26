@@ -19,8 +19,8 @@ import argparse
 import heapq
 import socket
 import time
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable, Optional
 
 from pymavlink import mavutil
 from pymavlink.dialects.v20 import ardupilotmega as mav2
@@ -54,7 +54,7 @@ class Ids:
         self,
         detectors: list,
         fusion=None,
-        log: Optional[EvidenceLog] = None,
+        log: EvidenceLog | None = None,
         uav_id: int = 1,
         clear_after_s: float = 10.0,
     ):
@@ -148,7 +148,7 @@ def run_live(ids: Ids, port: int, tick_s: float = 0.1):
             msg = parser.parse_char(f[1:])
             if msg is not None:
                 ids.feed(msg, f[:1].decode(), time.monotonic())
-        except socket.timeout:
+        except TimeoutError:
             pass
         if time.monotonic() >= next_tick:
             ids.tick(time.monotonic())

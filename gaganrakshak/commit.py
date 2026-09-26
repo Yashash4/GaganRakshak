@@ -196,7 +196,7 @@ class CommitRx:
             for old in sorted(k for k in self._chunks if k < w):
                 out += self._resolve(old, t, final=True)
             if self.last_window is not None:
-                for lost in range(self.last_window + 1, w):
+                for _ in range(self.last_window + 1, w):
                     entry = [True, None, None]  # frame counts unknown until its frames are resolved
                     self._history.append(entry)
                     self._lost_pending.append(entry)

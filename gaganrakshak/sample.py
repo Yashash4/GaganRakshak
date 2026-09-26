@@ -10,7 +10,6 @@ Units: SI throughout (m, m/s, m/s^2, rad, rad/s, Pa, s). NED frame for velocitie
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Optional, Union
 
 
 @dataclass(frozen=True)
@@ -28,21 +27,21 @@ class Gnss:
     lat: float  # deg
     lon: float  # deg
     alt: float  # m AMSL
-    vn: Optional[float] = None  # m/s NED
-    ve: Optional[float] = None
-    vd: Optional[float] = None
-    fix_type: Optional[int] = None
-    satellites: Optional[int] = None
-    h_acc: Optional[float] = None  # receiver self-report — weak evidence only (D-006)
-    v_acc: Optional[float] = None
-    fix_time: Optional[float] = None  # receiver fix timestamp, s; identifies repeats of one fix
+    vn: float | None = None  # m/s NED
+    ve: float | None = None
+    vd: float | None = None
+    fix_type: int | None = None
+    satellites: int | None = None
+    h_acc: float | None = None  # receiver self-report — weak evidence only (D-006)
+    v_acc: float | None = None
+    fix_time: float | None = None  # receiver fix timestamp, s; identifies repeats of one fix
 
 
 @dataclass(frozen=True)
 class Baro:
     pressure_pa: float
-    alt_m: Optional[float] = None
-    temperature_c: Optional[float] = None
+    alt_m: float | None = None
+    temperature_c: float | None = None
 
 
 @dataclass(frozen=True)
@@ -58,32 +57,32 @@ class Command:
     src_sysid: int
     src_compid: int
     params: dict = field(default_factory=dict)
-    signed_ok: Optional[bool] = None  # None = no signature check applied
+    signed_ok: bool | None = None  # None = no signature check applied
 
 
 @dataclass(frozen=True)
 class Status:
     mode: str
     armed: bool
-    battery_v: Optional[float] = None
+    battery_v: float | None = None
 
 
 @dataclass(frozen=True)
 class EstimatorRatios:
     """Autopilot estimator test ratios (EKF_STATUS_REPORT / ESTIMATOR_STATUS). Non-authoritative."""
 
-    velocity: Optional[float] = None
-    pos_horiz: Optional[float] = None
-    pos_vert: Optional[float] = None
-    compass: Optional[float] = None
+    velocity: float | None = None
+    pos_horiz: float | None = None
+    pos_vert: float | None = None
+    compass: float | None = None
 
 
 @dataclass(frozen=True)
 class LinkStats:
-    rssi: Optional[float] = None
-    remote_rssi: Optional[float] = None
-    rx_errors: Optional[int] = None
-    seq_gap: Optional[int] = None
+    rssi: float | None = None
+    remote_rssi: float | None = None
+    rx_errors: int | None = None
+    seq_gap: int | None = None
 
 
 @dataclass(frozen=True)
@@ -108,19 +107,19 @@ class StatusText:
     text: str
 
 
-Payload = Union[
-    Imu,
-    Gnss,
-    Baro,
-    Attitude,
-    Command,
-    Status,
-    EstimatorRatios,
-    LinkStats,
-    ParamValue,
-    VersionInfo,
-    StatusText,
-]
+Payload = (
+    Imu
+    | Gnss
+    | Baro
+    | Attitude
+    | Command
+    | Status
+    | EstimatorRatios
+    | LinkStats
+    | ParamValue
+    | VersionInfo
+    | StatusText
+)
 
 
 @dataclass(frozen=True)
@@ -128,6 +127,6 @@ class Sample:
     t: float  # receive time at the observing agent, monotonic seconds
     uav_id: int
     payload: Payload
-    t_boot: Optional[float] = None  # autopilot time since boot, s, when the message carries it
-    msg_id: Optional[int] = None  # native message id, for protocol/commitment layers
-    seq: Optional[int] = None  # native link sequence number
+    t_boot: float | None = None  # autopilot time since boot, s, when the message carries it
+    msg_id: int | None = None  # native message id, for protocol/commitment layers
+    seq: int | None = None  # native link sequence number

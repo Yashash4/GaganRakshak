@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import math
 from collections import Counter
-from typing import Optional
 
 from pymavlink import mavutil
 
@@ -140,7 +139,7 @@ class ArduPilotAdapter:
         return name
 
     @staticmethod
-    def _t_boot(msg) -> Optional[float]:
+    def _t_boot(msg) -> float | None:
         if hasattr(msg, "time_boot_ms"):
             return msg.time_boot_ms / 1000.0
         if msg.get_type() == "RAW_IMU":  # ArduPilot fills time_usec with time since boot

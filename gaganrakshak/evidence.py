@@ -10,7 +10,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import IntEnum
-from typing import Optional
 
 
 class Severity(IntEnum):
@@ -28,7 +27,7 @@ class EvidenceEvent:
     evidence_type: str  # e.g. "gnss_velocity_residual", "tag_altered"
     score: float  # normalised, larger = more anomalous
     severity: Severity = Severity.INFO
-    class_hint: Optional[str] = None  # attack class this evidence points at, if any
+    class_hint: str | None = None  # attack class this evidence points at, if any
     metadata: dict = field(default_factory=dict)
 
 
@@ -50,7 +49,7 @@ class Episode:
     t_start: float
     t_last: float
     alerts: list = field(default_factory=list)
-    t_end: Optional[float] = None
+    t_end: float | None = None
 
     @property
     def open(self) -> bool:

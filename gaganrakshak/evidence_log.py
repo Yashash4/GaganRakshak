@@ -13,7 +13,7 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from . import crypto
 
@@ -45,7 +45,7 @@ def _entry_bytes(entry: dict) -> bytes:
 
 
 class EvidenceLog:
-    def __init__(self, path: Optional[Path] = None):
+    def __init__(self, path: Path | None = None):
         self.path = Path(path) if path else None
         self.entries: list[dict] = []
         self._leaves: list[bytes] = []

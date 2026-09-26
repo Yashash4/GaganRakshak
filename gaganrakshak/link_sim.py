@@ -26,7 +26,6 @@ import socket
 import threading
 import time
 from dataclasses import dataclass, field
-from typing import Optional
 
 from pymavlink.dialects.v20 import ardupilotmega as mav2
 
@@ -42,7 +41,7 @@ class LinkConfig:
     latency_s: float = 0.030
     jitter_s: float = 0.005
     loss: float = 0.0
-    loss_d50_m: Optional[float] = None  # distance at which distance-loss reaches 50 %
+    loss_d50_m: float | None = None  # distance at which distance-loss reaches 50 %
     loss_scale_m: float = 100.0
     seed: int = 0
 
@@ -76,11 +75,11 @@ class LinkSim:
         self,
         air_port: int,
         ground_port: int,
-        cfg: LinkConfig = LinkConfig(),
-        attacker: Optional[Attacker] = None,
+        cfg: LinkConfig | None = None,
+        attacker: Attacker | None = None,
         host: str = "127.0.0.1",
     ):
-        self.cfg = cfg
+        self.cfg = cfg = cfg or LinkConfig()
         self.attacker = attacker or Attacker()
         self.rng = random.Random(cfg.seed)
         # onboard router sends to air_port; we reply to whoever last sent from there

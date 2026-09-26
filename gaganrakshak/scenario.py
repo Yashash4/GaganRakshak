@@ -133,7 +133,7 @@ class Recorder:
         while not self._stop.is_set():
             try:
                 f = self.sock.recv(4096)
-            except socket.timeout:
+            except TimeoutError:
                 continue
             out = self.files.get(f[:1])
             if out is None:
@@ -259,9 +259,12 @@ class Run:
             raise RuntimeError("EKF not ready")
         g.set_mode("GUIDED")
         self._pump(g, 1)
-        armed = lambda m: (
-            m.get_type() == "HEARTBEAT" and m.get_srcSystem() == 1 and m.base_mode & MAV.MAV_MODE_FLAG_SAFETY_ARMED
-        )
+
+        def armed(m):
+            return (
+                m.get_type() == "HEARTBEAT" and m.get_srcSystem() == 1 and m.base_mode & MAV.MAV_MODE_FLAG_SAFETY_ARMED
+            )
+
         for _ in range(20):
             g.arducopter_arm()
             if self._pump(g, 3, armed):
@@ -295,9 +298,14 @@ class Run:
             wp += 1
         self.event("land")
         g.set_mode("LAND")
-        disarmed = lambda m: (
-            m.get_type() == "HEARTBEAT" and m.get_srcSystem() == 1 and not m.base_mode & MAV.MAV_MODE_FLAG_SAFETY_ARMED
-        )
+
+        def disarmed(m):
+            return (
+                m.get_type() == "HEARTBEAT"
+                and m.get_srcSystem() == 1
+                and not m.base_mode & MAV.MAV_MODE_FLAG_SAFETY_ARMED
+            )
+
         # Touchdown = the vehicle stopped descending: |vz| < 0.2 m/s for 5 s, after 10 s in LAND.
         # (Relative altitude on the ground drifts with the barometer on long flights.)
         land_t, still = time.monotonic(), [None]
@@ -429,8 +437,10 @@ class Run:
             "status": status,
             "t0_wall": self.events[0]["wall"] if self.events else None,
             "events": self.events,
-            "recorded_frames": {r_name: r.count for r_name, r in zip(("onboard", "ground"), recs)},
-            "non_mavlink_frames": {r_name: r.non_mavlink for r_name, r in zip(("onboard", "ground"), recs)},
+            "recorded_frames": {r_name: r.count for r_name, r in zip(("onboard", "ground"), recs, strict=False)},
+            "non_mavlink_frames": {
+                r_name: r.non_mavlink for r_name, r in zip(("onboard", "ground"), recs, strict=False)
+            },
             "link_stats": self.link.stats() if self.link else None,
         }
         (out / "labels.json").write_text(json.dumps(labels, indent=1))
