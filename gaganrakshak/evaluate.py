@@ -39,6 +39,7 @@ def detectors(
     cpce_calib: Path = CPCE_CALIB,
     estimator_calib: Path = ESTIMATOR_CALIB,
     uncalibrated: bool = False,
+    onboard_gnss: list[float] | None = None,
 ) -> list:
     """Each agent's detector set for a recorded run, with the learned link, physics and estimator
     settings. A missing artefact is an error: silently falling back to defaults would produce
@@ -58,7 +59,8 @@ def detectors(
         return onboard
     curves = {} if uncalibrated else load_curves(link_curves)
     rx = CommitRx(_pub(run, "onboard_commit"), **curves.pop("commit", {}))
-    return [for_agent("ground"), rx, LinkMonitor(rx, curves=curves or None), ResponseMonitor(rx=rx)]
+    lm = LinkMonitor(rx, curves=curves or None, onboard_gnss=onboard_gnss)
+    return [for_agent("ground"), rx, lm, ResponseMonitor(rx=rx)]
 
 
 def evaluate(
@@ -79,9 +81,12 @@ def evaluate(
         "episodes": [],
         "adapter_unknown": {},
     }
+    onboard_gnss: list[float] = []  # wall times of onboard GNSS evidence, forwarded to the ground agent
     for side in ("onboard", "ground"):
-        ids = Ids(detectors(side, run, link_curves, cpce_calib, estimator_calib, uncalibrated))
+        ids = Ids(detectors(side, run, link_curves, cpce_calib, estimator_calib, uncalibrated, onboard_gnss))
         run_replay(ids, run / side)
+        if side == "onboard":  # confirmed GNSS spoofing, forwarded for the ground agent's distance trust
+            onboard_gnss += sorted(e.t for a in ids.alerts for e in a.evidence if e.class_hint == "gps_spoofing")
         out["adapter_unknown"][side] = dict(ids.adapter.stats["unknown"])
         for a in ids.alerts:
             for e in a.evidence:

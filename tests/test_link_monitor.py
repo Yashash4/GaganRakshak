@@ -160,3 +160,13 @@ def test_silence_limit_follows_loss_band():
     lm = LinkMonitor(CommitRx(PUB), curves=CURVES)
     assert lm.silence_limit(0) == 1 + math.log(1 / 3600) / math.log(0.08)  # ~4.2 s near home
     assert lm.silence_limit(320) > 15  # 90 % loss: long silences are normal
+
+
+def test_onboard_gnss_evidence_makes_the_ground_distrust_the_reported_distance():
+    """A slow GNSS spoof moves the reported position plausibly; only the onboard physics sees it.
+    Its forwarded evidence (one window later) makes the ground use the nearest band for a while."""
+    lm = LinkMonitor(None, onboard_gnss=[100.0], forward_latency_s=1.0, distrust_s=60.0)
+    lm.distance_m = 350.0
+    assert lm.trusted_distance(100.5) == (350.0, True)  # not yet received
+    assert lm.trusted_distance(101.5) == (0.0, False)
+    assert lm.trusted_distance(159.0) == (0.0, False) and lm.trusted_distance(161.0) == (350.0, True)

@@ -302,6 +302,26 @@ class GpsDriftAccel(GpsDriftNaive):
         return v * self.unit[0], v * self.unit[1]
 
 
+class GpsDriftThenJam(GpsDriftCoherent):
+    """Combined: a coherent drift that moves the reported position far from home (the ground's
+    expected-loss band then allows heavy loss), then jamming from jam_after_s into the drift for
+    jam_s seconds. Tests that a spoofed distance cannot excuse jamming as a fade."""
+
+    def __init__(self, run):
+        super().__init__(run)
+        self.link_attacker = self
+        self.jam_from = self.start + self.p.get("jam_after_s", 30.0)
+        self.jam_to = self.jam_from + self.p.get("jam_s", 8.0)
+
+    def on_frame(self, direction, buf, msg, now):
+        if self.run.t0 is not None and self.jam_from <= self.run.t() < self.jam_to:
+            if not self.done:
+                self.done = True
+                self.action(jam_from=self.jam_from, jam_to=self.jam_to)
+            return []
+        return super().on_frame(direction, buf, msg, now)
+
+
 ATTACKS = {
     "command_injection": CommandInjection,
     "telemetry_manipulation": TelemetryManipulation,
@@ -314,4 +334,5 @@ ATTACKS = {
     "gps_drift_naive": GpsDriftNaive,
     "gps_drift": GpsDriftCoherent,
     "gps_drift_accel": GpsDriftAccel,
+    "gps_drift_jam": GpsDriftThenJam,
 }

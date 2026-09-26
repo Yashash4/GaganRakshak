@@ -1,0 +1,9 @@
+# A2 + A9 combined — coherent drift moves the reported position far away, then jamming inside the
+# drift. DEVELOPMENT variant for the cross-agent check (a spoofed distance must not excuse jamming).
+name: a2j_drift_then_jam
+duration_s: 220
+mission: {legs: 4, radius_m: [30, 60], alt_m: [15, 25], speed_ms: [3, 6]}
+wind: {spd: [0, 2], dir: [0, 360], turb: 0}
+gnss_noise: {sigma_m: 2.1, tau_s: 60}
+link: {loss_d50_m: 350, loss_scale_m: 60}
+attack: {type: gps_drift_jam, start_s: [40, 60], duration_s: [90, 100], params: {rate_ms: [4.0, 5.0], bearing_deg: [0, 360], jam_after_s: [60, 70], jam_s: [8, 10]}}
