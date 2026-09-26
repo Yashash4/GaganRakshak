@@ -7,7 +7,9 @@ The signature is sent twice so that one radio loss does not leave a command unsi
 Onboard agent (``CmdVerifier``, an IDS detector): pairs each uplink command with its
 signature. Evidence (class ``command_injection`` unless noted):
 - ``unsigned_command``   no valid signature arrived within ``wait_s`` (injected, or both
-                         signature copies lost on the radio — the second is rare by design)
+                         signature copies lost on the radio). When the uplink loss measured from
+                         the GCS's own sequence gaps makes losing both copies likely (p² > alpha),
+                         it is reported as LOW ``dos`` corroboration instead.
 - ``bad_signature``      signature present but does not verify (altered command or forged sig)
 - ``replayed_command``   valid signature, counter not newer than the last accepted  [replay]
 Alert-only: commands are always forwarded; blocking is a deployment option, not the default.
@@ -16,6 +18,7 @@ Alert-only: commands are always forwarded; blocking is a deployment option, not 
 from __future__ import annotations
 
 import time
+from collections import deque
 
 from pymavlink.dialects.v20 import ardupilotmega as mav2
 
@@ -62,6 +65,9 @@ class CmdVerifier:
         self._cmds = {}  # key -> (t, frame bytes, name)
         self._sigs = {}  # key -> list of GR_CMD_SIG
         self.verified = 0
+        self._gcs_seq = None
+        self._uplink = deque()  # (t, frames received, frames missing) from the GCS's own seq gaps
+        self.alpha = 1e-3
         self.outcome = {}  # command key -> "verified" | "bad_signature" | "replayed" | "unsigned"
 
     @staticmethod
@@ -80,9 +86,22 @@ class CmdVerifier:
     def _ev(self, t, kind, sev, cls, **meta):
         return EvidenceEvent(t, self.uav_id, "cmd_sign", kind, 1.0, sev, cls, meta)
 
+    def uplink_loss(self, t, span_s: float = 30.0) -> float:
+        while self._uplink and t - self._uplink[0][0] > span_s:
+            self._uplink.popleft()
+        got = sum(x[1] for x in self._uplink)
+        miss = sum(x[2] for x in self._uplink)
+        return miss / (got + miss) if got >= 10 else 0.0  # loss is claimed only from evidence
+
     def observe(self, msg, samples, direction, t):
         if direction != "U":
             return []
+        if msg.get_srcSystem() == 255 and msg.get_srcComponent() == 190:
+            seq = msg.get_seq()
+            gap = 0 if self._gcs_seq is None else (seq - self._gcs_seq - 1) % 256
+            if gap < 128:  # larger = reordering/duplicate, the protocol layer's business
+                self._uplink.append((t, 1, gap))
+            self._gcs_seq = seq
         if msg.get_type() == "GR_CMD_SIG":
             k = self._key(msg.cmd_sysid, msg.cmd_compid, msg.cmd_seq, msg.cmd_msgid)
             self._sigs.setdefault(k, []).append(msg)
@@ -117,8 +136,13 @@ class CmdVerifier:
             if t - t_cmd > self.wait_s:
                 del self._cmds[k]
                 self._set(k, "unsigned")
-                out.append(self._ev(t, "unsigned_command", Severity.MEDIUM, "command_injection",
-                                    command=name, sysid=k[0]))
+                p = self.uplink_loss(t)
+                if p * p > self.alpha:  # both signature copies lost is plausible on this link
+                    out.append(self._ev(t, "unsigned_command", Severity.LOW, "dos", command=name,
+                                        sysid=k[0], uplink_loss=round(p, 3)))
+                else:
+                    out.append(self._ev(t, "unsigned_command", Severity.MEDIUM, "command_injection",
+                                        command=name, sysid=k[0], uplink_loss=round(p, 3)))
         for k in list(self._sigs):  # signatures whose command was lost on the radio
             if k not in self._cmds:
                 del self._sigs[k]

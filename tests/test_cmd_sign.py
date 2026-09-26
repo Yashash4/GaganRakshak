@@ -25,14 +25,14 @@ def parse(buf):
     return p.parse_char(buf)
 
 
-def run(frames, v=None, t0=0.0):
+def run(frames, v=None, t0=0.0, classes=False):
     """Feed frames at 10 ms spacing, then let the verifier time out; return evidence types."""
     v = v or CmdVerifier(PUB)
     out = []
     for i, f in enumerate(frames):
         out += v.observe(parse(f), [], "U", t0 + i * 0.01)
     out += v.tick(t0 + len(frames) * 0.01 + 1.0)
-    return [e.evidence_type for e in out], v
+    return [(e.evidence_type, e.class_hint) if classes else e.evidence_type for e in out], v
 
 
 def signed(gcs, signer):
@@ -53,7 +53,19 @@ def test_one_signature_copy_lost_still_verifies():
 
 
 def test_injected_command_is_unsigned():
-    assert run([Gcs().land()])[0] == ["unsigned_command"]
+    assert run([Gcs().land()], classes=True)[0] == [("unsigned_command", "command_injection")]
+
+
+def test_unsigned_on_a_lossy_uplink_is_link_evidence():
+    gcs = Gcs()
+    hb = lambda: mav.MAVLink_heartbeat_message(6, 8, 0, 0, 0, 3)
+    frames = []
+    for i in range(40):  # GCS heartbeats with every other one lost: 50 % uplink loss
+        buf = hb().pack(gcs.m)
+        gcs.m.seq = (gcs.m.seq + 2) % 256
+        frames.append(buf)
+    frames.append(gcs.land())  # its signatures were lost too
+    assert run(frames, classes=True)[0] == [("unsigned_command", "dos")]
 
 
 def test_altered_command_fails_signature():
