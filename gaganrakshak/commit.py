@@ -23,6 +23,8 @@ Listed frames that never arrive are counted as missing (radio loss) for the link
 from __future__ import annotations
 
 import hashlib
+import math
+import statistics
 import threading
 from collections import deque
 
@@ -88,16 +90,17 @@ class CommitTx:
 
 class CommitRx:
     def __init__(self, public_key: bytes, uav_id: int = 1, timeout_s: float = 5.0,
-                 loss_history: int = 60, selective_margin: float = 0.15, selective_min: int = 5):
+                 loss_history: int = 60, selective_z: float = 4.0, selective_min: int = 5):
         self.pub = public_key
         self.uav_id = uav_id
         self.timeout_s = timeout_s
-        self.selective_margin = selective_margin
+        self.selective_z = selective_z
         self.selective_min = selective_min
         self.last_window = None  # highest window id seen (any chunk)
         self._pending = []  # [t, seq, msgid, tag, name, prev_window]
         self._chunks: dict[int, dict] = {}  # window -> {"n": n_chunks, "got": {chunk: {(seq,msgid): tag}}}
-        self._history = deque(maxlen=loss_history)  # per window: (lost_window, listed, missing)
+        self._history = deque(maxlen=loss_history)  # per window: [lost_window, listed, missing]
+        self._lost_pending = []
         self._t_last_commit = None
         self._recent_frames = deque()  # arrival times of relevant frames within timeout_s
         self._selective = self._timed_out = False
@@ -149,7 +152,9 @@ class CommitRx:
                 out += self._resolve(old, t, final=True)
             if self.last_window is not None:
                 for lost in range(self.last_window + 1, w):
-                    self._history.append((True, 0, 0))
+                    entry = [True, 0, 0]  # frame counts filled in when its frames are resolved
+                    self._history.append(entry)
+                    self._lost_pending.append(entry)
                     self.stats["windows_lost"] += 1
             self.last_window = w
         c = self._chunks[w]
@@ -165,31 +170,48 @@ class CommitRx:
             for k, tags in part.items():
                 listed.setdefault(k, []).extend(tags)
         n_listed = sum(len(tags) for tags in listed.values())
-        out, keep = [], []
+        out, keep, arrived_in_lost = [], [], 0
         for f in self._pending:
             ft, seq, msgid, h, name, prev = f
             if prev is not None and prev >= w:
                 keep.append(f)  # belongs to a later window
                 continue
             k = (seq, msgid)
-            if k in listed:
-                if h in listed[k]:
-                    listed[k].remove(h)
-                    self.stats["match"] += 1
-                else:
-                    self.stats["altered"] += 1
-                    out.append(self._ev(t, "tag_altered", Severity.HIGH, msg=name, seq=seq, window=w))
-            elif prev is not None and prev == w - 1 and complete:
+            contiguous = prev is not None and prev == w - 1  # else its own window may have been lost
+            if k in listed and h in listed[k]:
+                listed[k].remove(h)
+                self.stats["match"] += 1
+            elif k in listed and contiguous:
+                self.stats["altered"] += 1
+                out.append(self._ev(t, "tag_altered", Severity.HIGH, msg=name, seq=seq, window=w))
+            elif contiguous and complete:
                 self.stats["unexpected"] += 1
                 out.append(self._ev(t, "tag_unexpected", Severity.HIGH, msg=name, seq=seq, window=w))
             else:
                 self.stats["unverified"] += 1  # first frames, or a window/chunk lost on the radio
+                if prev is not None and prev < w - 1:
+                    arrived_in_lost += 1
         self._pending = keep
         missing = sum(len(tags) for tags in listed.values())
         self.stats["missing"] += missing
         self.stats["windows"] += 1
-        self._history.append((False, n_listed, missing))
+        self._history.append([False, n_listed, missing])
+        self._fill_lost(arrived_in_lost)
         return out
+
+    def _fill_lost(self, arrived: int):
+        """Frame loss inside lost windows: expected frames (median of recent received windows)
+        minus the frames that did arrive there. Without this, loss measured only in windows
+        whose commitment arrived — the good moments — understates loss in a fade."""
+        if not self._lost_pending:
+            return
+        recent = [e[1] for e in list(self._history)[-30:] if not e[0] and e[1]]
+        per = statistics.median(recent) if recent else 0
+        n = len(self._lost_pending)
+        miss = max(0.0, per * n - arrived) / n
+        for e in self._lost_pending:
+            e[1], e[2] = per, miss
+        self._lost_pending = []
 
     def recent_loss(self, windows: int = 10) -> tuple[int, int, int]:
         """(frames listed, listed frames missing, windows lost) over the last ``windows`` windows."""
@@ -197,27 +219,46 @@ class CommitRx:
         return sum(n for _, n, _ in h), sum(m for _, _, m in h), sum(1 for lost, _, _ in h if lost)
 
     def _selective_check(self, t):
-        lost_w = sum(1 for lost, _, _ in self._history if lost)
-        listed = sum(n for _, n, _ in self._history)
-        missing = sum(m for _, _, m in self._history)
+        """Commitments lost more often than frames, beyond sampling noise: one-sided binomial
+        test over the loss history (z > ``selective_z``)."""
+        h = list(self._history)
+        n = len(h)
+        lost_w = sum(1 for e in h if e[0])
+        listed = sum(e[1] for e in h)
+        missing = sum(e[2] for e in h)
         p_frame = missing / listed if listed else 0.0
-        p_commit = lost_w / len(self._history) if self._history else 0.0
-        selective = lost_w >= self.selective_min and p_commit > p_frame + self.selective_margin
+        p_commit = lost_w / n if n else 0.0
+        sd = math.sqrt(max(p_frame * (1 - p_frame), 1.0 / max(n, 1)) / max(n, 1))
+        z = (p_commit - p_frame) / sd if n else 0.0
+        selective = lost_w >= self.selective_min and z > self.selective_z
         out = []
         if selective and not self._selective:
-            out.append(self._loss_ev(t, "selective_commit_loss",
-                                     commit_loss=round(p_commit, 3), frame_loss=round(p_frame, 3)))
+            out.append(self._loss_ev(t, "selective_commit_loss", commit_loss=round(p_commit, 3),
+                                     frame_loss=round(p_frame, 3), z=round(z, 1)))
         self._selective = selective
         return out
 
+    def required_silence(self, budget_per_hour: float = 1.0, window_s: float = 1.0, recent: int = 10) -> float:
+        """Commitment silence that random loss explains less often than the false-alarm budget
+        (per window: budget·window/3600), given the loss seen over the last ``recent`` windows.
+        Local: in a fade, loss changes within tens of seconds. Laplace prior: never p = 0."""
+        listed, missing, lost = self.recent_loss(recent)
+        n = min(recent, len(self._history))
+        p_frame = (missing + 1) / (listed + 2)
+        p_commit = (lost + 1) / (n + 2)  # arrived windows alone understate loss in a fade
+        p = min(max(p_frame, p_commit), 0.99)
+        alpha = budget_per_hour * window_s / 3600.0
+        return max(self.timeout_s, window_s * math.log(alpha) / math.log(p))
+
     def tick(self, t, min_rate_hz: float = 5.0):
-        """Telemetry kept flowing for the whole ``timeout_s`` but no commitment came. An outage
-        (jamming, fade) stops both and is the link monitor's business, not this one's."""
-        while self._recent_frames and t - self._recent_frames[0] > self.timeout_s:
+        """Telemetry kept flowing but no commitment came for longer than random loss explains.
+        An outage (jamming, fade) stops both and is the link monitor's business."""
+        timeout = self.required_silence()
+        while self._recent_frames and t - self._recent_frames[0] > timeout:
             self._recent_frames.popleft()
-        flowing = len(self._recent_frames) >= min_rate_hz * self.timeout_s
+        flowing = len(self._recent_frames) >= min_rate_hz * timeout
         if (self._t_last_commit is not None and not self._timed_out and flowing
-                and t - self._t_last_commit > self.timeout_s):
+                and t - self._t_last_commit > timeout):
             self._timed_out = True
             return [self._loss_ev(t, "commit_timeout", silent_s=round(t - self._t_last_commit, 1))]
         return []
