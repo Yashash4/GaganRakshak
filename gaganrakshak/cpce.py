@@ -709,21 +709,38 @@ def calibrate(runs: list[Path], budget_per_hour: float, k: float = 3.0, imu_keep
                         cells[reg][vb] = (cells[reg][vb - 1] if vb else None) or (cells[reg - 1][vb] if reg else None)
             sigma[ch][str(H)] = cells
     hours = sum(rr[-1]["t"] - rr[0]["t"] for rr in per_run if rr) / 3600
-    for h in [x * 0.25 for x in range(1, 400)]:
-        onsets = 0
-        for rr in per_run:
+    # normalised increments per flight, once (they do not depend on h)
+    increments = []
+    for rr in per_run:
+        inc: list[tuple[tuple[str, float], float]] = []
+        t_prev = None
+        for r in rr:
+            dt = r["t"] - t_prev if t_prev is not None and r["t"] != t_prev else 0.2
+            if r["t"] != t_prev:
+                t_prev = r["t"]
+            inc += [(key, (v - k) * min(1.0, dt / key[1])) for key, v in nis(r, sigma).items()]
+        increments.append(inc)
+
+    def false_onsets(h: float) -> int:
+        n = 0
+        for inc in increments:
             S: dict[tuple[str, float], float] = {}
-            t_prev = None
-            for r in rr:
-                dt = r["t"] - t_prev if t_prev is not None and r["t"] != t_prev else 0.2
-                if r["t"] != t_prev:
-                    t_prev = r["t"]
-                for key, v in nis(r, sigma).items():
-                    s = max(0.0, S.get(key, 0.0) + (v - k) * min(1.0, dt / key[1]))
-                    onsets += s > h >= S.get(key, 0.0)
-                    S[key] = s
-        if onsets / hours <= budget_per_hour:
-            break
+            for key, d in inc:
+                prev = S.get(key, 0.0)
+                cur = max(0.0, prev + d)
+                n += cur > h >= prev
+                S[key] = cur
+        return n
+
+    # Smallest h meeting the budget. Onset counts are not strictly monotone in h (a path that
+    # oscillates around a level crosses it often), so scan: coarse steps of 2.5, then 0.25 steps
+    # inside the first coarse cell that meets the budget.
+    def meets(h: float) -> bool:
+        return false_onsets(h) / hours <= budget_per_hour
+
+    coarse = next((x * 2.5 for x in range(1, 41) if meets(x * 2.5)), 100.0)
+    h = next((coarse - 2.5 + x * 0.25 for x in range(1, 11) if meets(coarse - 2.5 + x * 0.25)), coarse)
+    onsets = false_onsets(h)
     return {
         "sigma": sigma,
         "cusum": {"k": k, "h": h},
