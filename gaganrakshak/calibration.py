@@ -17,7 +17,11 @@ CALIBRATED_EVIDENCE = {
     "radio_congestion",
     "gnss_inertial_inconsistency",
     "gps_spoofing",
+    "inertial_trend",
 }
+# Link-loss corroboration (class dos, e.g. a signature lost on a fading link) and physics advisories
+# are consequences of the statistics being calibrated, not anomalies of the flight.
+CALIBRATED_CLASSES = {"dos", "gnss_integrity_advisory"}
 
 
 def usable(run: Path, check_ids: bool = True) -> tuple[bool, str]:
@@ -37,7 +41,7 @@ def usable(run: Path, check_ids: bool = True) -> tuple[bool, str]:
         ev = [
             e
             for e in evaluate(run, link_curves=Path("/nonexistent"))["evidence"]
-            if e["type"] not in CALIBRATED_EVIDENCE
+            if e["type"] not in CALIBRATED_EVIDENCE and e["class"] not in CALIBRATED_CLASSES
         ]
         if ev:
             return False, f"IDS evidence: {sorted({(e['agent'], e['type']) for e in ev})}"
