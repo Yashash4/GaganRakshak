@@ -18,10 +18,23 @@ def hb(mode_num):
     return msg(mav.MAVLink_heartbeat_message(2, 3, MAV.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED | 128, mode_num, 4, 3), FC)
 
 
-def run(steps):
-    """steps: (t, direction, message) -> evidence types"""
-    rm = ResponseMonitor()
-    return [e.evidence_type for t, d, m in steps for e in rm.observe(m, [], d, t)]
+class Verdicts:
+    """Stands for the ground agent's CommitRx: verdict per received frame, by seq."""
+
+    def __init__(self, by_seq):
+        self.by_seq = by_seq
+
+    def verdict(self, t_rx, seq, msgid):
+        return self.by_seq.get(seq)
+
+
+def run(steps, rx=None, until=None):
+    """steps: (t, direction, message) -> evidence types (ticks after the last step until `until`)"""
+    rm = ResponseMonitor(rx=rx)
+    out = [e.evidence_type for t, d, m in steps for e in rm.observe(m, [], d, t)]
+    if until is not None:
+        out += [e.evidence_type for e in rm.tick(until)]
+    return out
 
 
 def test_commanded_mode_changes_are_explained():
@@ -35,13 +48,33 @@ def test_commanded_mode_changes_are_explained():
     assert run(steps) == []
 
 
-def test_failsafe_notice_explains_a_mode_change():
-    steps = [
-        (0, "D", hb(4)),
-        (5, "D", msg(mav.MAVLink_statustext_message(2, b"Radio Failsafe"), FC)),
-        (5.5, "D", hb(6)),
-    ]
-    assert run(steps) == []
+def failsafe_then_land(text=b"Battery Failsafe", battery_pct=80):
+    notice = msg(mav.MAVLink_statustext_message(2, text), FC)
+    status = msg(mav.MAVLink_sys_status_message(0, 0, 0, 0, 11000, -1, battery_pct, 0, 0, 0, 0, 0, 0), FC)
+    return notice, [(0, "D", hb(4)), (4, "D", status), (5, "D", notice), (5.5, "D", hb(9))]
+
+
+def test_verified_failsafe_notice_explains_a_mode_change():
+    notice, steps = failsafe_then_land()
+    assert run(steps, rx=Verdicts({notice.get_seq(): "match"})) == []
+
+
+def test_injected_failsafe_notice_does_not_hide_an_injected_mode_change():
+    notice, steps = failsafe_then_land()
+    assert run(steps, rx=Verdicts({notice.get_seq(): "unexpected"})) == ["uncommanded_mode_change"]
+
+
+def test_judgement_waits_for_the_notice_verdict_then_decides():
+    notice, steps = failsafe_then_land()
+    assert run(steps, rx=Verdicts({}), until=8.0) == []  # verdict still awaited
+    assert run(steps, rx=Verdicts({}), until=11.0) == ["uncommanded_mode_change"]  # never verified
+
+
+def test_without_commitments_only_corroborated_notices_count():
+    _, steps = failsafe_then_land(battery_pct=15)
+    assert run(steps) == []  # SYS_STATUS shows the low battery the notice names
+    _, steps = failsafe_then_land(battery_pct=80)
+    assert run(steps, until=11.0) == ["uncommanded_mode_change"]
 
 
 def test_mode_change_nobody_asked_for():

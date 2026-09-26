@@ -124,6 +124,8 @@ class CommitRx:
         self.selective_min = selective_min
         self.last_window: int | None = None  # highest window id seen (any chunk)
         self._pending: list[list[Any]] = []  # [t, seq, msgid, tag, name, prev_window]
+        # final verdict per received frame, for other checks that must trust a frame's content
+        self._verdicts: deque = deque(maxlen=20000)  # (t_rx, seq, msgid, verdict)
         self._chunks: dict[int, dict] = {}  # window -> {"n": n_chunks, "got": {chunk: {(seq,msgid): tag}}}
         self._history: deque[list[Any]] = deque(maxlen=loss_history)  # per window: [lost_window, listed, missing]
         self._lost_pending: list[list[Any]] = []  # _history entries of lost windows
@@ -227,14 +229,18 @@ class CommitRx:
             if k in listed and h in listed[k]:
                 listed[k].remove(h)
                 self.stats["match"] += 1
+                self._verdicts.append((ft, seq, msgid, "match"))
             elif k in listed and contiguous:
                 self.stats["altered"] += 1
+                self._verdicts.append((ft, seq, msgid, "altered"))
                 out.append(self._ev(t, "tag_altered", Severity.HIGH, msg=name, seq=seq, window=w))
             elif contiguous and complete:
                 self.stats["unexpected"] += 1
+                self._verdicts.append((ft, seq, msgid, "unexpected"))
                 out.append(self._ev(t, "tag_unexpected", Severity.HIGH, msg=name, seq=seq, window=w))
             else:
                 self.stats["unverified"] += 1  # first frames, or a window/chunk lost on the radio
+                self._verdicts.append((ft, seq, msgid, "unverified"))
                 if prev is not None and prev < w - 1:
                     arrived_in_lost += 1
         self._pending = keep
@@ -258,6 +264,16 @@ class CommitRx:
         for e in self._lost_pending:
             e[1], e[2] = per, miss
         self._lost_pending = []
+
+    def verdict(self, t_rx: float, seq: int, msgid: int) -> str | None:
+        """Final verdict for the frame received at t_rx with this seq and msgid: "match",
+        "altered", "unexpected" or "unverified"; None while its commitment is still awaited."""
+        for ft, s, m, v in reversed(self._verdicts):
+            if s == seq and m == msgid and abs(ft - t_rx) < 1e-6:
+                return v
+            if ft < t_rx - 1e-6:
+                break
+        return None
 
     def recent_loss(self, windows: int = 10) -> tuple[int, int, int]:
         """(frames listed, listed frames missing, windows lost) over the last ``windows`` windows."""

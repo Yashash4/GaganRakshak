@@ -40,7 +40,7 @@ def detectors(side: str, run: Path, link_curves: Path = LINK_CURVES, cpce_calib:
         return onboard
     curves = load_curves(link_curves) if link_curves.exists() else {}
     rx = CommitRx(_pub(run, "onboard_commit"), **curves.pop("commit", {}))
-    return [for_agent("ground"), rx, LinkMonitor(rx, curves=curves or None), ResponseMonitor()]
+    return [for_agent("ground"), rx, LinkMonitor(rx, curves=curves or None), ResponseMonitor(rx=rx)]
 
 
 def evaluate(run: Path, link_curves: Path = LINK_CURVES, cpce_calib: Path = CPCE_CALIB) -> dict:
