@@ -1,4 +1,4 @@
-# Gaganrakshak
+# GaganRakshak
 
 A two-point, cyber-physical intrusion detection system for drones. PUSHPAK Grand
 Challenge 2026, GC3 "Security of Drones", Objective 2 (Drone IDS). Team: Eagle Vision.
