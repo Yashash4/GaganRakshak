@@ -38,24 +38,35 @@ def detectors(
     link_curves: Path = LINK_CURVES,
     cpce_calib: Path = CPCE_CALIB,
     estimator_calib: Path = ESTIMATOR_CALIB,
+    uncalibrated: bool = False,
 ) -> list:
-    """Each agent's detector set for a recorded run; learned link, physics and estimator settings if calibrated."""
+    """Each agent's detector set for a recorded run, with the learned link, physics and estimator
+    settings. A missing artefact is an error: silently falling back to defaults would produce
+    numbers from an uncalibrated IDS. Only calibration itself passes ``uncalibrated=True`` (it
+    judges runs before any artefact exists): then the learned detectors are left out."""
+    if not uncalibrated:
+        missing = [str(f) for f in (link_curves, cpce_calib, estimator_calib) if not f.exists()]
+        if missing:
+            raise FileNotFoundError(f"calibration artefact(s) missing: {missing}; run the calibration first")
     if side == "onboard":
         verifier = CmdVerifier(_pub(run, "ground_sign"))
         baseline = load_baseline(BASELINE.with_suffix(".json"), bytes.fromhex(BASELINE.with_suffix(".pub").read_text()))
         onboard = [for_agent("onboard", verifier=verifier), verifier, IntegrityMonitor(baseline, verifier)]
-        if cpce_calib.exists():
+        if not uncalibrated:
             onboard.append(Cpce(json.loads(cpce_calib.read_text())))
-        if estimator_calib.exists():
             onboard.append(EstimatorMonitor(json.loads(estimator_calib.read_text())))
         return onboard
-    curves = load_curves(link_curves) if link_curves.exists() else {}
+    curves = {} if uncalibrated else load_curves(link_curves)
     rx = CommitRx(_pub(run, "onboard_commit"), **curves.pop("commit", {}))
     return [for_agent("ground"), rx, LinkMonitor(rx, curves=curves or None), ResponseMonitor(rx=rx)]
 
 
 def evaluate(
-    run: Path, link_curves: Path = LINK_CURVES, cpce_calib: Path = CPCE_CALIB, estimator_calib: Path = ESTIMATOR_CALIB
+    run: Path,
+    link_curves: Path = LINK_CURVES,
+    cpce_calib: Path = CPCE_CALIB,
+    estimator_calib: Path = ESTIMATOR_CALIB,
+    uncalibrated: bool = False,
 ) -> dict:
     labels = json.loads((run / "labels.json").read_text())
     t0 = labels["t0_wall"]
@@ -69,7 +80,7 @@ def evaluate(
         "adapter_unknown": {},
     }
     for side in ("onboard", "ground"):
-        ids = Ids(detectors(side, run, link_curves, cpce_calib, estimator_calib))
+        ids = Ids(detectors(side, run, link_curves, cpce_calib, estimator_calib, uncalibrated))
         run_replay(ids, run / side)
         out["adapter_unknown"][side] = dict(ids.adapter.stats["unknown"])
         for a in ids.alerts:
