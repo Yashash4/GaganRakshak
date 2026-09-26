@@ -68,11 +68,16 @@ LossCurve = BandCurve  # loss-vs-distance band
 
 def save_curves(path: Path, curves: dict):
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps({k: c.to_dict() for k, c in curves.items()}, indent=1))
+    path.write_text(json.dumps({k: c if isinstance(c, dict) else c.to_dict() for k, c in curves.items()}, indent=1))
 
 
 def load_curves(path: Path) -> dict:
-    return {k: BandCurve.from_dict(d) for k, d in json.loads(Path(path).read_text()).items()}
+    """{"loss": BandCurve, "gap": BandCurve, "commit": {CommitRx settings}}"""
+    d = json.loads(Path(path).read_text())
+    out = {k: BandCurve.from_dict(v) for k, v in d.items() if k != "commit"}
+    if "commit" in d:
+        out["commit"] = {k: v for k, v in d["commit"].items() if k != "meta"}
+    return out
 
 
 class LinkMonitor:
@@ -150,14 +155,15 @@ class LinkMonitor:
 
 # -- calibration ----------------------------------------------------------------------------
 
-def run_samples(run: Path) -> tuple[list, list]:
-    """(windowed loss, heartbeat silence) vs distance seen by the ground agent in one run."""
+def run_samples(run: Path) -> tuple[list, list, list]:
+    """(windowed loss, heartbeat silence) vs distance seen by the ground agent in one run, and
+    the commitment-vs-frame loss history used to learn the commitment loss model."""
     from .commit import CommitRx
     from .ids import Ids, run_replay
     rx = CommitRx(bytes.fromhex((run / "onboard_commit.pub").read_text()))
     lm = LinkMonitor(rx)
     run_replay(Ids([rx, lm]), run / "ground")
-    return lm.samples, lm.gap_samples
+    return lm.samples, lm.gap_samples, rx.loss_pairs
 
 
 def onsets(series: list[tuple[float, float, float]], curve: BandCurve) -> int:
@@ -181,18 +187,45 @@ def _fit_to_budget(per_run, hours, budget_per_hour, **fit_kw) -> BandCurve:
     return curve
 
 
+def fit_commit_loss(pairs: list, hours: float, budget_per_hour: float, min_lost: int = 5) -> dict:
+    """Commitments are longer than telemetry frames and lost more often. Learn gamma in
+    p_commit = 1 - (1 - p_frame)^gamma (least squares in log space), then the smallest z for
+    the selective-loss test that meets the false-alarm budget on these clean flights."""
+    xy = [(math.log(1 - f), math.log(1 - c)) for run in pairs for f, c, n, _ in run
+          if n >= 20 and 0.02 < f < 0.98 and c < 0.98]
+    gamma = sum(x * y for x, y in xy) / sum(x * x for x, _ in xy) if len(xy) >= 20 else 1.0
+    for z in [x / 4 for x in range(4, 81)]:
+        n_on = 0
+        for run in pairs:
+            above = False
+            for f, c, n, lost in run:
+                p_exp = 1 - (1 - min(f, 0.999)) ** gamma
+                sd = math.sqrt(max(p_exp * (1 - p_exp), 1.0 / max(n, 1)) / max(n, 1))
+                now = lost >= min_lost and n and (c - p_exp) / sd > z
+                n_on += now and not above
+                above = now
+        if n_on / hours <= budget_per_hour:
+            break
+    return {"commit_loss_exponent": round(gamma, 3), "selective_z": z,
+            "meta": {"points": len(xy), "false_onsets": n_on}}
+
+
 def calibrate(runs: list[Path], budget_per_hour: float, bin_m: float = 50.0) -> dict:
-    """Per statistic, the smallest k whose band meets the false-alarm budget on the
-    calibration flights."""
+    """Per statistic, the smallest k (or z) meeting the false-alarm budget on the clean
+    calibration flights; runs that are not clean are rejected first."""
+    from .calibration import select
+    runs = select(runs)
     per_run = [run_samples(r) for r in runs]
-    hours = sum(s[-1][0] - s[0][0] for s, _ in per_run if s) / 3600
-    curves = {"loss": _fit_to_budget([s for s, _ in per_run], hours, budget_per_hour, bin_m=bin_m, floor=0.05),
-              "gap": _fit_to_budget([g for _, g in per_run], hours, budget_per_hour, bin_m=bin_m, floor=3.0,
+    hours = sum(s[-1][0] - s[0][0] for s, _, _ in per_run if s) / 3600
+    curves = {"loss": _fit_to_budget([s for s, _, _ in per_run], hours, budget_per_hour, bin_m=bin_m, floor=0.05),
+              "gap": _fit_to_budget([g for _, g, _ in per_run], hours, budget_per_hour, bin_m=bin_m, floor=3.0,
                                     cap=1e9)}
     for c in curves.values():
         c.meta.update(calibration_hours=round(hours, 3), budget_per_hour=budget_per_hour,
                       runs=[r.name for r in runs])
-    return curves
+    commit = fit_commit_loss([p for _, _, p in per_run], hours, budget_per_hour)
+    commit["meta"].update(calibration_hours=round(hours, 3), budget_per_hour=budget_per_hour)
+    return {**curves, "commit": commit}
 
 
 def main():
@@ -205,6 +238,9 @@ def main():
     curves = calibrate(runs, a.budget)
     save_curves(a.out, curves)
     for name, c in curves.items():
+        if isinstance(c, dict):
+            print(name, json.dumps(c))
+            continue
         print(name, json.dumps({k: v for k, v in c.meta.items() if k != "runs"}),
               "\n  upper by", c.bin_m, "m bin:", [round(u, 2) for u in c.upper])
 

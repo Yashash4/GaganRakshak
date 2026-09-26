@@ -90,11 +90,16 @@ class CommitTx:
 
 class CommitRx:
     def __init__(self, public_key: bytes, uav_id: int = 1, timeout_s: float = 5.0,
-                 loss_history: int = 60, selective_z: float = 4.0, selective_min: int = 5):
+                 loss_history: int = 60, selective_z: float = 4.0, selective_min: int = 5,
+                 commit_loss_exponent: float = 1.0):
         self.pub = public_key
         self.uav_id = uav_id
         self.timeout_s = timeout_s
         self.selective_z = selective_z
+        # Commitments are longer than telemetry frames, and longer frames are lost more often:
+        # expected commitment loss = 1 - (1 - frame loss)^gamma, gamma learned on clean flights.
+        self.gamma = commit_loss_exponent
+        self.loss_pairs: list[tuple] = []  # (frame loss, commit loss, n, lost windows) for calibration
         self.selective_min = selective_min
         self.last_window = None  # highest window id seen (any chunk)
         self._pending = []  # [t, seq, msgid, tag, name, prev_window]
@@ -104,6 +109,7 @@ class CommitRx:
         self._t_last_commit = None
         self._recent_frames = deque()  # arrival times of relevant frames within timeout_s
         self._selective = self._timed_out = False
+        self.last_z = 0.0
         self._t_congested = None  # last RADIO_STATUS with a nearly full radio buffer
         self.congestion_hold_s = 10.0
         self.stats = {"match": 0, "altered": 0, "unexpected": 0, "unverified": 0, "missing": 0,
@@ -220,7 +226,8 @@ class CommitRx:
 
     def _selective_check(self, t):
         """Commitments lost more often than frames, beyond sampling noise: one-sided binomial
-        test over the loss history (z > ``selective_z``)."""
+        test over the loss history against the loss expected for commitment-length frames
+        (z > ``selective_z``, set to the false-alarm budget on clean flights)."""
         h = list(self._history)
         n = len(h)
         lost_w = sum(1 for e in h if e[0])
@@ -228,13 +235,17 @@ class CommitRx:
         missing = sum(e[2] for e in h)
         p_frame = missing / listed if listed else 0.0
         p_commit = lost_w / n if n else 0.0
-        sd = math.sqrt(max(p_frame * (1 - p_frame), 1.0 / max(n, 1)) / max(n, 1))
-        z = (p_commit - p_frame) / sd if n else 0.0
+        self.loss_pairs.append((p_frame, p_commit, n, lost_w))
+        p_exp = 1 - (1 - min(p_frame, 0.999)) ** self.gamma
+        sd = math.sqrt(max(p_exp * (1 - p_exp), 1.0 / max(n, 1)) / max(n, 1))
+        z = (p_commit - p_exp) / sd if n else 0.0
+        self.last_z = z
         selective = lost_w >= self.selective_min and z > self.selective_z
         out = []
         if selective and not self._selective:
             out.append(self._loss_ev(t, "selective_commit_loss", commit_loss=round(p_commit, 3),
-                                     frame_loss=round(p_frame, 3), z=round(z, 1)))
+                                     expected_commit_loss=round(p_exp, 3), frame_loss=round(p_frame, 3),
+                                     z=round(z, 1)))
         self._selective = selective
         return out
 

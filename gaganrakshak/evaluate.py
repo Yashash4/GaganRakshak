@@ -27,23 +27,24 @@ def _pub(run: Path, name: str) -> bytes:
 
 
 def detectors(side: str, run: Path, link_curves: Path = LINK_CURVES) -> list:
+    """Each agent's detector set for a recorded run; learned link settings if calibrated."""
     if side == "onboard":
         verifier = CmdVerifier(_pub(run, "ground_sign"))
         baseline = load_baseline(BASELINE.with_suffix(".json"), bytes.fromhex(BASELINE.with_suffix(".pub").read_text()))
         return [for_agent("onboard"), verifier, IntegrityMonitor(baseline, verifier)]
-    rx = CommitRx(_pub(run, "onboard_commit"))
-    curves = load_curves(link_curves) if link_curves.exists() else None
-    return [for_agent("ground"), rx, LinkMonitor(rx, curves=curves)]
+    curves = load_curves(link_curves) if link_curves.exists() else {}
+    rx = CommitRx(_pub(run, "onboard_commit"), **curves.pop("commit", {}))
+    return [for_agent("ground"), rx, LinkMonitor(rx, curves=curves or None)]
 
 
-def evaluate(run: Path) -> dict:
+def evaluate(run: Path, link_curves: Path = LINK_CURVES) -> dict:
     labels = json.loads((run / "labels.json").read_text())
     t0 = labels["t0_wall"]
     out = {"run_id": labels["run_id"], "status": labels["status"], "attack": labels["attack"],
            "attack_events": [e for e in labels["events"] if e["event"].startswith("attack")],
            "evidence": [], "episodes": [], "adapter_unknown": {}}
     for side in ("onboard", "ground"):
-        ids = Ids(detectors(side, run))
+        ids = Ids(detectors(side, run, link_curves))
         run_replay(ids, run / side)
         out["adapter_unknown"][side] = dict(ids.adapter.stats["unknown"])
         for a in ids.alerts:
