@@ -80,6 +80,7 @@ def evaluate(
         "evidence": [],
         "episodes": [],
         "adapter_unknown": {},
+        "physics": {"observable_s": None, "armed_s": None},
     }
     onboard_gnss: list[float] = []  # wall times of onboard GNSS evidence, forwarded to the ground agent
     for side in ("onboard", "ground"):
@@ -88,6 +89,13 @@ def evaluate(
         if side == "onboard":  # confirmed GNSS spoofing, forwarded for the ground agent's distance trust
             onboard_gnss += sorted(e.t for a in ids.alerts for e in a.evidence if e.class_hint == "gps_spoofing")
         out["adapter_unknown"][side] = dict(ids.adapter.stats["unknown"])
+        for d in ids.detectors:
+            if isinstance(d, Cpce):  # when the heading became observable and the longest horizon armed
+                res = d.res
+                out["physics"] = {
+                    k: None if v is None else round(v - t0, 2)
+                    for k, v in (("observable_s", res.observable_at), ("armed_s", res.armed_at))
+                }
         for a in ids.alerts:
             for e in a.evidence:
                 out["evidence"].append(

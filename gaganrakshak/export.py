@@ -8,7 +8,9 @@ the same scenario and seed from different batches stay apart; else the run id) w
 source, calibration (the calibration files the IDS used, with their git blob hashes), scenario,
 seed, split, variant
 ("dev" | "held_out" | null for runs without an attack), status, attack {type, params},
-events (labels, scenario time t), flight_s (takeoff to touchdown) and episodes
+events (labels, scenario time t), flight_s (takeoff to touchdown), physics {observable_s,
+armed_s} (when the physics engine's heading became observable and its longest horizon armed),
+distance_track [[t, d_m], ...] (about 1 Hz, see distance_track) and episodes
 [{agent, class, severity, t_start, t_end, evidence_types}] from replaying the run through both agents, and
 baseline_episodes in the same format: what stock ArduPilot itself flagged (see baseline.py).
 The command exports only runs with status "ok" and lists the others with their status.
@@ -21,6 +23,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 
@@ -54,6 +57,29 @@ def calibration_used() -> dict:
     return out
 
 
+def distance_track(run: Path, t0: float, every_s: float = 1.0) -> list[list[float]]:
+    """[[t, d_m], ...] about once per ``every_s``: horizontal distance from home of the position the
+    ground agent received (GLOBAL_POSITION_INT, the autopilot's estimate, so a GNSS spoof moves it
+    too), home = first fix after takeoff; scenario time."""
+    from pymavlink import mavutil
+
+    log = mavutil.mavlink_connection(str(run / "ground_D.tlog"), robust_parsing=True)
+    out: list[list[float]] = []
+    home = None
+    while (m := log.recv_match(type="GLOBAL_POSITION_INT")) is not None:
+        t = m._timestamp - t0
+        if t < 0 or m.get_srcSystem() != 1 or not (m.lat or m.lon):
+            continue
+        lat, lon = m.lat / 1e7, m.lon / 1e7
+        home = home or (lat, lon)
+        if out and t - out[-1][0] < every_s:
+            continue
+        dn = math.radians(lat - home[0]) * 6371000.0
+        de = math.radians(lon - home[1]) * 6371000.0 * math.cos(math.radians(home[0]))
+        out.append([round(t, 2), round(math.hypot(dn, de), 1)])
+    return out
+
+
 def export_run(run: Path, split: str, out_root: Path = ROOT / "results" / "runs", source: str | None = None) -> Path:
     if split not in SPLITS:
         raise ValueError(f"split must be one of {SPLITS}")
@@ -71,7 +97,9 @@ def export_run(run: Path, split: str, out_root: Path = ROOT / "results" / "runs"
         "scenario": labels["scenario"],
         "seed": labels["seed"],
         "split": split,
-        "variant": None if not attack else ("held_out" if labels.get("split") == "heldout" else "dev"),
+        "variant": None
+        if not attack
+        else labels.get("variant") or ("held_out" if labels.get("split") == "heldout" else "dev"),
         "status": labels["status"],
         "attack": {
             "type": attack["type"],
@@ -84,15 +112,20 @@ def export_run(run: Path, split: str, out_root: Path = ROOT / "results" / "runs"
         "benign": labels.get("benign"),
         "events": events,
         "flight_s": round(t["touchdown"] - t["takeoff"], 2) if len(t) == 2 else None,
+        "physics": {"observable_s": None, "armed_s": None},
+        "distance_track": [],
         "episodes": [],
         "baseline_episodes": [],
     }
     if labels["status"] == "ok":
+        ev = evaluate(run)
+        doc["physics"] = ev["physics"]
         doc["episodes"] = [
             {k: ep[k] for k in ("agent", "class", "severity", "t_start", "t_end", "evidence_types")}
-            for ep in evaluate(run)["episodes"]
+            for ep in ev["episodes"]
         ]
         doc["baseline_episodes"] = baseline_episodes(run)
+        doc["distance_track"] = distance_track(run, labels["t0_wall"])
     out = out_root / split / f"{source}.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(doc, indent=1))
