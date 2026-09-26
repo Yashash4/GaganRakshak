@@ -1,0 +1,78 @@
+{
+ "run_id": "b6_operator-s1010",
+ "source": "calib3/b6_operator-s1010",
+ "calibration": {
+  "cpce.json": "9b2fa54b946e03d12f2d568c43541da45d7fc0f7"
+ },
+ "scenario": "b6_operator",
+ "seed": 1010,
+ "split": "calibration",
+ "variant": null,
+ "status": "ok",
+ "attack": null,
+ "benign": null,
+ "events": [
+  {
+   "t": 0.0,
+   "event": "takeoff",
+   "alt": 21.71
+  },
+  {
+   "t": 40.494,
+   "event": "operator",
+   "at_s": 40,
+   "action": "speed",
+   "value": 8
+  },
+  {
+   "t": 60.421,
+   "event": "operator",
+   "at_s": 60,
+   "action": "mode",
+   "mode": "LOITER"
+  },
+  {
+   "t": 75.256,
+   "event": "operator",
+   "at_s": 75,
+   "action": "mode",
+   "mode": "GUIDED"
+  },
+  {
+   "t": 100.373,
+   "event": "operator",
+   "at_s": 100,
+   "action": "speed",
+   "value": 3
+  },
+  {
+   "t": 130.139,
+   "event": "operator",
+   "at_s": 130,
+   "action": "mode",
+   "mode": "BRAKE"
+  },
+  {
+   "t": 140.313,
+   "event": "operator",
+   "at_s": 140,
+   "action": "mode",
+   "mode": "GUIDED"
+  },
+  {
+   "t": 180.307,
+   "event": "land"
+  },
+  {
+   "t": 195.41,
+   "event": "touchdown"
+  },
+  {
+   "t": 196.017,
+   "event": "end"
+  }
+ ],
+ "flight_s": 195.41,
+ "episodes": [],
+ "baseline_episodes": []
+}

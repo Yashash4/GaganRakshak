@@ -1,0 +1,44 @@
+{
+ "run_id": "b5_link_fade-s202",
+ "source": "val/b5_link_fade-s202",
+ "calibration": {
+  "cpce.json": "9b2fa54b946e03d12f2d568c43541da45d7fc0f7"
+ },
+ "scenario": "b5_link_fade",
+ "seed": 202,
+ "split": "validation",
+ "variant": null,
+ "status": "ok",
+ "attack": null,
+ "benign": null,
+ "events": [
+  {
+   "t": 0.0,
+   "event": "takeoff",
+   "alt": 32.64
+  },
+  {
+   "t": 240.269,
+   "event": "land"
+  },
+  {
+   "t": 276.785,
+   "event": "touchdown"
+  },
+  {
+   "t": 280.049,
+   "event": "end"
+  }
+ ],
+ "flight_s": 276.79,
+ "episodes": [
+  {
+   "agent": "onboard",
+   "class": "dos",
+   "severity": 1,
+   "t_start": 51.55,
+   "t_end": 51.55
+  }
+ ],
+ "baseline_episodes": []
+}

@@ -1,0 +1,81 @@
+{
+ "run_id": "a2a_gps_drift_accel-s21",
+ "source": "inject/stepped/a2a_gps_drift_accel-s21",
+ "calibration": {
+  "cpce.json": "9b2fa54b946e03d12f2d568c43541da45d7fc0f7"
+ },
+ "scenario": "a2a_gps_drift_accel",
+ "seed": 21,
+ "split": "validation",
+ "variant": "dev",
+ "status": "ok",
+ "attack": {
+  "type": "gps_drift_accel",
+  "start_s": 30.03,
+  "end_s": 333.74,
+  "params": {
+   "accel_ms2": 0.013780437457731862,
+   "bearing_deg": 24.935314745992073
+  }
+ },
+ "benign": null,
+ "events": [
+  {
+   "t": 0.0,
+   "event": "takeoff",
+   "alt": 16.65
+  },
+  {
+   "t": 30.035,
+   "event": "attack_start",
+   "attack": "gps_drift_accel",
+   "params": {
+    "accel_ms2": 0.013780437457731862,
+    "bearing_deg": 24.935314745992073
+   }
+  },
+  {
+   "t": 333.746,
+   "event": "attack_end",
+   "attack": "gps_drift_accel"
+  },
+  {
+   "t": 380.203,
+   "event": "land"
+  },
+  {
+   "t": 395.312,
+   "event": "touchdown"
+  },
+  {
+   "t": 395.977,
+   "event": "end"
+  }
+ ],
+ "flight_s": 395.31,
+ "episodes": [
+  {
+   "agent": "onboard",
+   "class": "gnss_integrity_advisory",
+   "severity": 1,
+   "t_start": 334.77,
+   "t_end": 334.77
+  },
+  {
+   "agent": "onboard",
+   "class": "gps_spoofing",
+   "severity": 3,
+   "t_start": 339.78,
+   "t_end": 339.78
+  }
+ ],
+ "baseline_episodes": [
+  {
+   "agent": "baseline",
+   "class": "gps_spoofing",
+   "severity": 3,
+   "t_start": 334.8,
+   "t_end": 346.96
+  }
+ ]
+}

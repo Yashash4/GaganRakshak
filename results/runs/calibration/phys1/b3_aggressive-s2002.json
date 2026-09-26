@@ -1,0 +1,36 @@
+{
+ "run_id": "b3_aggressive-s2002",
+ "source": "phys1/b3_aggressive-s2002",
+ "calibration": {
+  "cpce.json": "9b2fa54b946e03d12f2d568c43541da45d7fc0f7"
+ },
+ "scenario": "b3_aggressive",
+ "seed": 2002,
+ "split": "calibration",
+ "variant": null,
+ "status": "ok",
+ "attack": null,
+ "benign": null,
+ "events": [
+  {
+   "t": 0.0,
+   "event": "takeoff",
+   "alt": 25.91
+  },
+  {
+   "t": 180.364,
+   "event": "land"
+  },
+  {
+   "t": 217.711,
+   "event": "touchdown"
+  },
+  {
+   "t": 217.921,
+   "event": "end"
+  }
+ ],
+ "flight_s": 217.71,
+ "episodes": [],
+ "baseline_episodes": []
+}

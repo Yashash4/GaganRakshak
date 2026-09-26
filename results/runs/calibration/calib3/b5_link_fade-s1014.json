@@ -1,0 +1,70 @@
+{
+ "run_id": "b5_link_fade-s1014",
+ "source": "calib3/b5_link_fade-s1014",
+ "calibration": {
+  "cpce.json": "9b2fa54b946e03d12f2d568c43541da45d7fc0f7"
+ },
+ "scenario": "b5_link_fade",
+ "seed": 1014,
+ "split": "calibration",
+ "variant": null,
+ "status": "ok",
+ "attack": null,
+ "benign": null,
+ "events": [
+  {
+   "t": 0.0,
+   "event": "takeoff",
+   "alt": 30.16
+  },
+  {
+   "t": 240.055,
+   "event": "land"
+  },
+  {
+   "t": 256.096,
+   "event": "touchdown"
+  },
+  {
+   "t": 266.129,
+   "event": "operator",
+   "action": "disarm",
+   "force": false
+  },
+  {
+   "t": 269.142,
+   "event": "operator",
+   "action": "disarm",
+   "force": true
+  },
+  {
+   "t": 272.186,
+   "event": "end"
+  }
+ ],
+ "flight_s": 256.1,
+ "episodes": [
+  {
+   "agent": "onboard",
+   "class": "dos",
+   "severity": 1,
+   "t_start": 92.31,
+   "t_end": 92.31
+  },
+  {
+   "agent": "ground",
+   "class": "telemetry_manipulation",
+   "severity": 2,
+   "t_start": 37.89,
+   "t_end": 37.89
+  },
+  {
+   "agent": "ground",
+   "class": "telemetry_manipulation",
+   "severity": 2,
+   "t_start": 250.12,
+   "t_end": 250.12
+  }
+ ],
+ "baseline_episodes": []
+}

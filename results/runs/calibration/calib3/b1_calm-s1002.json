@@ -1,0 +1,36 @@
+{
+ "run_id": "b1_calm-s1002",
+ "source": "calib3/b1_calm-s1002",
+ "calibration": {
+  "cpce.json": "9b2fa54b946e03d12f2d568c43541da45d7fc0f7"
+ },
+ "scenario": "b1_calm",
+ "seed": 1002,
+ "split": "calibration",
+ "variant": null,
+ "status": "ok",
+ "attack": null,
+ "benign": null,
+ "events": [
+  {
+   "t": 0.0,
+   "event": "takeoff",
+   "alt": 20.21
+  },
+  {
+   "t": 180.147,
+   "event": "land"
+  },
+  {
+   "t": 213.927,
+   "event": "touchdown"
+  },
+  {
+   "t": 214.03,
+   "event": "end"
+  }
+ ],
+ "flight_s": 213.93,
+ "episodes": [],
+ "baseline_episodes": []
+}

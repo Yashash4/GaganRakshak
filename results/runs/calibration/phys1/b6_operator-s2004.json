@@ -1,0 +1,86 @@
+{
+ "run_id": "b6_operator-s2004",
+ "source": "phys1/b6_operator-s2004",
+ "calibration": {
+  "cpce.json": "9b2fa54b946e03d12f2d568c43541da45d7fc0f7"
+ },
+ "scenario": "b6_operator",
+ "seed": 2004,
+ "split": "calibration",
+ "variant": null,
+ "status": "ok",
+ "attack": null,
+ "benign": null,
+ "events": [
+  {
+   "t": 0.0,
+   "event": "takeoff",
+   "alt": 20.25
+  },
+  {
+   "t": 40.385,
+   "event": "operator",
+   "at_s": 40,
+   "action": "speed",
+   "value": 8
+  },
+  {
+   "t": 60.216,
+   "event": "operator",
+   "at_s": 60,
+   "action": "mode",
+   "mode": "LOITER"
+  },
+  {
+   "t": 75.019,
+   "event": "operator",
+   "at_s": 75,
+   "action": "mode",
+   "mode": "GUIDED"
+  },
+  {
+   "t": 100.123,
+   "event": "operator",
+   "at_s": 100,
+   "action": "speed",
+   "value": 3
+  },
+  {
+   "t": 130.256,
+   "event": "operator",
+   "at_s": 130,
+   "action": "mode",
+   "mode": "BRAKE"
+  },
+  {
+   "t": 140.02,
+   "event": "operator",
+   "at_s": 140,
+   "action": "mode",
+   "mode": "GUIDED"
+  },
+  {
+   "t": 180.109,
+   "event": "land"
+  },
+  {
+   "t": 195.208,
+   "event": "touchdown"
+  },
+  {
+   "t": 195.85,
+   "event": "end"
+  }
+ ],
+ "flight_s": 195.21,
+ "episodes": [
+  {
+   "agent": "onboard",
+   "class": "gnss_integrity_advisory",
+   "severity": 1,
+   "t_start": 168.16,
+   "t_end": 168.16
+  }
+ ],
+ "baseline_episodes": []
+}

@@ -1,0 +1,36 @@
+{
+ "run_id": "b3_aggressive-s1010",
+ "source": "calib3/b3_aggressive-s1010",
+ "calibration": {
+  "cpce.json": "9b2fa54b946e03d12f2d568c43541da45d7fc0f7"
+ },
+ "scenario": "b3_aggressive",
+ "seed": 1010,
+ "split": "calibration",
+ "variant": null,
+ "status": "ok",
+ "attack": null,
+ "benign": null,
+ "events": [
+  {
+   "t": 0.0,
+   "event": "takeoff",
+   "alt": 25.07
+  },
+  {
+   "t": 180.08,
+   "event": "land"
+  },
+  {
+   "t": 216.845,
+   "event": "touchdown"
+  },
+  {
+   "t": 216.931,
+   "event": "end"
+  }
+ ],
+ "flight_s": 216.84,
+ "episodes": [],
+ "baseline_episodes": []
+}

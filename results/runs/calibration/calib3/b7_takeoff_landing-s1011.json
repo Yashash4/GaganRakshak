@@ -1,0 +1,36 @@
+{
+ "run_id": "b7_takeoff_landing-s1011",
+ "source": "calib3/b7_takeoff_landing-s1011",
+ "calibration": {
+  "cpce.json": "9b2fa54b946e03d12f2d568c43541da45d7fc0f7"
+ },
+ "scenario": "b7_takeoff_landing",
+ "seed": 1011,
+ "split": "calibration",
+ "variant": null,
+ "status": "ok",
+ "attack": null,
+ "benign": null,
+ "events": [
+  {
+   "t": 0.0,
+   "event": "takeoff",
+   "alt": 6.83
+  },
+  {
+   "t": 45.021,
+   "event": "land"
+  },
+  {
+   "t": 64.869,
+   "event": "touchdown"
+  },
+  {
+   "t": 65.978,
+   "event": "end"
+  }
+ ],
+ "flight_s": 64.87,
+ "episodes": [],
+ "baseline_episodes": []
+}

@@ -1,0 +1,84 @@
+{
+ "run_id": "a3_cmd_injection-s1",
+ "source": "att/a3_cmd_injection-s1",
+ "calibration": {
+  "cpce.json": "9b2fa54b946e03d12f2d568c43541da45d7fc0f7"
+ },
+ "scenario": "a3_cmd_injection",
+ "seed": 1,
+ "split": "validation",
+ "variant": "dev",
+ "status": "ok",
+ "attack": {
+  "type": "command_injection",
+  "start_s": 31.88,
+  "end_s": 47.16,
+  "params": {
+   "command": "land"
+  }
+ },
+ "benign": null,
+ "events": [
+  {
+   "t": 0.0,
+   "event": "takeoff",
+   "alt": 16.34
+  },
+  {
+   "t": 31.88,
+   "event": "attack_action",
+   "attack": "command_injection",
+   "command": "land"
+  },
+  {
+   "t": 31.884,
+   "event": "attack_start",
+   "attack": "command_injection",
+   "params": {
+    "command": "land"
+   }
+  },
+  {
+   "t": 47.161,
+   "event": "attack_end",
+   "attack": "command_injection"
+  },
+  {
+   "t": 100.415,
+   "event": "land"
+  },
+  {
+   "t": 100.622,
+   "event": "touchdown"
+  },
+  {
+   "t": 101.033,
+   "event": "end"
+  }
+ ],
+ "flight_s": 100.62,
+ "episodes": [
+  {
+   "agent": "onboard",
+   "class": "command_injection",
+   "severity": 2,
+   "t_start": 32.46,
+   "t_end": 32.46
+  },
+  {
+   "agent": "onboard",
+   "class": "mavlink_anomaly",
+   "severity": 2,
+   "t_start": 32.7,
+   "t_end": 32.7
+  },
+  {
+   "agent": "ground",
+   "class": "command_injection",
+   "severity": 3,
+   "t_start": 31.96,
+   "t_end": 31.96
+  }
+ ],
+ "baseline_episodes": []
+}

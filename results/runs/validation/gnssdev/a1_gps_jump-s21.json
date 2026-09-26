@@ -1,0 +1,81 @@
+{
+ "run_id": "a1_gps_jump-s21",
+ "source": "gnssdev/a1_gps_jump-s21",
+ "calibration": {
+  "cpce.json": "9b2fa54b946e03d12f2d568c43541da45d7fc0f7"
+ },
+ "scenario": "a1_gps_jump",
+ "seed": 21,
+ "split": "validation",
+ "variant": "dev",
+ "status": "ok",
+ "attack": {
+  "type": "gps_jump",
+  "start_s": 40.1,
+  "end_s": 62.46,
+  "params": {
+   "offset_m": 20.127225224411887,
+   "bearing_deg": 133.57680898755882
+  }
+ },
+ "benign": null,
+ "events": [
+  {
+   "t": 0.0,
+   "event": "takeoff",
+   "alt": 16.65
+  },
+  {
+   "t": 40.106,
+   "event": "attack_start",
+   "attack": "gps_jump",
+   "params": {
+    "offset_m": 20.127225224411887,
+    "bearing_deg": 133.57680898755882
+   }
+  },
+  {
+   "t": 62.46,
+   "event": "attack_end",
+   "attack": "gps_jump"
+  },
+  {
+   "t": 100.125,
+   "event": "land"
+  },
+  {
+   "t": 131.645,
+   "event": "touchdown"
+  },
+  {
+   "t": 131.953,
+   "event": "end"
+  }
+ ],
+ "flight_s": 131.65,
+ "episodes": [
+  {
+   "agent": "onboard",
+   "class": "gnss_integrity_advisory",
+   "severity": 1,
+   "t_start": 41.37,
+   "t_end": 41.37
+  },
+  {
+   "agent": "onboard",
+   "class": "gps_spoofing",
+   "severity": 3,
+   "t_start": 46.56,
+   "t_end": 46.56
+  }
+ ],
+ "baseline_episodes": [
+  {
+   "agent": "baseline",
+   "class": "gps_spoofing",
+   "severity": 2,
+   "t_start": 40.98,
+   "t_end": 82.97
+  }
+ ]
+}

@@ -1,0 +1,36 @@
+{
+ "run_id": "b2_wind-s1002",
+ "source": "calib3/b2_wind-s1002",
+ "calibration": {
+  "cpce.json": "9b2fa54b946e03d12f2d568c43541da45d7fc0f7"
+ },
+ "scenario": "b2_wind",
+ "seed": 1002,
+ "split": "calibration",
+ "variant": null,
+ "status": "ok",
+ "attack": null,
+ "benign": null,
+ "events": [
+  {
+   "t": 0.0,
+   "event": "takeoff",
+   "alt": 20.21
+  },
+  {
+   "t": 180.425,
+   "event": "land"
+  },
+  {
+   "t": 214.374,
+   "event": "touchdown"
+  },
+  {
+   "t": 215.025,
+   "event": "end"
+  }
+ ],
+ "flight_s": 214.37,
+ "episodes": [],
+ "baseline_episodes": []
+}

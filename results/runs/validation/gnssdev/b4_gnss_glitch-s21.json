@@ -1,0 +1,122 @@
+{
+ "run_id": "b4_gnss_glitch-s21",
+ "source": "gnssdev/b4_gnss_glitch-s21",
+ "calibration": {
+  "cpce.json": "9b2fa54b946e03d12f2d568c43541da45d7fc0f7"
+ },
+ "scenario": "b4_gnss_glitch",
+ "seed": 21,
+ "split": "validation",
+ "variant": null,
+ "status": "ok",
+ "attack": null,
+ "benign": {
+  "type": "gnss_glitch",
+  "windows": [
+   [
+    24.72,
+    26.73
+   ],
+   [
+    57.3,
+    61.05
+   ],
+   [
+    87.09,
+    91.47
+   ]
+  ],
+  "magnitude_m": [
+   5,
+   15
+  ]
+ },
+ "events": [
+  {
+   "t": 0.0,
+   "event": "takeoff",
+   "alt": 16.65
+  },
+  {
+   "t": 25.679,
+   "event": "benign_glitch_start",
+   "window": [
+    24.72,
+    26.73
+   ]
+  },
+  {
+   "t": 27.677,
+   "event": "benign_glitch_end"
+  },
+  {
+   "t": 57.68,
+   "event": "benign_glitch_start",
+   "window": [
+    57.3,
+    61.05
+   ]
+  },
+  {
+   "t": 61.679,
+   "event": "benign_glitch_end"
+  },
+  {
+   "t": 87.674,
+   "event": "benign_glitch_start",
+   "window": [
+    87.09,
+    91.47
+   ]
+  },
+  {
+   "t": 91.677,
+   "event": "benign_glitch_end"
+  },
+  {
+   "t": 150.397,
+   "event": "land"
+  },
+  {
+   "t": 181.713,
+   "event": "touchdown"
+  },
+  {
+   "t": 181.878,
+   "event": "end"
+  }
+ ],
+ "flight_s": 181.71,
+ "episodes": [
+  {
+   "agent": "onboard",
+   "class": "gnss_integrity_advisory",
+   "severity": 1,
+   "t_start": 28.16,
+   "t_end": 28.16
+  }
+ ],
+ "baseline_episodes": [
+  {
+   "agent": "baseline",
+   "class": "gps_spoofing",
+   "severity": 2,
+   "t_start": 25.77,
+   "t_end": 37.75
+  },
+  {
+   "agent": "baseline",
+   "class": "gps_spoofing",
+   "severity": 2,
+   "t_start": 57.78,
+   "t_end": 71.94
+  },
+  {
+   "agent": "baseline",
+   "class": "gps_spoofing",
+   "severity": 2,
+   "t_start": 87.78,
+   "t_end": 101.76
+  }
+ ]
+}

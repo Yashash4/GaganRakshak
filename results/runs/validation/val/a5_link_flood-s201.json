@@ -1,0 +1,98 @@
+{
+ "run_id": "a5_link_flood-s201",
+ "source": "val/a5_link_flood-s201",
+ "calibration": {
+  "cpce.json": "9b2fa54b946e03d12f2d568c43541da45d7fc0f7"
+ },
+ "scenario": "a5_link_flood",
+ "seed": 201,
+ "split": "validation",
+ "variant": "dev",
+ "status": "ok",
+ "attack": {
+  "type": "link_flood",
+  "start_s": 39.02,
+  "end_s": 62.67,
+  "params": {
+   "bytes_per_s": 16100.213488499488
+  }
+ },
+ "benign": null,
+ "events": [
+  {
+   "t": 0.0,
+   "event": "takeoff",
+   "alt": 15.67
+  },
+  {
+   "t": 39.02,
+   "event": "attack_start",
+   "attack": "link_flood",
+   "params": {
+    "bytes_per_s": 16100.213488499488
+   }
+  },
+  {
+   "t": 39.02,
+   "event": "attack_action",
+   "attack": "link_flood",
+   "bytes_per_s": 16100.213488499488
+  },
+  {
+   "t": 62.671,
+   "event": "attack_end",
+   "attack": "link_flood"
+  },
+  {
+   "t": 100.234,
+   "event": "land"
+  },
+  {
+   "t": 125.329,
+   "event": "touchdown"
+  },
+  {
+   "t": 127.936,
+   "event": "end"
+  }
+ ],
+ "flight_s": 125.33,
+ "episodes": [
+  {
+   "agent": "onboard",
+   "class": "mavlink_anomaly",
+   "severity": 3,
+   "t_start": 39.06,
+   "t_end": 63.41
+  },
+  {
+   "agent": "onboard",
+   "class": "dos",
+   "severity": 3,
+   "t_start": 39.24,
+   "t_end": 39.24
+  },
+  {
+   "agent": "ground",
+   "class": "mavlink_anomaly",
+   "severity": 3,
+   "t_start": 39.06,
+   "t_end": 63.41
+  },
+  {
+   "agent": "ground",
+   "class": "dos",
+   "severity": 2,
+   "t_start": 42.71,
+   "t_end": 43.91
+  },
+  {
+   "agent": "ground",
+   "class": "dos",
+   "severity": 2,
+   "t_start": 63.48,
+   "t_end": 63.48
+  }
+ ],
+ "baseline_episodes": []
+}

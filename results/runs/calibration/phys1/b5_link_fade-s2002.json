@@ -1,0 +1,65 @@
+{
+ "run_id": "b5_link_fade-s2002",
+ "source": "phys1/b5_link_fade-s2002",
+ "calibration": {
+  "cpce.json": "9b2fa54b946e03d12f2d568c43541da45d7fc0f7"
+ },
+ "scenario": "b5_link_fade",
+ "seed": 2002,
+ "split": "calibration",
+ "variant": null,
+ "status": "ok",
+ "attack": null,
+ "benign": null,
+ "events": [
+  {
+   "t": 0.0,
+   "event": "takeoff",
+   "alt": 32.27
+  },
+  {
+   "t": 240.179,
+   "event": "land"
+  },
+  {
+   "t": 282.029,
+   "event": "touchdown"
+  },
+  {
+   "t": 282.867,
+   "event": "end"
+  }
+ ],
+ "flight_s": 282.03,
+ "episodes": [
+  {
+   "agent": "onboard",
+   "class": "dos",
+   "severity": 1,
+   "t_start": 125.59,
+   "t_end": 125.59
+  },
+  {
+   "agent": "ground",
+   "class": "telemetry_manipulation",
+   "severity": 2,
+   "t_start": 47.98,
+   "t_end": 47.98
+  },
+  {
+   "agent": "ground",
+   "class": "telemetry_manipulation",
+   "severity": 2,
+   "t_start": 74.22,
+   "t_end": 74.22
+  },
+  {
+   "agent": "ground",
+   "class": "telemetry_manipulation",
+   "severity": 2,
+   "t_start": 141.93,
+   "t_end": 141.93
+  }
+ ],
+ "baseline_episodes": []
+}

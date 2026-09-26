@@ -1,0 +1,57 @@
+{
+ "run_id": "a9_jamming-s201",
+ "source": "val2/a9_jamming-s201",
+ "calibration": {
+  "cpce.json": "9b2fa54b946e03d12f2d568c43541da45d7fc0f7"
+ },
+ "scenario": "a9_jamming",
+ "seed": 201,
+ "split": "validation",
+ "variant": "dev",
+ "status": "ok",
+ "attack": {
+  "type": "jamming",
+  "start_s": 39.02,
+  "end_s": 48.34,
+  "params": {}
+ },
+ "benign": null,
+ "events": [
+  {
+   "t": 0.0,
+   "event": "takeoff",
+   "alt": 15.67
+  },
+  {
+   "t": 39.028,
+   "event": "attack_start",
+   "attack": "jamming",
+   "params": {}
+  },
+  {
+   "t": 39.094,
+   "event": "attack_action",
+   "attack": "jamming"
+  },
+  {
+   "t": 48.341,
+   "event": "attack_end",
+   "attack": "jamming"
+  },
+  {
+   "t": 100.389,
+   "event": "land"
+  },
+  {
+   "t": 131.09,
+   "event": "touchdown"
+  },
+  {
+   "t": 131.977,
+   "event": "end"
+  }
+ ],
+ "flight_s": 131.09,
+ "episodes": [],
+ "baseline_episodes": []
+}

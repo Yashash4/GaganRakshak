@@ -1,0 +1,36 @@
+{
+ "run_id": "b7_takeoff_landing-s2003",
+ "source": "phys1/b7_takeoff_landing-s2003",
+ "calibration": {
+  "cpce.json": "9b2fa54b946e03d12f2d568c43541da45d7fc0f7"
+ },
+ "scenario": "b7_takeoff_landing",
+ "seed": 2003,
+ "split": "calibration",
+ "variant": null,
+ "status": "ok",
+ "attack": null,
+ "benign": null,
+ "events": [
+  {
+   "t": 0.0,
+   "event": "takeoff",
+   "alt": 5.56
+  },
+  {
+   "t": 45.125,
+   "event": "land"
+  },
+  {
+   "t": 62.525,
+   "event": "touchdown"
+  },
+  {
+   "t": 63.06,
+   "event": "end"
+  }
+ ],
+ "flight_s": 62.52,
+ "episodes": [],
+ "baseline_episodes": []
+}
