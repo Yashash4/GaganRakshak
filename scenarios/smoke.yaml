@@ -1,0 +1,7 @@
+# Harness smoke test: short hover-and-hop, used by the test suite.
+name: smoke
+duration_s: 15
+mission: {legs: 2, radius_m: [5, 10], alt_m: [8, 12], speed_ms: 3}
+gnss_noise: {sigma_m: 2.1, tau_s: 60}
+operator:
+  - {at_s: 8, action: speed, value: 2}
