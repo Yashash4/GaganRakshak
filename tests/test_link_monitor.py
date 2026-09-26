@@ -1,11 +1,15 @@
 import random
+from pathlib import Path
 
 from pymavlink.dialects.v20 import ardupilotmega as mav
 
 import gaganrakshak  # noqa: F401
 from gaganrakshak import crypto
 from gaganrakshak.commit import CommitRx, CommitTx
-from gaganrakshak.link_monitor import LinkMonitor
+import subprocess
+import sys
+
+from gaganrakshak.link_monitor import LinkMonitor, LossCurve, onsets
 
 SEED, PUB = crypto.generate_keypair()
 
@@ -34,9 +38,14 @@ def downlink(seconds=40, per_s=20):
     return out
 
 
-def run(stream, distance_m=0.0, extra=(), **kw):
+# learned from calibration: little loss near home, heavy loss beyond 300 m
+CURVES = {"loss": LossCurve(50.0, [0.08, 0.08, 0.1, 0.15, 0.3, 0.6, 0.9, 1.0]),
+          "gap": LossCurve(50.0, [3.0, 3.0, 3.0, 3.0, 4.0, 8.0, 15.0, 30.0])}
+
+
+def run(stream, distance_m=0.0, extra=(), curves=CURVES, **kw):
     rx = CommitRx(PUB)
-    lm = LinkMonitor(rx, **kw)
+    lm = LinkMonitor(rx, curves=curves, **kw)
     lm.distance_m = distance_m
     ev = []
     items = sorted([(t, b, False) for t, b, _ in stream] + [(t, b, True) for t, b in extra], key=lambda x: x[0])
@@ -57,8 +66,8 @@ def lossy(stream, p, seed=1, window=None):
 
 
 def test_normal_loss_near_home_is_quiet():
-    kinds, lm = run(lossy(downlink(), 0.05))
-    assert kinds == [] and lm.last["observed"] < 0.15
+    kinds, lm = run(lossy(downlink(), 0.03))
+    assert kinds == [] and max(x for _, _, x in lm.samples) < 0.08
 
 
 def test_heavy_loss_near_home_is_excess_loss():
@@ -67,7 +76,7 @@ def test_heavy_loss_near_home_is_excess_loss():
 
 
 def test_same_loss_at_radio_range_is_expected():
-    kinds, _ = run(lossy(downlink(), 0.5, window=(15, 30)), distance_m=500, d50_m=500, scale_m=60)
+    kinds, _ = run(lossy(downlink(), 0.5, window=(15, 30)), distance_m=320)
     assert kinds == []
 
 
@@ -80,3 +89,26 @@ def test_radio_buffer_congestion():
     radio = mav.MAVLink(None, srcSystem=51, srcComponent=68)
     rs = [(10.0 + k, mav.MAVLink_radio_status_message(200, 200, 5, 0, 0, 0, 0).pack(radio)) for k in range(6)]
     assert run(downlink(), extra=rs)[0].count("radio_congestion") == 1
+
+
+def test_curve_fit_is_monotone_with_floor_and_meets_budget():
+    rng = random.Random(3)
+    samples = [(d, max(0.0, rng.gauss(0.02 + 0.5 * (d > 300), 0.02))) for d in range(0, 400, 2) for _ in range(5)]
+    c = LossCurve.fit(samples, k=3)
+    assert c.upper == sorted(c.upper) and c.upper[0] >= 0.05
+    assert c.upper_at(100) < 0.2 and c.upper_at(350) > 0.5 and c.upper_at(5000) == c.upper[-1]
+    series = [(i, d, x) for i, (d, x) in enumerate(samples)]
+    assert onsets(series, LossCurve.fit(samples, k=6)) <= onsets(series, LossCurve.fit(samples, k=0))
+
+
+def test_monitor_has_no_radio_model():
+    """The expectation is learned; the monitor must not use the simulator's loss model."""
+    code = "import sys, gaganrakshak.link_monitor; assert 'gaganrakshak.link_sim' not in sys.modules"
+    assert subprocess.run([sys.executable, "-c", code]).returncode == 0
+    src = (Path(__file__).parent.parent / "gaganrakshak" / "link_monitor.py").read_text()
+    assert "link_sim" not in src.replace("link_sim's", "")
+
+
+def test_heartbeat_gap_normal_at_range_is_quiet():
+    stream = [x for x in downlink() if not 20 <= x[0] < 26]  # 6 s silence far out: a fade
+    assert "telemetry_gap" not in run(stream, distance_m=320)[0]

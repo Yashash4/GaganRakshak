@@ -14,23 +14,26 @@ from .cmd_sign import CmdVerifier
 from .commit import CommitRx
 from .ids import Ids, run_replay
 from .integrity import IntegrityMonitor, load_baseline
-from .link_monitor import LinkMonitor
+from .link_monitor import LinkMonitor, load_curves
 from .protocol import for_agent
 
-BASELINE = Path(__file__).resolve().parent.parent / "configs" / "baseline" / "ardupilot_copter_sitl"
+ROOT = Path(__file__).resolve().parent.parent
+BASELINE = ROOT / "configs" / "baseline" / "ardupilot_copter_sitl"
+LINK_CURVES = ROOT / "results" / "calibration" / "link_curves.json"  # learned from clean flights
 
 
 def _pub(run: Path, name: str) -> bytes:
     return bytes.fromhex((run / f"{name}.pub").read_text())
 
 
-def detectors(side: str, run: Path) -> list:
+def detectors(side: str, run: Path, link_curves: Path = LINK_CURVES) -> list:
     if side == "onboard":
         verifier = CmdVerifier(_pub(run, "ground_sign"))
         baseline = load_baseline(BASELINE.with_suffix(".json"), bytes.fromhex(BASELINE.with_suffix(".pub").read_text()))
         return [for_agent("onboard"), verifier, IntegrityMonitor(baseline, verifier)]
     rx = CommitRx(_pub(run, "onboard_commit"))
-    return [for_agent("ground"), rx, LinkMonitor(rx)]
+    curves = load_curves(link_curves) if link_curves.exists() else None
+    return [for_agent("ground"), rx, LinkMonitor(rx, curves=curves)]
 
 
 def evaluate(run: Path) -> dict:
