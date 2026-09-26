@@ -5,7 +5,8 @@ ground truth and the IDS's final output, and no computed metrics.
 writes results/runs/<split>/<run_id>.json with: run_id, scenario, seed, split, variant
 ("dev" | "held_out" | null for runs without an attack), status, attack {type, params},
 events (labels, scenario time t), flight_s (takeoff to touchdown) and episodes
-[{agent, class, severity, t_start, t_end}] from replaying the run through both agents.
+[{agent, class, severity, t_start, t_end}] from replaying the run through both agents, and
+baseline_episodes in the same format: what stock ArduPilot itself flagged (see baseline.py).
 """
 
 from __future__ import annotations
@@ -14,6 +15,7 @@ import argparse
 import json
 from pathlib import Path
 
+from .baseline import baseline_episodes
 from .evaluate import evaluate
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -59,11 +61,13 @@ def export_run(run: Path, split: str, out_root: Path = ROOT / "results" / "runs"
         "events": events,
         "flight_s": round(t["touchdown"] - t["takeoff"], 2) if len(t) == 2 else None,
         "episodes": [],
+        "baseline_episodes": [],
     }
     if labels["status"] == "ok":
         doc["episodes"] = [
             {k: ep[k] for k in ("agent", "class", "severity", "t_start", "t_end")} for ep in evaluate(run)["episodes"]
         ]
+        doc["baseline_episodes"] = baseline_episodes(run)
     out = out_root / split / f"{labels['run_id']}.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(doc, indent=1))

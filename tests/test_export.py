@@ -28,7 +28,8 @@ def test_export_failed_run_keeps_truth_and_no_episodes(tmp_path):
         )
     )
     doc = json.loads(export_run(run, "test", tmp_path / "out").read_text())
-    assert doc["variant"] == "held_out" and doc["flight_s"] == 95.5 and doc["episodes"] == []
+    assert doc["variant"] == "held_out" and doc["flight_s"] == 95.5
+    assert doc["episodes"] == doc["baseline_episodes"] == []
     assert [e["event"] for e in doc["events"]] == ["takeoff", "attack_start", "touchdown"]
     assert all("wall" not in e for e in doc["events"])
     with pytest.raises(ValueError):
