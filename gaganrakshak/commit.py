@@ -16,7 +16,7 @@ Commitment-level evidence:
 - ``commit_bad_signature``   chunk signature does not verify   [telemetry_manipulation]
 - ``selective_commit_loss``  commitments lost far more often than ordinary frames — random
                              radio loss hits both alike   [telemetry_manipulation]
-- ``commit_timeout``         telemetry keeps arriving but no commitment for ``timeout_s``
+- ``commit_timeout``         telemetry keeps flowing but no commitment for ``timeout_s``
 Listed frames that never arrive are counted as missing (radio loss) for the link monitor.
 """
 
@@ -99,13 +99,22 @@ class CommitRx:
         self._chunks: dict[int, dict] = {}  # window -> {"n": n_chunks, "got": {chunk: {(seq,msgid): tag}}}
         self._history = deque(maxlen=loss_history)  # per window: (lost_window, listed, missing)
         self._t_last_commit = None
-        self._frames_since_commit = 0
+        self._recent_frames = deque()  # arrival times of relevant frames within timeout_s
         self._selective = self._timed_out = False
+        self._t_congested = None  # last RADIO_STATUS with a nearly full radio buffer
+        self.congestion_hold_s = 10.0
         self.stats = {"match": 0, "altered": 0, "unexpected": 0, "unverified": 0, "missing": 0,
                       "windows": 0, "windows_lost": 0}
 
     def _ev(self, t, kind, sev, **meta):
         return EvidenceEvent(t, self.uav_id, "commit_rx", kind, 1.0, sev, CLASS, meta)
+
+    def _loss_ev(self, t, kind, **meta):
+        """Commitment loss while the radio is congested is explained by the congestion: a full
+        buffer drops large frames (commitments) first. Then it corroborates DoS instead."""
+        congested = self._t_congested is not None and t - self._t_congested < self.congestion_hold_s
+        return EvidenceEvent(t, self.uav_id, "commit_rx", kind, 1.0, Severity.MEDIUM,
+                             "dos" if congested else CLASS, {**meta, "congested": congested})
 
     def observe(self, msg, samples, direction, t):
         if direction != "D":
@@ -113,10 +122,12 @@ class CommitRx:
         name = msg.get_type()
         if name == "GR_COMMIT":
             return self._commit(msg, t)
+        if name == "RADIO_STATUS" and msg.txbuf < 50:
+            self._t_congested = t
         if name in RELEVANT:
             self._pending.append([t, msg.get_seq(), msg.get_msgId(), tag(bytes(msg.get_msgbuf())), name,
                                   self.last_window])
-            self._frames_since_commit += 1
+            self._recent_frames.append(t)
         return []
 
     def _commit(self, m, t):
@@ -124,7 +135,7 @@ class CommitRx:
         if not crypto.verify(_signed_bytes(m.window_id, m.chunk, m.n_chunks, m.count, entries),
                              bytes(m.signature), self.pub):
             return [self._ev(t, "commit_bad_signature", Severity.HIGH, window=m.window_id)]
-        self._t_last_commit, self._frames_since_commit, self._timed_out = t, 0, False
+        self._t_last_commit, self._timed_out = t, False
         w = m.window_id
         # (seq, msgid) -> tags. Not unique: at FC rates the 8-bit seq wraps several times per window.
         listed = {}
@@ -194,14 +205,19 @@ class CommitRx:
         selective = lost_w >= self.selective_min and p_commit > p_frame + self.selective_margin
         out = []
         if selective and not self._selective:
-            out.append(self._ev(t, "selective_commit_loss", Severity.MEDIUM,
-                                commit_loss=round(p_commit, 3), frame_loss=round(p_frame, 3)))
+            out.append(self._loss_ev(t, "selective_commit_loss",
+                                     commit_loss=round(p_commit, 3), frame_loss=round(p_frame, 3)))
         self._selective = selective
         return out
 
-    def tick(self, t):
-        if (self._t_last_commit is not None and not self._timed_out and self._frames_since_commit >= 10
+    def tick(self, t, min_rate_hz: float = 5.0):
+        """Telemetry kept flowing for the whole ``timeout_s`` but no commitment came. An outage
+        (jamming, fade) stops both and is the link monitor's business, not this one's."""
+        while self._recent_frames and t - self._recent_frames[0] > self.timeout_s:
+            self._recent_frames.popleft()
+        flowing = len(self._recent_frames) >= min_rate_hz * self.timeout_s
+        if (self._t_last_commit is not None and not self._timed_out and flowing
                 and t - self._t_last_commit > self.timeout_s):
             self._timed_out = True
-            return [self._ev(t, "commit_timeout", Severity.MEDIUM, silent_s=round(t - self._t_last_commit, 1))]
+            return [self._loss_ev(t, "commit_timeout", silent_s=round(t - self._t_last_commit, 1))]
         return []

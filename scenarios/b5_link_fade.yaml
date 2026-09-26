@@ -1,0 +1,7 @@
+# B5 — benign link fade: long-range legs where radio loss rises with distance.
+name: b5_link_fade
+duration_s: 240
+mission: {legs: 3, radius_m: [200, 450], alt_m: [25, 35], speed_ms: [8, 12]}
+wind: {spd: [0, 3], dir: [0, 360], turb: 0}
+gnss_noise: {sigma_m: 2.1, tau_s: 60}
+link: {loss_d50_m: 350, loss_scale_m: 60}

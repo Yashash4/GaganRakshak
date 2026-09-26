@@ -38,14 +38,13 @@ import yaml
 from pymavlink import mavutil
 
 from . import crypto, sitl
+from .attacks import ATTACKS
 from .link_sim import LinkConfig, LinkSim
 
 MAV = mavutil.mavlink
 M_PER_DEG = 111320.0
 HOME_LAT = float(sitl.HOME.split(",")[0])
 
-# attack type -> callable(run) returning an injector; filled in by the attack modules
-ATTACKS: dict = {}
 
 
 # -- plan -------------------------------------------------------------------------------
@@ -305,7 +304,7 @@ class Run:
             self.gcs = mavutil.mavlink_connection(f"udpin:127.0.0.1:{p['gcs']}", source_system=255,
                                                   source_component=190)
             if attacker:
-                threading.Thread(target=attacker.run, daemon=True).start()
+                threading.Thread(target=attacker.timeline, daemon=True).start()
             self._pilot()
             status = "ok"
         except Exception as e:  # a failed run is recorded, never silently dropped

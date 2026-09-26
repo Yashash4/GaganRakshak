@@ -127,3 +127,25 @@ def test_same_seq_twice_in_one_window():
     stream += [(2.0, c, True) for c in tx.flush(2.0)]
     kinds, rx = ground(stream)
     assert kinds == [] and rx.stats["match"] == 2
+
+
+def test_outage_is_not_a_commit_timeout():
+    """Jamming stops telemetry and commitments alike: link evidence, not a commitment attack."""
+    stream = [x for x in downlink() if not 10 <= x[0] < 18]
+    assert "commit_timeout" not in ground(stream)[0]
+
+
+def test_commitment_loss_under_congestion_points_at_dos():
+    stream = downlink(windows=60)
+    radio = mav.MAVLink(None, srcSystem=51, srcComponent=68)
+    kept, n = [], 0
+    for x in stream:
+        if x[2]:
+            n += 1
+            kept.append((x[0] - 0.01, mav.MAVLink_radio_status_message(200, 200, 5, 0, 0, 0, 0).pack(radio), False))
+            if n % 2 == 0:
+                continue  # full buffer drops the big frames
+        kept.append(x)
+    rx = CommitRx(PUB)
+    ev = [e for t, b, _ in kept for e in rx.observe(parse(b), [], "D", t)]
+    assert [(e.evidence_type, e.class_hint) for e in ev] == [("selective_commit_loss", "dos")]
