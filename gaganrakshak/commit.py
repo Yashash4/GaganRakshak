@@ -160,7 +160,7 @@ class CommitRx:
                 out += self._resolve(old, t, final=True)
             if self.last_window is not None:
                 for lost in range(self.last_window + 1, w):
-                    entry = [True, 0, 0]  # frame counts filled in when its frames are resolved
+                    entry = [True, None, None]  # frame counts unknown until its frames are resolved
                     self._history.append(entry)
                     self._lost_pending.append(entry)
                     self.stats["windows_lost"] += 1
@@ -224,13 +224,16 @@ class CommitRx:
     def recent_loss(self, windows: int = 10) -> tuple[int, int, int]:
         """(frames listed, listed frames missing, windows lost) over the last ``windows`` windows."""
         h = list(self._history)[-windows:]
-        return sum(n for _, n, _ in h), sum(m for _, _, m in h), sum(1 for lost, _, _ in h if lost)
+        return (sum(n or 0 for _, n, _ in h), sum(m or 0 for _, _, m in h),
+                sum(1 for lost, _, _ in h if lost))
 
     def _selective_check(self, t):
         """Commitments lost more often than frames, beyond sampling noise: one-sided binomial
         test over the loss history against the loss expected for commitment-length frames
         (z > ``selective_z``, set to the false-alarm budget on clean flights)."""
-        h = list(self._history)
+        # windows whose frame loss is still unknown (lost, nothing received after them yet) are
+        # left out: frame loss is measured through commitments, so it cannot be assumed 0
+        h = [e for e in self._history if e[1] is not None]
         n = len(h)
         lost_w = sum(1 for e in h if e[0])
         listed = sum(e[1] for e in h)
