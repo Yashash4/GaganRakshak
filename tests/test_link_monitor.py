@@ -143,3 +143,11 @@ def test_implausible_position_jump_is_not_trusted():
     assert lm.trusted_distance(1.0)[1]
     lm.observe(parse(gpi(fc, 400)), [], "D", 2.0)  # 395 m in 1 s
     assert lm.trusted_distance(2.0) == (0.0, False)
+
+
+def test_outside_calibrated_range_is_marked_once():
+    curves = {"loss": LossCurve(50.0, [0.1, 0.2], {"max_distance_m": 100.0}), "gap": CURVES["gap"]}
+    lm = LinkMonitor(CommitRx(PUB), curves=curves)
+    lm.distance_m = 150
+    ev = lm.tick(1.0) + lm.tick(1.1)
+    assert [(e.evidence_type, e.severity) for e in ev] == [("outside_calibrated_range", 0)]

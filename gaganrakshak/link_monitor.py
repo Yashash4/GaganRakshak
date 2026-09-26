@@ -164,6 +164,15 @@ class LinkMonitor:
 
     def tick(self, t):
         out = []
+        if self.curve is not None:  # beyond the calibrated range the last band is extrapolated
+            limit = self.curve.meta.get("max_distance_m")
+            if limit is not None:
+                far = self.trusted_distance(t)[0] > limit
+                if far and not self._in.get("far"):
+                    out.append(EvidenceEvent(t, self.uav_id, "link_monitor", "outside_calibrated_range", 0.0,
+                                             Severity.INFO, None, {"distance_m": round(self.distance_m, 1),
+                                                                   "calibrated_max_m": limit}))
+                self._in["far"] = far
         if self._t_hb is not None and self.gap_curve is not None:
             silent = t - self._t_hb
             limit = self.gap_curve.upper_at(self.trusted_distance(t)[0])
