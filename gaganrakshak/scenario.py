@@ -248,7 +248,20 @@ class Run:
         g.set_mode("LAND")
         disarmed = lambda m: (m.get_type() == "HEARTBEAT" and m.get_srcSystem() == 1
                               and not m.base_mode & MAV.MAV_MODE_FLAG_SAFETY_ARMED)
-        if not self._pump(g, 180, lambda m: m.get_type() == "GLOBAL_POSITION_INT" and m.relative_alt < 300):
+        # Touchdown = the vehicle stopped descending: |vz| < 0.2 m/s for 5 s, after 10 s in LAND.
+        # (Relative altitude on the ground drifts with the barometer on long flights.)
+        land_t, still = time.monotonic(), [None]
+
+        def landed(m):
+            if m.get_type() != "GLOBAL_POSITION_INT" or time.monotonic() - land_t < 10:
+                return False
+            if abs(m.vz) >= 20:
+                still[0] = None
+                return False
+            still[0] = still[0] or time.monotonic()
+            return time.monotonic() - still[0] >= 5
+
+        if not self._pump(g, 180, landed):
             self.event("touchdown_not_seen")  # never disarm a vehicle not seen on the ground
             self.event("end")
             return
