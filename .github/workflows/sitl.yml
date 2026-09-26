@@ -1,0 +1,25 @@
+name: SITL
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 2 * * *"  # nightly
+
+permissions:
+  contents: read
+
+jobs:
+  sitl:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: actions/setup-python@v5.3.0
+        with:
+          python-version: "3.12"
+      - name: Build ArduPilot SITL (our fork) and install
+        run: bash scripts/setup_dgx.sh
+      - name: SITL tests
+        run: |
+          source .venv/bin/activate
+          pytest -m sitl -v
