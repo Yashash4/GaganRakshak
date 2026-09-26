@@ -241,7 +241,10 @@ class Run:
         g.set_mode("LAND")
         disarmed = lambda m: (m.get_type() == "HEARTBEAT" and m.get_srcSystem() == 1
                               and not m.base_mode & MAV.MAV_MODE_FLAG_SAFETY_ARMED)
-        self._pump(g, 90, lambda m: m.get_type() == "GLOBAL_POSITION_INT" and m.relative_alt < 300)
+        if not self._pump(g, 180, lambda m: m.get_type() == "GLOBAL_POSITION_INT" and m.relative_alt < 300):
+            self.event("touchdown_not_seen")  # never disarm a vehicle not seen on the ground
+            self.event("end")
+            return
         self.event("touchdown")
         # The harness GNSS error keeps LAND's position loop requesting tilt on the ground,
         # which holds off the land detector; the operator disarms, as a pilot would.
