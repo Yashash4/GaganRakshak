@@ -156,4 +156,6 @@ def test_timeout_allows_for_long_commitments_losing_more():
     rx = CommitRx(PUB, commit_loss_exponent=3.6)
     rx._history.extend([[False, 30, 9]] * 10)
     assert rx.required_silence() > 15
-    assert CommitRx(PUB).required_silence() == 5.0  # clean link: the 5 s floor
+    clean = CommitRx(PUB, commit_loss_exponent=3.6)
+    clean._history.extend([[False, 30, 0]] * 10)
+    assert clean.required_silence() == 5.0  # clean link: the 5 s floor
