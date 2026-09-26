@@ -1,5 +1,12 @@
 # Third-party components and Background IP
 
+GaganRakshak itself is licensed under the Apache License 2.0 (LICENSE, NOTICE).
+
+ArduPilot is GPL-3.0. It is not part of GaganRakshak and is not linked into it: it is a
+separate program (the simulated flight controller, and our ArduPilot fork with a
+simulator-only change) that GaganRakshak talks to over the MAVLink protocol. The fork stays
+under GPL-3.0.
+
 ## Third-party software (used, not modified)
 
 | Component | Use | Licence |

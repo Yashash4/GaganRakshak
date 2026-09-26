@@ -1,0 +1,8 @@
+GaganRakshak — two-point cyber-physical intrusion detection for UAVs
+Copyright 2026 Team Eagle Vision
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+Third-party components and their licences are listed in THIRD_PARTY.md. ArduPilot
+(GPL-3.0) is not part of this product: it is a separate program, used as the simulated
+flight controller and reached only over the MAVLink protocol.
