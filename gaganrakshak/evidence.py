@@ -88,3 +88,8 @@ class EpisodeTracker:
 
     def open_episodes(self) -> list[Episode]:
         return list(self._open.values())
+
+
+def evidence_types(ep: Episode) -> list[str]:
+    """The evidence types that formed an episode, sorted and unique."""
+    return sorted({e.evidence_type for a in ep.alerts for e in a.evidence})

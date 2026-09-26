@@ -24,7 +24,17 @@ def test_glitch_flag_and_innovation_ratios_are_one_gps_episode_in_scenario_time(
     msgs += [(T0 + 12.0, ekf(pos=1.7)), (T0 + 14.0, text("EKF3 lane switch 1"))]
     msgs += [(T0 + t, ekf()) for t in range(15, 40)]
     eps = episodes_from(msgs, T0)
-    assert eps == [{"agent": "baseline", "class": "gps_spoofing", "severity": 2, "t_start": 10.0, "t_end": 14.0}]
+    kinds = ["ekf_gps_glitching", "ekf_pos_horiz_variance_above_1", "statustext_gps_glitch", "statustext_lane_switch"]
+    assert eps == [
+        {
+            "agent": "baseline",
+            "class": "gps_spoofing",
+            "severity": 2,
+            "t_start": 10.0,
+            "t_end": 14.0,
+            "evidence_types": kinds,
+        }
+    ]
 
 
 def test_compass_ratio_is_not_counted_as_gnss():
@@ -36,7 +46,10 @@ def test_failsafe_text_and_its_mode_change_are_a_high_dos_episode_but_a_plain_mo
     msgs = [(T0, hb(4)), (T0 + 5, hb(9)), (T0 + 6, hb(4))]  # commanded LAND and back: no indicator
     msgs += [(T0 + 30, text("Radio Failsafe")), (T0 + 31, hb(6)), (T0 + 60, hb(6))]
     eps = episodes_from(msgs, T0)
-    assert eps == [{"agent": "baseline", "class": "dos", "severity": 3, "t_start": 30.0, "t_end": 31.0}]
+    kinds = ["failsafe_mode_rtl", "statustext_radio_failsafe"]
+    assert eps == [
+        {"agent": "baseline", "class": "dos", "severity": 3, "t_start": 30.0, "t_end": 31.0, "evidence_types": kinds}
+    ]
 
 
 def test_quiet_run_has_no_episodes_and_open_episode_has_no_end():

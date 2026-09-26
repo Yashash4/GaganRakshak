@@ -9,7 +9,7 @@ source, calibration (the calibration files the IDS used, with their git blob has
 seed, split, variant
 ("dev" | "held_out" | null for runs without an attack), status, attack {type, params},
 events (labels, scenario time t), flight_s (takeoff to touchdown) and episodes
-[{agent, class, severity, t_start, t_end}] from replaying the run through both agents, and
+[{agent, class, severity, t_start, t_end, evidence_types}] from replaying the run through both agents, and
 baseline_episodes in the same format: what stock ArduPilot itself flagged (see baseline.py).
 The command exports only runs with status "ok" and lists the others with their status.
 --guard exports only the runs the calibration guard accepts (calibration.select). A run recorded
@@ -89,7 +89,8 @@ def export_run(run: Path, split: str, out_root: Path = ROOT / "results" / "runs"
     }
     if labels["status"] == "ok":
         doc["episodes"] = [
-            {k: ep[k] for k in ("agent", "class", "severity", "t_start", "t_end")} for ep in evaluate(run)["episodes"]
+            {k: ep[k] for k in ("agent", "class", "severity", "t_start", "t_end", "evidence_types")}
+            for ep in evaluate(run)["episodes"]
         ]
         doc["baseline_episodes"] = baseline_episodes(run)
     out = out_root / split / f"{source}.json"

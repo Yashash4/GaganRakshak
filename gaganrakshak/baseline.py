@@ -44,7 +44,7 @@ from typing import Any
 from pymavlink import mavutil
 
 from .adapter import ArduPilotAdapter
-from .evidence import Alert, EpisodeTracker, Severity
+from .evidence import Alert, EpisodeTracker, EvidenceEvent, Severity, evidence_types
 
 EKF_GPS_GLITCHING = 32768  # EKF_STATUS_FLAGS bit
 RATIOS = {
@@ -62,33 +62,33 @@ FAILSAFE_MODES = {"LAND", "RTL", "SMART_RTL", "BRAKE"}
 FAILSAFE_MODE_S = 3.0
 
 
-def indicators(msgs: Iterable[tuple[float, Any]]) -> list[tuple[float, str, Severity]]:
-    """(t, class, severity) for each stock indicator in (time, pymavlink message) pairs."""
-    out: list[tuple[float, str, Severity]] = []
+def indicators(msgs: Iterable[tuple[float, Any]]) -> list[tuple[float, str, Severity, str]]:
+    """(t, class, severity, indicator name) for each stock indicator in (time, pymavlink message) pairs."""
+    out: list[tuple[float, str, Severity, str]] = []
     mode = None
     failsafe: tuple[float, str] | None = None  # last failsafe text (t, class)
     for t, m in msgs:
         ty = m.get_type()
         if ty == "EKF_STATUS_REPORT":
             if m.flags & EKF_GPS_GLITCHING:
-                out.append((t, "gps_spoofing", Severity.MEDIUM))
-            out += [(t, cls, Severity.MEDIUM) for f, cls in RATIOS.items() if getattr(m, f) > 1.0]
+                out.append((t, "gps_spoofing", Severity.MEDIUM, "ekf_gps_glitching"))
+            out += [(t, cls, Severity.MEDIUM, f"ekf_{f}_above_1") for f, cls in RATIOS.items() if getattr(m, f) > 1.0]
         elif ty == "STATUSTEXT":
-            hit = next(((cls, sev) for rx, cls, sev in TEXTS if rx.search(m.text)), None)
+            hit = next(((cls, sev, x.group(0)) for rx, cls, sev in TEXTS if (x := rx.search(m.text))), None)
             if hit:
-                out.append((t, *hit))
+                out.append((t, hit[0], hit[1], "statustext_" + hit[2].lower().replace(" ", "_")))
                 if hit[1] == Severity.HIGH:
                     failsafe = (t, hit[0])
         elif ty == "HEARTBEAT" and ArduPilotAdapter._key(m) == "HEARTBEAT":
             new = mavutil.mode_string_v10(m)
             if new != mode and new in FAILSAFE_MODES and failsafe and t - failsafe[0] <= FAILSAFE_MODE_S:
-                out.append((t, failsafe[1], Severity.HIGH))
+                out.append((t, failsafe[1], Severity.HIGH, f"failsafe_mode_{new.lower()}"))
             mode = new
     return out
 
 
 def episodes_from(msgs: Iterable[tuple[float, Any]], t0: float, clear_after_s: float = 10.0) -> list[dict]:
-    """Baseline episodes {agent, class, severity, t_start, t_end}, scenario time (t - t0)."""
+    """Baseline episodes {agent, class, severity, t_start, t_end, evidence_types}, scenario time (t - t0)."""
     last: list[float] = []
 
     def seen():
@@ -97,8 +97,8 @@ def episodes_from(msgs: Iterable[tuple[float, Any]], t0: float, clear_after_s: f
             yield t, m
 
     tracker = EpisodeTracker(clear_after_s)
-    for t, cls, sev in indicators(seen()):
-        tracker.update(Alert(t, 1, cls, 1.0, sev))
+    for t, cls, sev, name in indicators(seen()):
+        tracker.update(Alert(t, 1, cls, 1.0, sev, (EvidenceEvent(t, 1, "ardupilot", name, 1.0, sev, cls),)))
     if last:
         tracker.close_idle(last[0])  # as the IDS replay's periodic tick does up to the last message
     return [
@@ -108,6 +108,7 @@ def episodes_from(msgs: Iterable[tuple[float, Any]], t0: float, clear_after_s: f
             "severity": max(int(a.severity) for a in ep.alerts),
             "t_start": round(ep.t_start - t0, 2),
             "t_end": None if ep.t_end is None else round(ep.t_end - t0, 2),
+            "evidence_types": evidence_types(ep),
         }
         for ep in tracker.episodes
     ]

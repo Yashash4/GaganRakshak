@@ -14,6 +14,7 @@ from .cmd_sign import CmdVerifier
 from .commit import CommitRx
 from .cpce import Cpce
 from .estimator import EstimatorMonitor
+from .evidence import evidence_types
 from .ids import Ids, run_replay
 from .integrity import IntegrityMonitor, load_baseline
 from .link_monitor import LinkMonitor, load_curves
@@ -92,6 +93,7 @@ def evaluate(
                     "t_end": None if ep.t_end is None else round(ep.t_end - t0, 2),
                     "alerts": len(ep.alerts),
                     "severity": max(int(a.severity) for a in ep.alerts),
+                    "evidence_types": evidence_types(ep),
                 }
             )
     return out
