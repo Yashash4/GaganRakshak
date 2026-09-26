@@ -114,3 +114,57 @@ def test_heading_drag_moves_the_bias_estimate_only_slightly():
     dragged = residuals(flight(reported_yaw=lambda t: TRUE_YAW + (math.radians(20) if 20.0 < t < 21.0 else 0.0)))
     late = [(a, b) for a, b in zip(clean, dragged, strict=True) if a["t"] - a["H"] > 21.1]
     assert late and max(np.linalg.norm(a["r1"] - b["r1"]) for a, b in late) < 0.02
+
+
+def yawing_hover(seconds, body_bias, spoof_accel=(0.0, 0.0), spoof_from=None, yaw_rate=0.105):  # ~6 deg/s
+    """Hover while yawing at yaw_rate; IMU carries a body-frame accelerometer bias; from spoof_from
+    GNSS reports an NED-fixed acceleration (velocity and position) that did not happen."""
+    b, a = np.array(body_bias), np.array(spoof_accel)
+    out = [Sample(0.0, 1, Status("GUIDED", True))]
+    for i in range(int(seconds * 200)):
+        t = i / 200
+        yaw = yaw_rate * t
+        if i % 4 == 0:
+            out.append(Sample(t, 1, Attitude(0.0, 0.0, yaw), msg_id=30))
+        out.append(Sample(t, 1, Imu(b[0], b[1], -G + b[2], 0.0, 0.0, yaw_rate), msg_id=27))
+        if i % 40 == 0 and t > 0:
+            gt = t - 0.10
+            dt = max(0.0, gt - spoof_from) if spoof_from is not None else 0.0
+            v, p = a * dt, 0.5 * a * dt * dt
+            out.append(
+                Sample(
+                    t,
+                    1,
+                    Gnss(
+                        LAT0 + p[0] / M_PER_DEG,
+                        LON0 + p[1] / (M_PER_DEG * math.cos(math.radians(LAT0))),
+                        100.0,
+                        v[0],
+                        v[1],
+                        None,
+                        3,
+                        10,
+                        fix_time=gt,
+                    ),
+                )
+            )
+    return out
+
+
+def test_ned_fixed_trend_restores_the_uncontaminated_bias():
+    """A spoof acceleration starting 20 s after arming (inside free learning): the trend is found,
+    and the bias is replaced by the jointly fitted body bias (spoof separated out) and frozen."""
+    res = Residuals()
+    for smp in yawing_hover(90.0, (0.05, -0.03, 0.0), spoof_accel=(0.04, 0.0), spoof_from=20.0):
+        res.observe(smp)
+    assert res.inertial_trend is not None, "trend not detected"
+    assert res.freeze_bias
+    assert np.allclose(res.bias[:2], (0.05, -0.03), atol=0.005), res.bias  # horizontal bias observable
+    assert np.allclose(res.inertial_trend["ned_accel"], (-0.04, 0.0), atol=0.01)  # the spoof, found
+
+
+def test_body_bias_while_yawing_is_not_a_trend():
+    res = Residuals()
+    for smp in yawing_hover(90.0, (0.05, -0.03, 0.0)):
+        res.observe(smp)
+    assert res.inertial_trend is None and np.allclose(res.bias[:2], (0.05, -0.03), atol=0.005)

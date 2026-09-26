@@ -216,8 +216,9 @@ class Residuals:
         self.trusted_learning_s = 180.0
         self.bias_rate_bound = 0.002 / 60.0  # m/s^2 per s
         self._t_bias: float | None = None
-        self._learn: deque = deque(maxlen=600)  # (J 2x3, y 2, h, heading) of recent learning windows
+        self._learn: deque = deque(maxlen=600)  # (J 2x3, y 2, h, heading, t) of recent learning windows
         self.inertial_trend: dict | None = None  # set when an NED-fixed residual trend is found
+        self._t_trend_check = -1e9
         self._rest: deque = deque(maxlen=50)  # (|f|, |ω|) of the last second of IMU samples
         self.armed: bool | None = None
         # autopilot-measured vibration (VIBRATION): level scales the expected inertial error
@@ -331,12 +332,21 @@ class Residuals:
         is applied per window, so estimating it creates no feedback loop."""
         raw = r["r1"] - (dM1 @ self.bias)[:2]  # residual as if no bias were applied
         J, y = dM1[:2], -raw
-        self._learn.append((J, y, h, self.imu.psi))
-        trend = self._ned_trend()
+        self._learn.append((J, y, h, self.imu.psi, t))
+        trend = None
+        if t - self._t_trend_check >= 1.0:  # a trend builds over tens of seconds: check at 1 Hz
+            self._t_trend_check = t
+            trend = self._ned_trend()
         if trend is not None:
+            # A spoof-like trend is reported, never learned. Free learning may already have
+            # absorbed part of it: take the body bias from the joint fit, which separates it from
+            # the NED-fixed acceleration, and keep it fixed for the rest of the flight.
+            self.bias = np.asarray(trend.pop("bias"))
+            self.freeze_bias = True
+            trend["bias_after"] = [round(float(x), 4) for x in self.bias]
             self.inertial_trend = {"t": t, **trend}
             r["trend"] = trend
-            return  # a spoof-like trend is reported, never learned
+            return
         self._A = self._forget * self._A + J.T @ J
         self._y = self._forget * self._y + J.T @ y
         candidate = np.linalg.solve(self._A, self._y)
@@ -350,24 +360,42 @@ class Residuals:
             self.bias = self.bias + (step if n <= limit else step * (limit / n))
         self._t_bias = t
 
-    def _ned_trend(self, min_windows: int = 60, min_heading_deg: float = 45.0) -> dict | None:
-        """Body-fixed bias vs NED-fixed acceleration on the recent learning windows: with enough
-        heading diversity to tell them apart, an NED-fixed model that explains the residuals far
-        better than any body-fixed bias is a spoofer-like trend."""
+    def _ned_trend(self, min_windows: int = 60, min_heading_deg: float = 45.0, f_crit: float = 30.0) -> dict | None:
+        """Does an NED-fixed acceleration (a spoofer's signature) explain the recent learning
+        windows on top of a body-fixed bias? Joint fit y = J b + h a vs bias-only y = J b; with
+        enough heading diversity the two are separable, and a significant a (F-test) is a trend."""
         if len(self._learn) < min_windows:
             return None
         psis = [x[3] for x in self._learn]
         if math.degrees(max(psis) - min(psis)) < min_heading_deg:
             return None  # not separable yet
-        A = sum(J.T @ J for J, _, _, _ in self._learn) + np.eye(3) * 1e-6
-        b = np.linalg.solve(A, sum(J.T @ y for J, y, _, _ in self._learn))
-        rss_body = sum(float(np.sum((y - J @ b) ** 2)) for J, y, _, _ in self._learn)
-        hh = sum(h * h for _, _, h, _ in self._learn)
-        a = sum(h * y for _, y, h, _ in self._learn) / hh  # NED acceleration: y = h a
-        rss_ned = sum(float(np.sum((y - h * a) ** 2)) for _, y, h, _ in self._learn)
-        noise = rss_ned / (2 * len(self._learn))
-        if rss_ned < 0.5 * rss_body and float(np.linalg.norm(a)) > 3 * math.sqrt(noise / hh):
-            return {"ned_accel": [round(float(x), 4) for x in a], "rss_ratio": round(rss_ned / rss_body, 3)}
+        X_b = np.vstack([J for J, _, _, _, _ in self._learn])
+        y = np.concatenate([y for _, y, _, _, _ in self._learn])
+        beta_b, *_ = np.linalg.lstsq(X_b, y, rcond=None)
+        rss_b = float(np.sum((y - X_b @ beta_b) ** 2))
+        # a spoof acceleration starting at an unknown time tau adds a * (t - max(tau, t0)) to a window
+        # [t0, t]: scan candidate onsets, keep the best-fitting joint model
+        ends = [t for _, _, _, _, t in self._learn]
+        best = None
+        for tau in ends[:: max(1, len(ends) // 40)]:
+            X_j = np.vstack(
+                [np.hstack([J, max(0.0, t - max(tau, t - h)) * np.eye(2)]) for J, _, h, _, t in self._learn]
+            )
+            beta_j, *_ = np.linalg.lstsq(X_j, y, rcond=None)
+            rss_j = float(np.sum((y - X_j @ beta_j) ** 2))
+            if best is None or rss_j < best[0]:
+                best = (rss_j, tau, beta_j)
+        assert best is not None
+        rss_j, tau, beta_j = best
+        dof = len(y) - 5 - 1  # 3 bias + 2 acceleration + onset
+        f = ((rss_b - rss_j) / 2) / max(rss_j / dof, 1e-12)
+        if f > f_crit:
+            return {
+                "ned_accel": [round(float(x), 4) for x in beta_j[3:]],
+                "f_stat": round(f, 1),
+                "onset_t": round(tau, 1),
+                "bias": beta_j[:3],
+            }
         return None
 
     def observe(self, sample):
