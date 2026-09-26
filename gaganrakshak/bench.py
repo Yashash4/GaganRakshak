@@ -9,14 +9,18 @@ split "test" (a held-out variant keeps variant "held_out").
 
 Metrics use the per-run exports only (the same JSON an independent verifier reads), scenario time
 t = 0 at the takeoff command:
-- Detection: an episode of the attack's EXPECTED class, severity MEDIUM or higher, starting in
-  [attack_start, attack_end + RELEASE_S]; "during" if it starts by attack_end, else "at release"
-  (the attack's end is visible to the IDS). Latency = episode start - attack start. For GNSS
-  attacks, a gnss_integrity_advisory (LOW) in the window without a detection is "advisory only".
-  The IDS must detect on the expected agent where one is named; the baseline has one agent.
+- Detection (headline): an episode of the attack's EXPECTED class, severity MEDIUM or higher,
+  starting in [attack_start, attack_end] ("during"). "Detected incl. release" also counts one
+  starting up to attack_end + GRACE_S (the attack's end is visible to the IDS). Latency = episode
+  start - attack start. The IDS must detect on the expected agent where one is named; the
+  baseline has one agent. For GNSS attacks, a gnss_integrity_advisory (LOW) in the same window
+  without a detection is "advisory only".
+- Secondary detections: MEDIUM+ episodes of any other class starting in [attack_start,
+  attack_end + SETTLE_S]; counted per attack type, neither detections nor false alarms.
 - False alarms: MEDIUM+ episodes of any class starting in clean flight time: benign flights from
-  takeoff to touchdown, and attack flights from takeoff to attack start. Rate per clean
-  flight-hour with its 95 % one-sided Poisson upper bound; advisories (LOW) are counted apart.
+  takeoff to touchdown; attack flights from takeoff to attack start and from attack_end +
+  SETTLE_S to touchdown. Rate per clean flight-hour with its 95 % one-sided Poisson upper bound;
+  advisories (LOW) are counted apart. Episodes before takeoff or after touchdown are not judged.
 - Splits: attack start before / after the physics engine's longest horizon armed, and distance
   from home at attack start (bands in BANDS_M); false alarms per band use the clean time spent in it.
 The same metrics are computed for stock ArduPilot's own indicators (baseline_episodes).
@@ -39,7 +43,8 @@ from .estimator import poisson_upper
 ROOT = Path(__file__).resolve().parent.parent
 SCENARIOS = ROOT / "scenarios"
 FIRST_SEED = 5001
-RELEASE_S = 5.0
+GRACE_S = 10.0  # an expected-class detection up to this long after the attack ends counts as "at release"
+SETTLE_S = 30.0  # after the attack ends, alarms count as false again only after this settling time
 BANDS_M = (0.0, 100.0, 200.0, 400.0, math.inf)
 GNSS = {"gps_jump", "gps_drift", "gps_drift_naive", "gps_drift_accel"}
 EXPECTED = {  # attack type -> (expected class, agent that must raise it or None for either)
@@ -143,13 +148,26 @@ def band_time(track: list, t0: float, t1: float) -> dict[str, float]:
     return out
 
 
-def clean_interval(doc: dict) -> tuple[float, float] | None:
-    """Clean flight time: takeoff to touchdown on benign flights, takeoff to attack start otherwise."""
-    if doc["flight_s"] is None:
-        return None
-    if doc["attack"]:
-        return 0.0, min(doc["attack"]["start_s"], doc["flight_s"])
-    return 0.0, doc["flight_s"]
+def clean_intervals(doc: dict) -> list[tuple[float, float]]:
+    """Clean flight time: takeoff to touchdown on benign flights; on attack flights takeoff to
+    attack start, and attack end + SETTLE_S to touchdown."""
+    f = doc["flight_s"]
+    if f is None:
+        return []
+    if not doc["attack"]:
+        return [(0.0, f)]
+    s, e = doc["attack"]["start_s"], doc["attack"]["end_s"]
+    return [iv for iv in ((0.0, min(s, f)), (e + SETTLE_S, f)) if iv[1] > iv[0]]
+
+
+def in_clean_time(doc: dict, t: float) -> bool:
+    """An episode starting at t is judged as a possible false alarm: airborne and not within
+    [attack_start, attack_end + SETTLE_S]."""
+    f = doc["flight_s"]
+    if f is None or not 0.0 <= t <= f:
+        return False
+    a = doc["attack"]
+    return not a or t < a["start_s"] or t > a["end_s"] + SETTLE_S
 
 
 def group_of(doc: dict) -> str:
@@ -160,36 +178,46 @@ def detection(doc: dict, eps: list, agent_check: bool) -> dict:
     a = doc["attack"]
     cls, agent = EXPECTED[a["type"]]
     s, e = a["start_s"], a["end_s"]
-    in_window = [ep for ep in eps if s <= ep["t_start"] <= e + RELEASE_S]
-    hits = sorted(
-        ep["t_start"]
-        for ep in in_window
-        if ep["class"] == cls and ep["severity"] >= 2 and (agent is None or not agent_check or ep["agent"] == agent)
+
+    def expected(ep):
+        return ep["class"] == cls and ep["severity"] >= 2 and (agent is None or not agent_check or ep["agent"] == agent)
+
+    hits = sorted(ep["t_start"] for ep in eps if expected(ep) and s <= ep["t_start"] <= e + GRACE_S)
+    secondary = [ep for ep in eps if ep["severity"] >= 2 and not expected(ep) and s <= ep["t_start"] <= e + SETTLE_S]
+    advisory = a["type"] in GNSS and any(
+        ep["class"] == "gnss_integrity_advisory" and s <= ep["t_start"] <= e + GRACE_S for ep in eps
     )
-    advisory = a["type"] in GNSS and any(ep["class"] == "gnss_integrity_advisory" for ep in in_window)
-    if not hits:
-        return {"detected": False, "advisory_only": advisory}
-    return {"detected": True, "during": hits[0] <= e, "latency_s": round(hits[0] - s, 2), "advisory_only": False}
+    r = {"detected": bool(hits), "during": bool(hits) and hits[0] <= e, "secondary": len(secondary)}
+    r["advisory_only"] = advisory and not hits
+    r["latency_s"] = round(hits[0] - s, 2) if hits else None
+    return r
+
+
+def _lat(xs: list[float]) -> dict | None:
+    if not xs:
+        return None
+    return {
+        "median": round(float(np.median(xs)), 2),
+        "p90": round(float(np.percentile(xs, 90)), 2),
+        "min": min(xs),
+        "max": max(xs),
+    }
 
 
 def _summary(rows: list[dict]) -> dict:
-    lat = [r["latency_s"] for r in rows if r["detected"]]
+    during = [r["latency_s"] for r in rows if r["during"]]
+    incl = [r["latency_s"] for r in rows if r["detected"]]
     return {
         "runs": len(rows),
-        "detected": len(lat),
-        "during": sum(1 for r in rows if r["detected"] and r["during"]),
-        "at_release": sum(1 for r in rows if r["detected"] and not r["during"]),
-        "missed": len(rows) - len(lat),
+        "detected_during": len(during),
+        "detection_rate_during": round(len(during) / len(rows), 3) if rows else None,
+        "detected_incl_release": len(incl),
+        "at_release": len(incl) - len(during),
+        "missed": len(rows) - len(incl),
         "advisory_only": sum(1 for r in rows if r["advisory_only"]),
-        "detection_rate": round(len(lat) / len(rows), 3) if rows else None,
-        "latency_s": {
-            "median": round(float(np.median(lat)), 2),
-            "p90": round(float(np.percentile(lat, 90)), 2),
-            "min": min(lat),
-            "max": max(lat),
-        }
-        if lat
-        else None,
+        "secondary_episodes": sum(r["secondary"] for r in rows),
+        "latency_during_s": _lat(during),
+        "latency_incl_release_s": _lat(incl),
     }
 
 
@@ -222,15 +250,15 @@ def score(docs: list[dict], key: str, agent_check: bool) -> dict:
             by_band[
                 f"{doc['attack']['type']}, {band(distance_at(doc.get('distance_track', []), s)) or 'unknown'}"
             ].append(r)
-        ci = clean_interval(doc)
-        if ci is None:
-            continue
-        hours += (ci[1] - ci[0]) / 3600
         track = doc.get("distance_track", [])
-        for b, sec in band_time(track, *ci).items():
-            band_s[b] += sec
+        clean = clean_intervals(doc)
+        for c0, c1 in clean:
+            hours += (c1 - c0) / 3600
+            for b, sec in band_time(track, c0, c1).items():
+                band_s[b] += sec
         for ep in eps:
-            if ci[0] <= ep["t_start"] < ci[1] or (not doc["attack"] and ep["t_start"] == ci[1]):
+            t = ep["t_start"]
+            if in_clean_time(doc, t):
                 if ep["severity"] >= 2:
                     fa += 1
                     fa_band[band(distance_at(track, ep["t_start"])) or "?"] += 1
@@ -261,7 +289,8 @@ def metrics(export_dir: Path) -> dict:
         "attack_runs": sum(1 for d in docs if d["attack"]),
         "benign_runs": sum(1 for d in docs if not d["attack"]),
         "calibration": sorted({json.dumps(d["calibration"], sort_keys=True) for d in docs}),
-        "release_s": RELEASE_S,
+        "grace_s": GRACE_S,
+        "settle_s": SETTLE_S,
         "ids": score(docs, "episodes", agent_check=True),
         "baseline": score(docs, "baseline_episodes", agent_check=False),
     }
@@ -269,21 +298,25 @@ def metrics(export_dir: Path) -> dict:
 
 def markdown(m: dict) -> str:
     def lat(s):
-        return "" if not s["latency_s"] else f"{s['latency_s']['median']} / {s['latency_s']['p90']}"
+        x = s["latency_during_s"]
+        return "" if not x else f"{x['median']} / {x['p90']}"
 
     out = [
         f"# Benchmark (SITL, test split)\n\n{m['runs']} runs ({m['attack_runs']} attack, {m['benign_runs']} benign). "
-        f"Detection window: attack start to attack end + {m['release_s']:g} s. Latency: median / p90, s.\n",
+        f"Detected = expected class, MEDIUM or higher, starting during the attack; incl. release = up to "
+        f"{m['grace_s']:g} s after its end. False alarms exclude attack start to attack end + {m['settle_s']:g} s. "
+        "Latency (detections during the attack): median / p90, s.\n",
         "## Detection\n",
-        "| scenario | runs | IDS detected | during | at release | advisory only | IDS latency "
-        "| ArduPilot detected | ArduPilot latency |",
-        "|---|---|---|---|---|---|---|---|---|",
+        "| scenario | runs | IDS during | IDS incl. release | advisory only | secondary | IDS latency "
+        "| ArduPilot during | ArduPilot incl. release | ArduPilot latency |",
+        "|---|---|---|---|---|---|---|---|---|---|",
     ]
     for g, s in m["ids"]["detection"].items():
         b = m["baseline"]["detection"][g]
         out.append(
-            f"| {g} | {s['runs']} | {s['detected']} | {s['during']} | {s['at_release']} | {s['advisory_only']} "
-            f"| {lat(s)} | {b['detected']} | {lat(b)} |"
+            f"| {g} | {s['runs']} | {s['detected_during']} | {s['detected_incl_release']} | {s['advisory_only']} "
+            f"| {s['secondary_episodes']} | {lat(s)} | {b['detected_during']} | {b['detected_incl_release']} "
+            f"| {lat(b)} |"
         )
     for title, k in (
         ("By physics arming at attack start", "detection_by_arming"),
@@ -291,11 +324,11 @@ def markdown(m: dict) -> str:
     ):
         out += [
             f"\n## {title}\n",
-            "| attack type / split | runs | IDS detected | ArduPilot detected |",
+            "| attack type / split | runs | IDS during | ArduPilot during |",
             "|---|---|---|---|",
         ]
         for g, s in m["ids"][k].items():
-            out.append(f"| {g} | {s['runs']} | {s['detected']} | {m['baseline'][k][g]['detected']} |")
+            out.append(f"| {g} | {s['runs']} | {s['detected_during']} | {m['baseline'][k][g]['detected_during']} |")
     out += [
         "\n## False alarms (MEDIUM+, clean flight time)\n",
         "| | clean hours | false alarms | per hour | 95 % upper bound | advisories |",
