@@ -17,7 +17,8 @@ CPU % of one core (user + system time / wall time), resident memory at start and
 detector, and the alert latency (first episode opened between attack start and attack end +
 ``ALERT_WINDOW_S``, scenario time). Onboard, the physics engine's cost is reported per new GNSS
 fix (all horizons) and per IMU sample, with the IMU rate of the run. Tlog reading and parsing are
-outside the timed section. The machine's load average is recorded: numbers from a busy machine
+outside the timed section. The timings are kept as packed doubles; their size is reported
+(timing_buffers_mb) and is part of the peak memory. The machine's load average is recorded: numbers from a busy machine
 are not comparable with numbers from an idle one.
 """
 
@@ -29,6 +30,7 @@ import multiprocessing as mp
 import os
 import resource
 import time
+from array import array
 from collections import defaultdict
 from pathlib import Path
 from typing import Any
@@ -42,10 +44,10 @@ PLATFORM = "DGX Spark"
 ALERT_WINDOW_S = 10.0
 
 
-def _pct(xs: list[float]) -> dict:
-    if not xs:
+def _pct(xs) -> dict:
+    if not len(xs):
         return {}
-    a = np.array(xs) * 1000.0
+    a = np.asarray(xs) * 1000.0
     return {f"p{q}_ms": round(float(np.percentile(a, q)), 4) for q in (50, 95, 99)} | {
         "max_ms": round(float(a.max()), 4),
         "n": len(xs),
@@ -62,7 +64,7 @@ class Timed:
 
     def __init__(self, det):
         self.det = det
-        self.times: dict[str, list[float]] = defaultdict(list)
+        self.times: dict[str, array] = defaultdict(lambda: array("d"))  # 8 bytes a sample
         self._fix = None
 
     def observe(self, msg, samples, direction, t):
@@ -82,9 +84,11 @@ class Timed:
 
 def replay(ids: Ids, prefix: Path, paced: bool, tick_s: float = 0.1) -> dict:
     """Feed a tlog pair through ``ids`` (ticks as ``ids.run_replay``); timing per message."""
-    lat: list[float] = []
-    by_type: dict[str, list[float]] = defaultdict(list)
-    late: list[tuple[float, float]] = []  # (run time, lateness)
+    # timings kept as packed doubles: the measurement must not inflate the memory it reports
+    lat = array("d")
+    by_type: dict[str, array] = defaultdict(lambda: array("d"))
+    late = array("d")
+    late_max: dict[int, float] = {}  # 10 s bin of run time -> largest lateness
     t_first: float | None = None
     next_tick = t = 0.0
     ru0, w0 = resource.getrusage(resource.RUSAGE_SELF), time.perf_counter()
@@ -97,7 +101,9 @@ def replay(ids: Ids, prefix: Path, paced: bool, tick_s: float = 0.1) -> dict:
             if start < due:
                 time.sleep(due - start)
                 start = due
-            late.append((t - t_first, start - due))
+            late.append(start - due)
+            k = int((t - t_first) // 10)
+            late_max[k] = max(late_max.get(k, 0.0), start - due)
         else:
             due = start
         while t >= next_tick:
@@ -120,11 +126,9 @@ def replay(ids: Ids, prefix: Path, paced: bool, tick_s: float = 0.1) -> dict:
         "latency_by_type": {k: _pct(v) for k, v in sorted(by_type.items(), key=lambda kv: -len(kv[1]))},
     }
     if paced and late:
-        bins: dict[int, float] = {}
-        for rt, lt in late:
-            bins[int(rt // 10)] = max(bins.get(int(rt // 10), 0.0), lt)
-        out["lateness"] = _pct([lt for _, lt in late])
-        out["lateness_max_per_10s_s"] = [round(bins[k], 4) for k in sorted(bins)]
+        out["lateness"] = _pct(late)
+        out["lateness_max_per_10s_s"] = [round(late_max[k], 4) for k in sorted(late_max)]
+    out["timing_buffers_mb"] = round((sum(a.buffer_info()[1] for a in (lat, late, *by_type.values())) * 8) / 2**20, 1)
     return out
 
 
@@ -135,13 +139,14 @@ def _agent(side: str, run: Path, paced: bool, make, t0: float, start, end, q) ->
     r = replay(ids, run / side, paced)
     r["rss_start_mb"] = round(rss0, 1)
     r["peak_rss_mb"] = round(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024.0, 1)  # Linux: KiB
+    r["timing_buffers_mb"] += round(sum(len(a) * 8 for d in dets for a in d.times.values()) / 2**20, 1)
     r["detector_s"] = {type(d.det).__name__: round(sum(sum(v) for v in d.times.values()), 3) for d in dets}
     physics = next((d for d in dets if type(d.det).__name__ == "Cpce"), None)
     if physics is not None:
-        imu = physics.times.get("RAW_IMU", [])
+        imu = physics.times.get("RAW_IMU", array("d"))
         r["physics"] = {
             "horizons_s": list(physics.det.res.horizons),
-            "per_gnss_fix": _pct(physics.times.get("GPS_RAW_INT(new fix)", [])),
+            "per_gnss_fix": _pct(physics.times.get("GPS_RAW_INT(new fix)", array("d"))),
             "per_imu_sample": _pct(imu),
             "imu_rate_hz": round(len(imu) / r["recorded_s"], 1) if r["recorded_s"] else None,
         }

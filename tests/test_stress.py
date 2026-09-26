@@ -51,6 +51,7 @@ def test_fast_and_paced_replay_measure_latency_backlog_and_alert_latency(tmp_pat
     assert on["messages"] == 75 and set(on["latency"]) == {"p50_ms", "p95_ms", "p99_ms", "max_ms", "n"}
     assert on["latency_by_type"]["ATTITUDE"]["n"] == 75 and on["recorded_s"] == 1.48
     assert set(on["detector_s"]) == {"RollFlagger"} and "physics" not in on
+    assert on["timing_buffers_mb"] == 0.0  # 75 messages: a few hundred bytes of packed timings
     assert on["first_alert"] == {"latency_s": 0.1, "class": "toy_class"}  # roll 0.9 from t = 1.0 s
     assert fast["agents"]["ground"]["first_alert"] is None and on["peak_rss_mb"] >= on["rss_start_mb"] > 0
 
