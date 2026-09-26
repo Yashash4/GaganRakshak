@@ -97,3 +97,60 @@ def test_compound_attack_excused_change_keeps_the_chain():
     ev = [e for t, d, m in steps for e in rm.observe(m, [], d, t)]
     assert [e.evidence_type for e in ev] == ["excused_mode_change"]
     assert ev[0].metadata["excused_by"] == "telemetry_outage" and ev[0].metadata["notice_verdict"] == "unexpected"
+
+
+def target(lat_m_north):
+    lat = -35.36 + lat_m_north / 111320.0
+    return msg(
+        mav.MAVLink_position_target_global_int_message(
+            0, 6, 0xFFF8, int(lat * 1e7), 1491650000, 600.0, 0, 0, 0, 0, 0, 0, 0, 0
+        ),
+        FC,
+    )
+
+
+def servo(aux9):
+    return msg(
+        mav.MAVLink_servo_output_raw_message(0, 0, 1500, 1500, 1500, 1500, 0, 0, 0, 0, aux9, 0, 0, 0, 0, 0, 0, 0), FC
+    )
+
+
+def test_position_target_moved_without_a_request_is_flagged():
+    move = [(0, "D", hb(4)), (20, "D", target(0)), (30, "D", target(50))]
+    assert run(move) == ["uncommanded_target_change"]
+    req = msg(
+        mav.MAVLink_set_position_target_local_ned_message(0, 1, 1, 1, 0x0DF8, 50, 0, -20, 0, 0, 0, 0, 0, 0, 0, 0), GCS
+    )
+    assert run([(0, "D", hb(4)), (20, "D", target(0)), (29, "U", req), (30, "D", target(50))]) == []
+    assert run([(0, "D", hb(4)), (20, "D", target(0)), (28, "D", hb(5)), (30, "D", target(50))]) != [
+        "uncommanded_target_change"
+    ]
+
+
+def test_aux_output_changed_without_a_servo_command_is_flagged():
+    assert run([(0, "D", hb(4)), (10, "D", servo(0)), (11, "D", servo(1900))]) == ["uncommanded_servo_output"]
+    cmd = msg(mav.MAVLink_command_long_message(1, 1, MAV.MAV_CMD_DO_SET_SERVO, 0, 9, 1900, 0, 0, 0, 0, 0), GCS)
+    assert run([(0, "D", hb(4)), (10, "D", servo(0)), (10.5, "U", cmd), (11, "D", servo(1900))]) == []
+
+
+def test_mission_item_changes_follow_the_uploaded_mission_including_do_jump():
+    """Items: 0 home, 1-2 waypoints, 3 DO_JUMP back to 1, 4 waypoint. Legitimate: 1->2, 2->1 (the
+    jump), 2->4 (jump exhausted). Not legitimate: 1->4 with no set-current request."""
+
+    def item(seq, command, p1=0.0):
+        return msg(mav.MAVLink_mission_item_int_message(1, 1, seq, 3, command, 0, 1, p1, 0, 0, 0, 0, 0, 20, 0), GCS)
+
+    def cur(seq):
+        return msg(mav.MAVLink_mission_current_message(seq, 5, 0, 0), FC)
+
+    upload = [
+        (1, "U", item(0, 16)),
+        (1, "U", item(1, 16)),
+        (1, "U", item(2, 16)),
+        (1, "U", item(3, 177, 1)),
+        (1, "U", item(4, 16)),
+    ]
+    auto = [(0, "D", hb(4)), *upload, (2, "U", msg(mav.MAVLink_set_mode_message(1, 1, 3), GCS)), (2.5, "D", hb(3))]
+    legit = [(20, "D", cur(1)), (40, "D", cur(2)), (60, "D", cur(1)), (80, "D", cur(2)), (100, "D", cur(4))]
+    assert run(auto + legit) == []
+    assert run(auto + [(20, "D", cur(1)), (40, "D", cur(4))]) == ["uncommanded_mission_change"]

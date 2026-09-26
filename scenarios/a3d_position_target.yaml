@@ -1,0 +1,7 @@
+# A3 — injected position target redirecting the vehicle. DEVELOPMENT variant (differs from the held-out one).
+name: a3d_position_target
+duration_s: 195
+mission: {legs: 4, radius_m: [30, 60], alt_m: [15, 25], speed_ms: [3, 6]}
+wind: {spd: [0, 2], dir: [0, 360], turb: 0}
+gnss_noise: {sigma_m: 2.1, tau_s: 60}
+attack: {type: command_injection, start_s: [30, 150], duration_s: [15, 25], params: {command: position_target, target_ned: [-60, 40, 25]}}
