@@ -1,0 +1,996 @@
+{
+  "connect": "tcp:127.0.0.1:5760",
+  "requested_rate_hz": 50,
+  "duration_s": 60.0,
+  "autopilot": {
+    "sysid": 1,
+    "compid": 0
+  },
+  "messages": {
+    "AHRS": {
+      "count": 2930,
+      "rate_hz": 48.83,
+      "fields": [
+        "accel_weight",
+        "error_rp",
+        "error_yaw",
+        "omegaIx",
+        "omegaIy",
+        "omegaIz",
+        "renorm_val"
+      ]
+    },
+    "AHRS2": {
+      "count": 2828,
+      "rate_hz": 47.13,
+      "fields": [
+        "altitude",
+        "lat",
+        "lng",
+        "pitch",
+        "roll",
+        "yaw"
+      ]
+    },
+    "ATTITUDE": {
+      "count": 2929,
+      "rate_hz": 48.81,
+      "fields": [
+        "pitch",
+        "pitchspeed",
+        "roll",
+        "rollspeed",
+        "time_boot_ms",
+        "yaw",
+        "yawspeed"
+      ]
+    },
+    "AUTOPILOT_VERSION": {
+      "count": 1,
+      "rate_hz": 0.02,
+      "fields": [
+        "board_version",
+        "capabilities",
+        "flight_custom_version",
+        "flight_sw_version",
+        "middleware_custom_version",
+        "middleware_sw_version",
+        "os_custom_version",
+        "os_sw_version",
+        "product_id",
+        "uid",
+        "uid2",
+        "vendor_id"
+      ]
+    },
+    "BATTERY_STATUS": {
+      "count": 2929,
+      "rate_hz": 48.81,
+      "fields": [
+        "battery_function",
+        "battery_remaining",
+        "charge_state",
+        "current_battery",
+        "current_consumed",
+        "energy_consumed",
+        "fault_bitmask",
+        "id",
+        "mode",
+        "temperature",
+        "time_remaining",
+        "type",
+        "voltages",
+        "voltages_ext"
+      ]
+    },
+    "COMMAND_ACK": {
+      "count": 1,
+      "rate_hz": 0.02,
+      "fields": [
+        "command",
+        "progress",
+        "result",
+        "result_param2",
+        "target_component",
+        "target_system"
+      ]
+    },
+    "EKF_STATUS_REPORT": {
+      "count": 2878,
+      "rate_hz": 47.96,
+      "fields": [
+        "airspeed_variance",
+        "compass_variance",
+        "flags",
+        "pos_horiz_variance",
+        "pos_vert_variance",
+        "terrain_alt_variance",
+        "velocity_variance"
+      ]
+    },
+    "ESC_TELEMETRY_1_TO_4": {
+      "count": 2750,
+      "rate_hz": 45.83,
+      "fields": [
+        "count",
+        "current",
+        "rpm",
+        "temperature",
+        "totalcurrent",
+        "voltage"
+      ]
+    },
+    "GLOBAL_POSITION_INT": {
+      "count": 2929,
+      "rate_hz": 48.81,
+      "fields": [
+        "alt",
+        "hdg",
+        "lat",
+        "lon",
+        "relative_alt",
+        "time_boot_ms",
+        "vx",
+        "vy",
+        "vz"
+      ]
+    },
+    "GPS_GLOBAL_ORIGIN": {
+      "count": 1,
+      "rate_hz": 0.02,
+      "fields": [
+        "altitude",
+        "latitude",
+        "longitude",
+        "time_usec"
+      ]
+    },
+    "GPS_RAW_INT": {
+      "count": 2929,
+      "rate_hz": 48.81,
+      "fields": [
+        "alt",
+        "alt_ellipsoid",
+        "cog",
+        "eph",
+        "epv",
+        "fix_type",
+        "h_acc",
+        "hdg_acc",
+        "lat",
+        "lon",
+        "satellites_visible",
+        "time_usec",
+        "v_acc",
+        "vel",
+        "vel_acc",
+        "yaw"
+      ]
+    },
+    "HEARTBEAT": {
+      "count": 61,
+      "rate_hz": 1.02,
+      "fields": [
+        "autopilot",
+        "base_mode",
+        "custom_mode",
+        "mavlink_version",
+        "system_status",
+        "type"
+      ]
+    },
+    "HOME_POSITION": {
+      "count": 1,
+      "rate_hz": 0.02,
+      "fields": [
+        "altitude",
+        "approach_x",
+        "approach_y",
+        "approach_z",
+        "latitude",
+        "longitude",
+        "q",
+        "time_usec",
+        "x",
+        "y",
+        "z"
+      ]
+    },
+    "LOCAL_POSITION_NED": {
+      "count": 970,
+      "rate_hz": 16.17,
+      "fields": [
+        "time_boot_ms",
+        "vx",
+        "vy",
+        "vz",
+        "x",
+        "y",
+        "z"
+      ]
+    },
+    "MEMINFO": {
+      "count": 2929,
+      "rate_hz": 48.81,
+      "fields": [
+        "brkval",
+        "freemem",
+        "freemem32"
+      ]
+    },
+    "MISSION_CURRENT": {
+      "count": 2929,
+      "rate_hz": 48.81,
+      "fields": [
+        "mission_mode",
+        "mission_state",
+        "seq",
+        "total"
+      ]
+    },
+    "NAV_CONTROLLER_OUTPUT": {
+      "count": 2929,
+      "rate_hz": 48.81,
+      "fields": [
+        "alt_error",
+        "aspd_error",
+        "nav_bearing",
+        "nav_pitch",
+        "nav_roll",
+        "target_bearing",
+        "wp_dist",
+        "xtrack_error"
+      ]
+    },
+    "PARAM_VALUE": {
+      "count": 26,
+      "rate_hz": 0.43,
+      "fields": [
+        "param_count",
+        "param_id",
+        "param_index",
+        "param_type",
+        "param_value"
+      ]
+    },
+    "POWER_STATUS": {
+      "count": 2929,
+      "rate_hz": 48.81,
+      "fields": [
+        "Vcc",
+        "Vservo",
+        "flags"
+      ]
+    },
+    "RAW_IMU": {
+      "count": 2929,
+      "rate_hz": 48.81,
+      "fields": [
+        "id",
+        "temperature",
+        "time_usec",
+        "xacc",
+        "xgyro",
+        "xmag",
+        "yacc",
+        "ygyro",
+        "ymag",
+        "zacc",
+        "zgyro",
+        "zmag"
+      ]
+    },
+    "RC_CHANNELS": {
+      "count": 2929,
+      "rate_hz": 48.81,
+      "fields": [
+        "chan10_raw",
+        "chan11_raw",
+        "chan12_raw",
+        "chan13_raw",
+        "chan14_raw",
+        "chan15_raw",
+        "chan16_raw",
+        "chan17_raw",
+        "chan18_raw",
+        "chan1_raw",
+        "chan2_raw",
+        "chan3_raw",
+        "chan4_raw",
+        "chan5_raw",
+        "chan6_raw",
+        "chan7_raw",
+        "chan8_raw",
+        "chan9_raw",
+        "chancount",
+        "rssi",
+        "time_boot_ms"
+      ]
+    },
+    "SCALED_IMU2": {
+      "count": 2929,
+      "rate_hz": 48.81,
+      "fields": [
+        "temperature",
+        "time_boot_ms",
+        "xacc",
+        "xgyro",
+        "xmag",
+        "yacc",
+        "ygyro",
+        "ymag",
+        "zacc",
+        "zgyro",
+        "zmag"
+      ]
+    },
+    "SCALED_IMU3": {
+      "count": 2929,
+      "rate_hz": 48.81,
+      "fields": [
+        "temperature",
+        "time_boot_ms",
+        "xacc",
+        "xgyro",
+        "xmag",
+        "yacc",
+        "ygyro",
+        "ymag",
+        "zacc",
+        "zgyro",
+        "zmag"
+      ]
+    },
+    "SCALED_PRESSURE": {
+      "count": 2929,
+      "rate_hz": 48.81,
+      "fields": [
+        "press_abs",
+        "press_diff",
+        "temperature",
+        "temperature_press_diff",
+        "time_boot_ms"
+      ]
+    },
+    "SCALED_PRESSURE2": {
+      "count": 2929,
+      "rate_hz": 48.81,
+      "fields": [
+        "press_abs",
+        "press_diff",
+        "temperature",
+        "temperature_press_diff",
+        "time_boot_ms"
+      ]
+    },
+    "SERVO_OUTPUT_RAW": {
+      "count": 2929,
+      "rate_hz": 48.81,
+      "fields": [
+        "port",
+        "servo10_raw",
+        "servo11_raw",
+        "servo12_raw",
+        "servo13_raw",
+        "servo14_raw",
+        "servo15_raw",
+        "servo16_raw",
+        "servo1_raw",
+        "servo2_raw",
+        "servo3_raw",
+        "servo4_raw",
+        "servo5_raw",
+        "servo6_raw",
+        "servo7_raw",
+        "servo8_raw",
+        "servo9_raw",
+        "time_usec"
+      ]
+    },
+    "SIMSTATE": {
+      "count": 2929,
+      "rate_hz": 48.81,
+      "fields": [
+        "lat",
+        "lng",
+        "pitch",
+        "roll",
+        "xacc",
+        "xgyro",
+        "yacc",
+        "yaw",
+        "ygyro",
+        "zacc",
+        "zgyro"
+      ]
+    },
+    "STATUSTEXT": {
+      "count": 19,
+      "rate_hz": 0.32,
+      "fields": [
+        "chunk_seq",
+        "id",
+        "severity",
+        "text"
+      ]
+    },
+    "SYSTEM_TIME": {
+      "count": 2929,
+      "rate_hz": 48.81,
+      "fields": [
+        "time_boot_ms",
+        "time_unix_usec"
+      ]
+    },
+    "SYS_STATUS": {
+      "count": 2929,
+      "rate_hz": 48.81,
+      "fields": [
+        "battery_remaining",
+        "current_battery",
+        "drop_rate_comm",
+        "errors_comm",
+        "errors_count1",
+        "errors_count2",
+        "errors_count3",
+        "errors_count4",
+        "load",
+        "onboard_control_sensors_enabled",
+        "onboard_control_sensors_enabled_extended",
+        "onboard_control_sensors_health",
+        "onboard_control_sensors_health_extended",
+        "onboard_control_sensors_present",
+        "onboard_control_sensors_present_extended",
+        "voltage_battery"
+      ]
+    },
+    "TERRAIN_REPORT": {
+      "count": 2929,
+      "rate_hz": 48.81,
+      "fields": [
+        "current_height",
+        "lat",
+        "loaded",
+        "lon",
+        "pending",
+        "spacing",
+        "terrain_height"
+      ]
+    },
+    "TERRAIN_REQUEST": {
+      "count": 403,
+      "rate_hz": 6.72,
+      "fields": [
+        "grid_spacing",
+        "lat",
+        "lon",
+        "mask"
+      ]
+    },
+    "TIMESYNC": {
+      "count": 6,
+      "rate_hz": 0.1,
+      "fields": [
+        "tc1",
+        "ts1"
+      ]
+    },
+    "VFR_HUD": {
+      "count": 2929,
+      "rate_hz": 48.81,
+      "fields": [
+        "airspeed",
+        "alt",
+        "climb",
+        "groundspeed",
+        "heading",
+        "throttle"
+      ]
+    },
+    "VIBRATION": {
+      "count": 2929,
+      "rate_hz": 48.81,
+      "fields": [
+        "clipping_0",
+        "clipping_1",
+        "clipping_2",
+        "time_usec",
+        "vibration_x",
+        "vibration_y",
+        "vibration_z"
+      ]
+    },
+    "WIND": {
+      "count": 970,
+      "rate_hz": 16.17,
+      "fields": [
+        "direction",
+        "speed",
+        "speed_z"
+      ]
+    }
+  },
+  "required_present": [
+    "ATTITUDE",
+    "AUTOPILOT_VERSION",
+    "COMMAND_ACK",
+    "EKF_STATUS_REPORT",
+    "GLOBAL_POSITION_INT",
+    "GPS_RAW_INT",
+    "HEARTBEAT",
+    "LOCAL_POSITION_NED",
+    "NAV_CONTROLLER_OUTPUT",
+    "RAW_IMU",
+    "SCALED_IMU2",
+    "SCALED_PRESSURE",
+    "SERVO_OUTPUT_RAW",
+    "STATUSTEXT",
+    "SYS_STATUS",
+    "VFR_HUD"
+  ],
+  "required_missing": [
+    "ESTIMATOR_STATUS",
+    "HIGHRES_IMU",
+    "POSITION_TARGET_GLOBAL_INT",
+    "POSITION_TARGET_LOCAL_NED",
+    "RADIO_STATUS",
+    "SCALED_IMU"
+  ],
+  "examples": {
+    "COMMAND_ACK": {
+      "command": 512,
+      "result": 0,
+      "progress": 0,
+      "result_param2": 0,
+      "target_system": 255,
+      "target_component": 0
+    },
+    "AUTOPILOT_VERSION": {
+      "capabilities": 64495,
+      "flight_sw_version": 67568127,
+      "middleware_sw_version": 0,
+      "os_sw_version": 0,
+      "board_version": 0,
+      "flight_custom_version": [
+        100,
+        98,
+        101,
+        55,
+        57,
+        50,
+        49,
+        54
+      ],
+      "middleware_custom_version": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "os_custom_version": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "vendor_id": 0,
+      "product_id": 0,
+      "uid": 0,
+      "uid2": [
+        55,
+        97,
+        102,
+        54,
+        54,
+        102,
+        51,
+        48,
+        57,
+        54,
+        54,
+        97,
+        52,
+        57,
+        98,
+        54,
+        56,
+        0
+      ]
+    },
+    "HEARTBEAT": {
+      "type": 2,
+      "autopilot": 3,
+      "base_mode": 89,
+      "custom_mode": 0,
+      "system_status": 1,
+      "mavlink_version": 3
+    },
+    "STATUSTEXT": {
+      "severity": 6,
+      "text": "Barometer 1 calibration complete",
+      "id": 0,
+      "chunk_seq": 0
+    },
+    "PARAM_VALUE": {
+      "param_id": "BARO1_GND_PRESS",
+      "param_value": 94502.828125,
+      "param_type": 9,
+      "param_count": 1370,
+      "param_index": 65535
+    },
+    "AHRS": {
+      "omegaIx": 0.0,
+      "omegaIy": 0.0,
+      "omegaIz": 0.0,
+      "accel_weight": 0.0,
+      "renorm_val": 0.0,
+      "error_rp": 1.0,
+      "error_yaw": 1.0
+    },
+    "ATTITUDE": {
+      "time_boot_ms": 2441,
+      "roll": 0.00017596066754776984,
+      "pitch": -7.232229836517945e-05,
+      "yaw": -6.540727213177888e-07,
+      "rollspeed": 8.79269209690392e-05,
+      "pitchspeed": 5.154994869371876e-05,
+      "yawspeed": 2.316726022399962e-05
+    },
+    "GLOBAL_POSITION_INT": {
+      "time_boot_ms": 2441,
+      "lat": 0,
+      "lon": 0,
+      "alt": 0,
+      "relative_alt": 0,
+      "vx": 0,
+      "vy": 0,
+      "vz": 0,
+      "hdg": 0
+    },
+    "VFR_HUD": {
+      "airspeed": 0.0,
+      "groundspeed": 0.0,
+      "heading": 359,
+      "throttle": 0,
+      "alt": 0.0,
+      "climb": 0.0
+    },
+    "SYS_STATUS": {
+      "onboard_control_sensors_present": 1395784719,
+      "onboard_control_sensors_enabled": 1375829007,
+      "onboard_control_sensors_health": 1158806539,
+      "load": 0,
+      "voltage_battery": 0,
+      "current_battery": -1,
+      "battery_remaining": -1,
+      "drop_rate_comm": 0,
+      "errors_comm": 0,
+      "errors_count1": 0,
+      "errors_count2": 0,
+      "errors_count3": 0,
+      "errors_count4": 0,
+      "onboard_control_sensors_present_extended": 0,
+      "onboard_control_sensors_enabled_extended": 0,
+      "onboard_control_sensors_health_extended": 0
+    },
+    "POWER_STATUS": {
+      "Vcc": 5000,
+      "Vservo": 0,
+      "flags": 0
+    },
+    "MEMINFO": {
+      "brkval": 0,
+      "freemem": 65535,
+      "freemem32": 524288
+    },
+    "NAV_CONTROLLER_OUTPUT": {
+      "nav_roll": 0.0,
+      "nav_pitch": 0.0,
+      "nav_bearing": 0,
+      "target_bearing": 0,
+      "wp_dist": 0,
+      "alt_error": 0.0,
+      "aspd_error": 0.0,
+      "xtrack_error": 0.0
+    },
+    "MISSION_CURRENT": {
+      "seq": 0,
+      "total": 0,
+      "mission_state": 1,
+      "mission_mode": 0
+    },
+    "SERVO_OUTPUT_RAW": {
+      "time_usec": 2441523,
+      "port": 0,
+      "servo1_raw": 0,
+      "servo2_raw": 0,
+      "servo3_raw": 0,
+      "servo4_raw": 0,
+      "servo5_raw": 0,
+      "servo6_raw": 0,
+      "servo7_raw": 0,
+      "servo8_raw": 0,
+      "servo9_raw": 0,
+      "servo10_raw": 0,
+      "servo11_raw": 0,
+      "servo12_raw": 0,
+      "servo13_raw": 0,
+      "servo14_raw": 0,
+      "servo15_raw": 0,
+      "servo16_raw": 0
+    },
+    "RC_CHANNELS": {
+      "time_boot_ms": 2441,
+      "chancount": 8,
+      "chan1_raw": 1500,
+      "chan2_raw": 1500,
+      "chan3_raw": 1000,
+      "chan4_raw": 1500,
+      "chan5_raw": 1800,
+      "chan6_raw": 1000,
+      "chan7_raw": 1000,
+      "chan8_raw": 1800,
+      "chan9_raw": 0,
+      "chan10_raw": 0,
+      "chan11_raw": 0,
+      "chan12_raw": 0,
+      "chan13_raw": 0,
+      "chan14_raw": 0,
+      "chan15_raw": 0,
+      "chan16_raw": 0,
+      "chan17_raw": 0,
+      "chan18_raw": 0,
+      "rssi": 255
+    },
+    "RAW_IMU": {
+      "time_usec": 2441523,
+      "xacc": 0,
+      "yacc": 0,
+      "zacc": -1001,
+      "xgyro": 0,
+      "ygyro": 0,
+      "zgyro": 0,
+      "xmag": 0,
+      "ymag": 0,
+      "zmag": 0,
+      "id": 0,
+      "temperature": 2503
+    },
+    "SCALED_IMU2": {
+      "time_boot_ms": 2441,
+      "xacc": 0,
+      "yacc": 0,
+      "zacc": -1001,
+      "xgyro": 0,
+      "ygyro": 0,
+      "zgyro": 0,
+      "xmag": 0,
+      "ymag": 0,
+      "zmag": 0,
+      "temperature": 2503
+    },
+    "SCALED_IMU3": {
+      "time_boot_ms": 2441,
+      "xacc": 0,
+      "yacc": 0,
+      "zacc": 0,
+      "xgyro": 0,
+      "ygyro": 0,
+      "zgyro": 0,
+      "xmag": 0,
+      "ymag": 0,
+      "zmag": 0,
+      "temperature": 0
+    },
+    "SCALED_PRESSURE": {
+      "time_boot_ms": 2441,
+      "press_abs": 945.0282592773438,
+      "press_diff": 0.0,
+      "temperature": 2536,
+      "temperature_press_diff": 0
+    },
+    "SCALED_PRESSURE2": {
+      "time_boot_ms": 2441,
+      "press_abs": 945.0302734375,
+      "press_diff": 0.0,
+      "temperature": 2536,
+      "temperature_press_diff": 0
+    },
+    "GPS_RAW_INT": {
+      "time_usec": 0,
+      "fix_type": 0,
+      "lat": 0,
+      "lon": 0,
+      "alt": 0,
+      "eph": 0,
+      "epv": 0,
+      "vel": 0,
+      "cog": 0,
+      "satellites_visible": 0,
+      "alt_ellipsoid": 0,
+      "h_acc": 0,
+      "v_acc": 0,
+      "vel_acc": 0,
+      "hdg_acc": 0,
+      "yaw": 0
+    },
+    "SYSTEM_TIME": {
+      "time_unix_usec": 0,
+      "time_boot_ms": 2441
+    },
+    "SIMSTATE": {
+      "roll": 0.0,
+      "pitch": 0.0,
+      "yaw": -0.12217313796281815,
+      "xacc": 0.0,
+      "yacc": 0.0,
+      "zacc": -9.806650161743164,
+      "xgyro": 0.0,
+      "ygyro": 0.0,
+      "zgyro": -1.276649985726408e-08,
+      "lat": -353632610,
+      "lng": 1491652299
+    },
+    "TERRAIN_REPORT": {
+      "lat": 0,
+      "lon": 0,
+      "spacing": 100,
+      "terrain_height": 0.0,
+      "current_height": 0.0,
+      "pending": 56,
+      "loaded": 0
+    },
+    "VIBRATION": {
+      "time_usec": 2441523,
+      "vibration_x": 0.002735394984483719,
+      "vibration_y": 0.002558445557951927,
+      "vibration_z": 0.0028048555832356215,
+      "clipping_0": 0,
+      "clipping_1": 0,
+      "clipping_2": 0
+    },
+    "BATTERY_STATUS": {
+      "id": 0,
+      "battery_function": 0,
+      "type": 0,
+      "temperature": 32767,
+      "voltages": [
+        65535,
+        65535,
+        65535,
+        65535,
+        65535,
+        65535,
+        65535,
+        65535,
+        65535,
+        65535
+      ],
+      "current_battery": 0,
+      "current_consumed": 0,
+      "energy_consumed": 0,
+      "battery_remaining": -1,
+      "time_remaining": 0,
+      "charge_state": 6,
+      "voltages_ext": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "mode": 0,
+      "fault_bitmask": 0
+    },
+    "TERRAIN_REQUEST": {
+      "lat": -353747690,
+      "lon": 1491548424,
+      "grid_spacing": 100,
+      "mask": 72057594037927935
+    },
+    "EKF_STATUS_REPORT": {
+      "flags": 1024,
+      "velocity_variance": 0.0,
+      "pos_horiz_variance": 0.0,
+      "pos_vert_variance": 0.0,
+      "compass_variance": 0.0,
+      "terrain_alt_variance": 0.0,
+      "airspeed_variance": 0.0
+    },
+    "AHRS2": {
+      "roll": 0.0001271694345632568,
+      "pitch": -9.481939196120948e-05,
+      "yaw": -0.3457269072532654,
+      "altitude": 0.0,
+      "lat": 0,
+      "lng": 0
+    },
+    "ESC_TELEMETRY_1_TO_4": {
+      "temperature": [
+        32,
+        32,
+        32,
+        32
+      ],
+      "voltage": [
+        1679,
+        1679,
+        1679,
+        1679
+      ],
+      "current": [
+        80,
+        80,
+        80,
+        80
+      ],
+      "totalcurrent": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "rpm": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "count": [
+        6,
+        6,
+        6,
+        6
+      ]
+    },
+    "TIMESYNC": {
+      "tc1": 0,
+      "ts1": 10001831001
+    },
+    "GPS_GLOBAL_ORIGIN": {
+      "latitude": -353632610,
+      "longitude": 1491652299,
+      "altitude": 584090,
+      "time_usec": 20011992
+    },
+    "HOME_POSITION": {
+      "latitude": -353632610,
+      "longitude": 1491652299,
+      "altitude": 584090,
+      "x": 0.0,
+      "y": 0.0,
+      "z": -0.0,
+      "q": [
+        NaN,
+        NaN,
+        NaN,
+        NaN
+      ],
+      "approach_x": 0.0,
+      "approach_y": 0.0,
+      "approach_z": 0.0,
+      "time_usec": 20011992
+    },
+    "WIND": {
+      "direction": -180.0,
+      "speed": 0.0,
+      "speed_z": 0.0
+    },
+    "LOCAL_POSITION_NED": {
+      "time_boot_ms": 41614,
+      "x": -6.044317615305772e-07,
+      "y": 6.811520734117948e-07,
+      "z": 0.011647549457848072,
+      "vx": -0.00011959084804402664,
+      "vy": 0.000125259772175923,
+      "vz": -6.512446998385713e-05
+    }
+  }
+}

@@ -1,0 +1,48 @@
+# Sensor noise and bias for ArduPilot Copter SITL (Copter-4.7.1).
+# Stock SITL sensors are near-ideal; these values make the IMU, barometer and GNSS
+# behave like a consumer-grade flight controller (ICM-42688 / BMI088-class IMU,
+# MS5611-class barometer, u-blox M8/M10-class GNSS). They are chosen, not measured.
+# Load with:  arducopter ... --defaults <copter.parm>,configs/sitl_noise.parm
+#
+# How SITL applies them (checked in libraries/AP_InertialSensor/AP_InertialSensor_SITL.cpp,
+# libraries/AP_Baro/AP_Baro_SITL.cpp, libraries/SITL/SIM_GPS.cpp):
+#   ACCn_RND  m/s^2 amplitude of motor-vibration noise, only while motors run
+#   GYRn_RND  deg/s amplitude of motor-vibration noise, scaled by throttle
+#   ACCn_BIAS m/s^2 constant bias per axis;  GYRn_BIAS rad/s constant bias per axis
+#   BARO_RND  m uniform altitude noise;  BARO_DRIFT m/s altitude drift
+#   GPS1_VERR m/s uniform velocity error per NED axis
+#   GPS1_NOISE m amplitude of a slow sine on GNSS altitude
+# Stock SITL has no horizontal GNSS position noise parameter.
+
+# IMU 1 — residual bias after factory/startup calibration
+SIM_ACC1_BIAS_X 0.08
+SIM_ACC1_BIAS_Y -0.05
+SIM_ACC1_BIAS_Z 0.10
+SIM_GYR1_BIAS_X 0.0020
+SIM_GYR1_BIAS_Y -0.0015
+SIM_GYR1_BIAS_Z 0.0010
+SIM_ACC1_RND 3.0
+SIM_GYR1_RND 1.0
+
+# IMU 2 — different part, different bias
+SIM_ACC2_BIAS_X -0.06
+SIM_ACC2_BIAS_Y 0.07
+SIM_ACC2_BIAS_Z -0.08
+SIM_GYR2_BIAS_X -0.0012
+SIM_GYR2_BIAS_Y 0.0018
+SIM_GYR2_BIAS_Z -0.0009
+SIM_ACC2_RND 3.0
+SIM_GYR2_RND 1.0
+
+# Barometer (~0.3 m noise, ~1.8 m/h thermal drift)
+SIM_BARO_RND 0.3
+SIM_BARO_DRIFT 0.0005
+
+# GNSS velocity and vertical error
+SIM_GPS1_VERR_X 0.10
+SIM_GPS1_VERR_Y 0.10
+SIM_GPS1_VERR_Z 0.15
+SIM_GPS1_NOISE 1.0
+
+# Magnetometer
+SIM_MAG_RND 5
