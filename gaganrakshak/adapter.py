@@ -107,7 +107,7 @@ class ArduPilotAdapter:
         self.uav_id = uav_id
         self.mode = "UNKNOWN"
         self.armed = False
-        self.stats = {"mapped": Counter(), "ignored": Counter(), "unknown": Counter()}
+        self.stats: dict[str, Counter[str]] = {"mapped": Counter(), "ignored": Counter(), "unknown": Counter()}
 
     def convert(self, msg, t: float) -> list[Sample]:
         """Convert one pymavlink message received at monotonic time ``t``."""
