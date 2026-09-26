@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # One-time setup on the build host (Ubuntu / DGX OS, x86_64 or arm64):
 # builds ArduPilot Copter SITL and installs gaganrakshak into a venv.
-#   bash scripts/setup_dgx.sh            # ArduPilot goes to ~/ardupilot-fork
-#   ARDUPILOT_DIR=/path bash scripts/setup_dgx.sh
+#   bash scripts/setup.sh            # ArduPilot goes to ~/ardupilot-fork
+#   ARDUPILOT_DIR=/path bash scripts/setup.sh
 #
 # ArduPilot comes from our fork: Copter-4.7.1 plus one simulator-only commit that adds a
 # simulated GPS velocity glitch (SIM_GPS1_GLTV), used to simulate a coherent GNSS spoofer.

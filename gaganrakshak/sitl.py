@@ -7,7 +7,7 @@ import subprocess
 import time
 from pathlib import Path
 
-# our ArduPilot fork (Copter-4.7.1 + simulator-only GPS velocity glitch), see scripts/setup_dgx.sh
+# our ArduPilot fork (Copter-4.7.1 + simulator-only GPS velocity glitch), see scripts/setup.sh
 ARDUPILOT_DIR = Path(os.environ.get("ARDUPILOT_DIR", Path.home() / "ardupilot-fork"))
 BINARY = ARDUPILOT_DIR / "build/sitl/bin/arducopter"
 COPTER_PARM = ARDUPILOT_DIR / "Tools/autotest/default_params/copter.parm"

@@ -18,7 +18,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Build ArduPilot SITL (our fork) and install
-        run: bash scripts/setup_dgx.sh
+        run: bash scripts/setup.sh
       - name: SITL tests
         run: |
           source .venv/bin/activate

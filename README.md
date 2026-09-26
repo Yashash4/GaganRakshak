@@ -27,13 +27,14 @@ All experiments run in ArduPilot SITL. No real RF or flight attacks were perform
 Copter-4.7.1 plus two simulator-only commits adding `SIM_GPS1_GLTV`, a simulated GPS velocity
 offset that is also integrated into the reported position at every GPS update (a continuous,
 coherent GNSS spoofer). Flight code is unmodified; with the parameter
-at 0 the simulated GPS is identical to stock. GPL-3.0, a separate program reached over MAVLink
+at 0 the simulated GPS is identical to stock. The simulator change is proposed upstream as
+[ArduPilot PR #34510](https://github.com/ArduPilot/ardupilot/pull/34510). GPL-3.0, a separate program reached over MAVLink
 (see THIRD_PARTY.md).
 
 ## Install
 Full setup, including the ArduPilot SITL used by the flight tests:
 ```bash
-bash scripts/setup_dgx.sh        # Ubuntu; builds ArduPilot Copter SITL + Python venv
+bash scripts/setup.sh        # Ubuntu; builds ArduPilot Copter SITL + Python venv
 source .venv/bin/activate
 pytest -q
 ```
