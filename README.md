@@ -14,11 +14,22 @@ per-attack templates; every decision goes to a signed, tamper-evident evidence l
 All experiments run in ArduPilot SITL. No real RF or flight attacks were performed.
 
 ## Install
+Full setup, including the ArduPilot SITL used by the flight tests:
 ```bash
 bash scripts/setup_dgx.sh        # Ubuntu; builds ArduPilot Copter SITL + Python venv
 source .venv/bin/activate
 pytest -q
 ```
+
+Python package only, with the exact dependency versions we test against
+(`requirements.lock`, resolved for Linux x86_64 and aarch64, Python 3.12+):
+```bash
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.lock && pip install --no-deps -e .
+pytest -q -m "not sitl"          # tests that do not need a SITL build
+```
+The lock is regenerated from `pyproject.toml` with
+`uv pip compile pyproject.toml --extra dev -o requirements.lock --python-version 3.12 --universal`.
 
 ## Run
 _Demo and benchmark commands are added as the build lands._
