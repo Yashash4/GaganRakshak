@@ -2,7 +2,8 @@
 
 Ground agent (``Signer``, inside the ground router): after forwarding each command frame from
 the GCS it sends a GR_CMD_SIG = Ed25519 over (monotonic counter || exact command frame bytes).
-The signature is sent twice so that one radio loss does not leave a command unsigned.
+The signature is sent k times, k chosen from the uplink loss the onboard agent measures and reports
+(GR_LINK) so that losing every copy is rarer than 1e-3.
 
 Onboard agent (``CmdVerifier``, an IDS detector): pairs each uplink command with its
 signature. Evidence (class ``command_injection`` unless noted):
@@ -17,6 +18,7 @@ Alert-only: commands are always forwarded; blocking is a deployment option, not 
 
 from __future__ import annotations
 
+import math
 import time
 from collections import deque
 from typing import Any
@@ -28,7 +30,21 @@ from .adapter import COMMAND_MSGS
 from .evidence import EvidenceEvent, Severity
 
 GROUND_SYSID, GROUND_COMPID = 255, 191  # the ground agent speaks as part of the GCS system
-COPIES = 2
+COPIES_ALPHA = 1e-3  # accepted probability that every signature copy of a command is lost
+COPIES_MAX = 16
+COPIES_DEFAULT = 6  # before the first uplink-loss report (covers up to ~31 % loss)
+
+
+def copies_for(uplink_loss: float | None) -> int:
+    """Signature copies so that all are lost with probability <= COPIES_ALPHA, given the uplink
+    loss the onboard agent measured: k = ceil(ln alpha / ln p), at least 2, at most COPIES_MAX."""
+    if uplink_loss is None:
+        return COPIES_DEFAULT
+    if uplink_loss <= 0:
+        return 2
+    if uplink_loss >= 1:
+        return COPIES_MAX
+    return max(2, min(COPIES_MAX, math.ceil(math.log(COPIES_ALPHA) / math.log(uplink_loss))))
 
 
 def _signed_bytes(counter: int, frame: bytes) -> bytes:
@@ -44,6 +60,7 @@ class Signer:
         self.seed = private_seed
         self.counter = time.time_ns() // 1000  # monotonic across restarts of the ground agent
         self._mav = mav2.MAVLink(None, srcSystem=GROUND_SYSID, srcComponent=GROUND_COMPID)
+        self.uplink_loss: float | None = None  # from the onboard agent's GR_LINK reports
 
     def sign(self, frame: bytes, msg) -> list[bytes]:
         self.counter += 1
@@ -52,7 +69,7 @@ class Signer:
             self.counter, msg.get_msgId(), msg.get_srcSystem(), msg.get_srcComponent(), msg.get_seq(), sig
         )
         out = []
-        for _ in range(COPIES):
+        for _ in range(copies_for(self.uplink_loss)):
             out.append(m.pack(self._mav))
             self._mav.seq = (self._mav.seq + 1) % 256
         return out

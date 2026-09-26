@@ -119,3 +119,29 @@ def test_forwarding_survives_without_ids(rig):
         gcs.mav.command_long_send(1, 1, MAV.MAV_CMD_NAV_LAND, 0, 0, 0, 0, 0, 0, 0, 0)
     assert sum(m.get_type() == "HEARTBEAT" for m in drain(gcs)) >= 5
     assert sum(m.get_type() == "COMMAND_LONG" for m in drain(fc)) == 5
+
+
+def test_onboard_router_reports_uplink_loss_after_each_commitment():
+    from gaganrakshak import crypto
+
+    fc = mavutil.mavlink_connection("udpout:127.0.0.1:16200", source_system=1, source_component=1)
+    gcs = mavutil.mavlink_connection("udpin:127.0.0.1:16201", source_system=255, source_component=190)
+    r = Router(
+        "udpin:127.0.0.1:16200", "udpout:127.0.0.1:16201", 16202, onboard=True, commit_key=crypto.generate_keypair()[0]
+    )
+    try:
+        fc.mav.heartbeat_send(MAV.MAV_TYPE_QUADROTOR, MAV.MAV_AUTOPILOT_ARDUPILOTMEGA, 0, 0, 0)
+        r.start()
+        types = []
+        t0 = time.monotonic()
+        while time.monotonic() - t0 < 2.5:
+            fc.mav.heartbeat_send(MAV.MAV_TYPE_QUADROTOR, MAV.MAV_AUTOPILOT_ARDUPILOTMEGA, 0, 0, 0)
+            types += [m for m in drain(gcs, 0.2) if m.get_type().startswith("GR_")]
+        links = [m for m in types if m.get_type() == "GR_LINK"]
+        assert links and all(m.uplink_loss == 255 for m in links)  # no GCS traffic yet: unknown
+        assert any(m.get_type() == "GR_COMMIT" for m in types)
+    finally:
+        r.stop()
+        time.sleep(0.15)
+        for c in (fc, gcs, r.a, r.b):
+            c.close()

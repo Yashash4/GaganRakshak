@@ -23,10 +23,11 @@ import argparse
 import socket
 import threading
 import time
-from collections import Counter
+from collections import Counter, deque
 from pathlib import Path
 
 from pymavlink import mavutil
+from pymavlink.dialects.v20 import ardupilotmega as mav2
 
 from .cmd_sign import Signer, is_command
 from .commit import CommitTx
@@ -112,6 +113,9 @@ class Router:
         self.imu_rate_hz = imu_rate_hz
         self.signer = Signer(sign_key) if sign_key else None  # ground agent only
         self.commit = CommitTx(commit_key) if commit_key else None  # onboard agent only
+        self._gcs_seq: int | None = None
+        self._uplink: deque = deque()  # (t, received, missing) of GCS frames, last 30 s (onboard)
+        self._link_mav = mav2.MAVLink(None, srcSystem=ROUTER_SYSID, srcComponent=ROUTER_COMPID)
         self.radio_hz: dict[str, float] = {}  # per message type, set by GCS requests
         self._last_tx: dict[str, float] = {}
         self.stats = {"a_to_b": Counter(), "b_to_a": Counter(), "dropped": Counter(), "bytes_to_b": 0}
@@ -180,10 +184,24 @@ class Router:
         except OSError:
             pass  # IDS down or buffer full: forwarding must not depend on it
 
+    def uplink_loss(self, now: float, span_s: float = 30.0) -> float | None:
+        """Loss of the GCS's frames on the uplink, from its sequence gaps (onboard)."""
+        while self._uplink and now - self._uplink[0][0] > span_s:
+            self._uplink.popleft()
+        got = sum(x[1] for x in self._uplink)
+        miss = sum(x[2] for x in self._uplink)
+        return miss / (got + miss) if got >= 10 else None
+
     def _pump(self, src, dst, direction: bytes, key: str):
         while not self._stop.is_set():
             if self.commit and direction == b"D":
-                for frame in self.commit.flush(time.monotonic()):
+                frames = self.commit.flush(time.monotonic())
+                if frames:  # one link report per commitment window
+                    p = self.uplink_loss(time.monotonic())
+                    report = mav2.MAVLink_gr_link_message(255 if p is None else round(100 * p))
+                    frames.append(report.pack(self._link_mav))
+                    self._link_mav.seq = (self._link_mav.seq + 1) % 256
+                for frame in frames:
                     dst.write(frame)
                     self.stats["bytes_to_b"] += len(frame)
             msg = src.recv_match(blocking=True, timeout=0.1)
@@ -199,6 +217,14 @@ class Router:
                 self.stats["dropped"][name] += 1
                 continue
             self._mirror(direction, bytes(buf))
+            if self.onboard and direction == b"U" and msg.get_srcSystem() == 255 and msg.get_srcComponent() == 190:
+                seq = msg.get_seq()
+                gap = 0 if self._gcs_seq is None else (seq - self._gcs_seq - 1) % 256
+                if gap < 128:
+                    self._uplink.append((time.monotonic(), 1, gap))
+                self._gcs_seq = seq
+            if self.signer and direction == b"D" and name == "GR_LINK":
+                self.signer.uplink_loss = None if msg.uplink_loss == 255 else msg.uplink_loss / 100
             if self.onboard and direction == b"U" and (name.startswith("GR_") or self._intercept_uplink(msg)):
                 self.stats["dropped"][name] += 1  # IDS traffic and rate requests end here
                 continue

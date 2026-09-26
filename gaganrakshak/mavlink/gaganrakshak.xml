@@ -23,5 +23,9 @@
       <field type="uint8_t[64]" name="signature">Ed25519 signature over window_id, chunk, n_chunks, count and entries.</field>
       <field type="uint8_t[180]" name="entries">Up to 30 entries; declared last so MAVLink2 trims unused bytes.</field>
     </message>
+    <message id="52502" name="GR_LINK">
+      <description>Onboard agent's link report, once per commitment window. Unsigned: it only sizes the ground agent's command-signature redundancy, so a forged value can only cause more unverified commands (alarms), never hide an attack.</description>
+      <field type="uint8_t" name="uplink_loss">Uplink frame loss measured onboard over the last 30 s, percent; 255 = unknown.</field>
+    </message>
   </messages>
 </mavlink>

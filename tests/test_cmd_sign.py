@@ -48,8 +48,8 @@ def test_signed_commands_verify():
 
 def test_one_signature_copy_lost_still_verifies():
     gcs, signer = Gcs(), Signer(SEED)
-    cmd, sig1, sig2 = signed(gcs, signer)
-    assert run([cmd, sig2])[0] == []
+    cmd, *sigs = signed(gcs, signer)
+    assert run([cmd, sigs[-1]])[0] == []  # all but one copy lost
 
 
 def test_injected_command_is_unsigned():
@@ -73,11 +73,11 @@ def test_unsigned_on_a_lossy_uplink_is_link_evidence():
 
 def test_altered_command_fails_signature():
     gcs, signer = Gcs(), Signer(SEED)
-    cmd, s1, s2 = signed(gcs, signer)
+    cmd, *sigs = signed(gcs, signer)
     forged = mav.MAVLink(None, srcSystem=255, srcComponent=190)
     forged.seq = parse(cmd).get_seq()  # same ids and seq, different content
     alt = mav.MAVLink_command_long_message(1, 1, MAV.MAV_CMD_NAV_RETURN_TO_LAUNCH, 0, 0, 0, 0, 0, 0, 0, 0).pack(forged)
-    assert run([alt, s1, s2])[0] == ["bad_signature"]
+    assert run([alt, *sigs])[0] == ["bad_signature"]
 
 
 def test_wrong_key_fails():
@@ -92,3 +92,44 @@ def test_replayed_command_detected():
     kinds, v = run(old + new)
     assert kinds == []
     assert run(old, v, t0=5.0)[0] == ["replayed_command"]
+
+
+def test_copies_follow_the_measured_uplink_loss():
+    from gaganrakshak.cmd_sign import copies_for
+
+    assert copies_for(None) == 6 and copies_for(0.0) == 2 and copies_for(0.6) == 14 and copies_for(0.99) == 16
+    for p in (0.05, 0.3, 0.6):
+        assert p ** copies_for(p) <= 1e-3
+
+
+def lossy_uplink(signer, n_commands, loss, seed=1):
+    """Signed commands over an uplink that drops each frame with probability `loss`; returns how
+    many commands arrived and how many of those were left unverified."""
+    import random
+
+    rng = random.Random(seed)
+    gcs, v = Gcs(), CmdVerifier(PUB)
+    arrived = unverified = 0
+    t = 0.0
+    for _ in range(n_commands):
+        frames = signed(gcs, signer)
+        kept = [f for f in frames if rng.random() >= loss]
+        if kept and kept[0] is frames[0]:
+            arrived += 1
+        for f in kept:
+            v.observe(parse(f), [], "U", t)
+        t += 2.0
+        unverified += sum(e.evidence_type == "unsigned_command" for e in v.tick(t))
+    return arrived, unverified
+
+
+def test_adaptive_copies_keep_commands_verified_on_a_lossy_uplink():
+    """Uplink 60 % loss (downlink may be fine: the onboard agent measures the uplink itself)."""
+    adaptive = Signer(SEED)
+    adaptive.uplink_loss = 0.6
+    fixed = Signer(SEED)
+    fixed.uplink_loss = 0.0  # 2 copies, as before
+    arrived_a, unverified_a = lossy_uplink(adaptive, 300, 0.6)
+    arrived_f, unverified_f = lossy_uplink(fixed, 300, 0.6)
+    assert arrived_a > 90 and unverified_a <= 1  # expected 300 * 0.4 * 0.6^14 ~ 0.1
+    assert unverified_f > 20  # expected 300 * 0.4 * 0.36 ~ 43

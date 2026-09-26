@@ -5,7 +5,6 @@ Generated from: ('gaganrakshak.xml',)
 
 Note: this file has been auto-generated. DO NOT EDIT
 """
-
 import hashlib
 import json
 import logging
@@ -51,7 +50,6 @@ MAVLINK_TYPE_DOUBLE = 10
 # if fastcrc is not available
 try:
     import fastcrc
-
     mcrf4xx = fastcrc.crc16.mcrf4xx
 except Exception:
     mcrf4xx = None  # type: ignore
@@ -108,16 +106,7 @@ x25crc = _x25crc_fast if mcrf4xx is not None else _x25crc_slow
 class MAVLink_header(object):
     """MAVLink message header"""
 
-    def __init__(
-        self,
-        msgId: int,
-        incompat_flags: int = 0,
-        compat_flags: int = 0,
-        mlen: int = 0,
-        seq: int = 0,
-        srcSystem: int = 0,
-        srcComponent: int = 0,
-    ) -> None:
+    def __init__(self, msgId: int, incompat_flags: int = 0, compat_flags: int = 0, mlen: int = 0, seq: int = 0, srcSystem: int = 0, srcComponent: int = 0) -> None:
         self.mlen = mlen
         self.seq = seq
         self.srcSystem = srcSystem
@@ -363,11 +352,9 @@ class EnumEntry(object):
         self.label: Dict[int, str] = {}
         self.has_location = False
 
-
 class Enum(Dict[int, EnumEntry]):
     def __init__(self) -> None:
         self.bitmask = False
-
 
 enums: Dict[str, Enum] = {}
 
@@ -376,6 +363,7 @@ MAVLINK_MSG_ID_BAD_DATA = -1
 MAVLINK_MSG_ID_UNKNOWN = -2
 MAVLINK_MSG_ID_GR_CMD_SIG = 52500
 MAVLINK_MSG_ID_GR_COMMIT = 52501
+MAVLINK_MSG_ID_GR_LINK = 52502
 
 
 class MAVLink_gr_cmd_sig_message(MAVLink_message):
@@ -401,9 +389,7 @@ class MAVLink_gr_cmd_sig_message(MAVLink_message):
     instance_field = None
     instance_offset = -1
 
-    def __init__(
-        self, counter: int, cmd_msgid: int, cmd_sysid: int, cmd_compid: int, cmd_seq: int, signature: Sequence[int]
-    ):
+    def __init__(self, counter: int, cmd_msgid: int, cmd_sysid: int, cmd_compid: int, cmd_seq: int, signature: Sequence[int]):
         MAVLink_message.__init__(self, MAVLink_gr_cmd_sig_message.id, MAVLink_gr_cmd_sig_message.msgname)
         self._fieldnames = MAVLink_gr_cmd_sig_message.fieldnames
         self._instance_field = MAVLink_gr_cmd_sig_message.instance_field
@@ -416,82 +402,7 @@ class MAVLink_gr_cmd_sig_message(MAVLink_message):
         self.signature = signature
 
     def pack(self, mav: "MAVLink", force_mavlink1: bool = False) -> bytes:
-        return self._pack(
-            mav,
-            self.crc_extra,
-            self.unpacker.pack(
-                self.counter,
-                self.cmd_msgid,
-                self.cmd_sysid,
-                self.cmd_compid,
-                self.cmd_seq,
-                self.signature[0],
-                self.signature[1],
-                self.signature[2],
-                self.signature[3],
-                self.signature[4],
-                self.signature[5],
-                self.signature[6],
-                self.signature[7],
-                self.signature[8],
-                self.signature[9],
-                self.signature[10],
-                self.signature[11],
-                self.signature[12],
-                self.signature[13],
-                self.signature[14],
-                self.signature[15],
-                self.signature[16],
-                self.signature[17],
-                self.signature[18],
-                self.signature[19],
-                self.signature[20],
-                self.signature[21],
-                self.signature[22],
-                self.signature[23],
-                self.signature[24],
-                self.signature[25],
-                self.signature[26],
-                self.signature[27],
-                self.signature[28],
-                self.signature[29],
-                self.signature[30],
-                self.signature[31],
-                self.signature[32],
-                self.signature[33],
-                self.signature[34],
-                self.signature[35],
-                self.signature[36],
-                self.signature[37],
-                self.signature[38],
-                self.signature[39],
-                self.signature[40],
-                self.signature[41],
-                self.signature[42],
-                self.signature[43],
-                self.signature[44],
-                self.signature[45],
-                self.signature[46],
-                self.signature[47],
-                self.signature[48],
-                self.signature[49],
-                self.signature[50],
-                self.signature[51],
-                self.signature[52],
-                self.signature[53],
-                self.signature[54],
-                self.signature[55],
-                self.signature[56],
-                self.signature[57],
-                self.signature[58],
-                self.signature[59],
-                self.signature[60],
-                self.signature[61],
-                self.signature[62],
-                self.signature[63],
-            ),
-            force_mavlink1=force_mavlink1,
-        )
+        return self._pack(mav, self.crc_extra, self.unpacker.pack(self.counter, self.cmd_msgid, self.cmd_sysid, self.cmd_compid, self.cmd_seq, self.signature[0], self.signature[1], self.signature[2], self.signature[3], self.signature[4], self.signature[5], self.signature[6], self.signature[7], self.signature[8], self.signature[9], self.signature[10], self.signature[11], self.signature[12], self.signature[13], self.signature[14], self.signature[15], self.signature[16], self.signature[17], self.signature[18], self.signature[19], self.signature[20], self.signature[21], self.signature[22], self.signature[23], self.signature[24], self.signature[25], self.signature[26], self.signature[27], self.signature[28], self.signature[29], self.signature[30], self.signature[31], self.signature[32], self.signature[33], self.signature[34], self.signature[35], self.signature[36], self.signature[37], self.signature[38], self.signature[39], self.signature[40], self.signature[41], self.signature[42], self.signature[43], self.signature[44], self.signature[45], self.signature[46], self.signature[47], self.signature[48], self.signature[49], self.signature[50], self.signature[51], self.signature[52], self.signature[53], self.signature[54], self.signature[55], self.signature[56], self.signature[57], self.signature[58], self.signature[59], self.signature[60], self.signature[61], self.signature[62], self.signature[63]), force_mavlink1=force_mavlink1)
 
 
 # Define name on the class for backwards compatibility (it is now msgname).
@@ -523,9 +434,7 @@ class MAVLink_gr_commit_message(MAVLink_message):
     instance_field = None
     instance_offset = -1
 
-    def __init__(
-        self, window_id: int, chunk: int, n_chunks: int, count: int, signature: Sequence[int], entries: Sequence[int]
-    ):
+    def __init__(self, window_id: int, chunk: int, n_chunks: int, count: int, signature: Sequence[int], entries: Sequence[int]):
         MAVLink_message.__init__(self, MAVLink_gr_commit_message.id, MAVLink_gr_commit_message.msgname)
         self._fieldnames = MAVLink_gr_commit_message.fieldnames
         self._instance_field = MAVLink_gr_commit_message.instance_field
@@ -538,261 +447,7 @@ class MAVLink_gr_commit_message(MAVLink_message):
         self.entries = entries
 
     def pack(self, mav: "MAVLink", force_mavlink1: bool = False) -> bytes:
-        return self._pack(
-            mav,
-            self.crc_extra,
-            self.unpacker.pack(
-                self.window_id,
-                self.chunk,
-                self.n_chunks,
-                self.count,
-                self.signature[0],
-                self.signature[1],
-                self.signature[2],
-                self.signature[3],
-                self.signature[4],
-                self.signature[5],
-                self.signature[6],
-                self.signature[7],
-                self.signature[8],
-                self.signature[9],
-                self.signature[10],
-                self.signature[11],
-                self.signature[12],
-                self.signature[13],
-                self.signature[14],
-                self.signature[15],
-                self.signature[16],
-                self.signature[17],
-                self.signature[18],
-                self.signature[19],
-                self.signature[20],
-                self.signature[21],
-                self.signature[22],
-                self.signature[23],
-                self.signature[24],
-                self.signature[25],
-                self.signature[26],
-                self.signature[27],
-                self.signature[28],
-                self.signature[29],
-                self.signature[30],
-                self.signature[31],
-                self.signature[32],
-                self.signature[33],
-                self.signature[34],
-                self.signature[35],
-                self.signature[36],
-                self.signature[37],
-                self.signature[38],
-                self.signature[39],
-                self.signature[40],
-                self.signature[41],
-                self.signature[42],
-                self.signature[43],
-                self.signature[44],
-                self.signature[45],
-                self.signature[46],
-                self.signature[47],
-                self.signature[48],
-                self.signature[49],
-                self.signature[50],
-                self.signature[51],
-                self.signature[52],
-                self.signature[53],
-                self.signature[54],
-                self.signature[55],
-                self.signature[56],
-                self.signature[57],
-                self.signature[58],
-                self.signature[59],
-                self.signature[60],
-                self.signature[61],
-                self.signature[62],
-                self.signature[63],
-                self.entries[0],
-                self.entries[1],
-                self.entries[2],
-                self.entries[3],
-                self.entries[4],
-                self.entries[5],
-                self.entries[6],
-                self.entries[7],
-                self.entries[8],
-                self.entries[9],
-                self.entries[10],
-                self.entries[11],
-                self.entries[12],
-                self.entries[13],
-                self.entries[14],
-                self.entries[15],
-                self.entries[16],
-                self.entries[17],
-                self.entries[18],
-                self.entries[19],
-                self.entries[20],
-                self.entries[21],
-                self.entries[22],
-                self.entries[23],
-                self.entries[24],
-                self.entries[25],
-                self.entries[26],
-                self.entries[27],
-                self.entries[28],
-                self.entries[29],
-                self.entries[30],
-                self.entries[31],
-                self.entries[32],
-                self.entries[33],
-                self.entries[34],
-                self.entries[35],
-                self.entries[36],
-                self.entries[37],
-                self.entries[38],
-                self.entries[39],
-                self.entries[40],
-                self.entries[41],
-                self.entries[42],
-                self.entries[43],
-                self.entries[44],
-                self.entries[45],
-                self.entries[46],
-                self.entries[47],
-                self.entries[48],
-                self.entries[49],
-                self.entries[50],
-                self.entries[51],
-                self.entries[52],
-                self.entries[53],
-                self.entries[54],
-                self.entries[55],
-                self.entries[56],
-                self.entries[57],
-                self.entries[58],
-                self.entries[59],
-                self.entries[60],
-                self.entries[61],
-                self.entries[62],
-                self.entries[63],
-                self.entries[64],
-                self.entries[65],
-                self.entries[66],
-                self.entries[67],
-                self.entries[68],
-                self.entries[69],
-                self.entries[70],
-                self.entries[71],
-                self.entries[72],
-                self.entries[73],
-                self.entries[74],
-                self.entries[75],
-                self.entries[76],
-                self.entries[77],
-                self.entries[78],
-                self.entries[79],
-                self.entries[80],
-                self.entries[81],
-                self.entries[82],
-                self.entries[83],
-                self.entries[84],
-                self.entries[85],
-                self.entries[86],
-                self.entries[87],
-                self.entries[88],
-                self.entries[89],
-                self.entries[90],
-                self.entries[91],
-                self.entries[92],
-                self.entries[93],
-                self.entries[94],
-                self.entries[95],
-                self.entries[96],
-                self.entries[97],
-                self.entries[98],
-                self.entries[99],
-                self.entries[100],
-                self.entries[101],
-                self.entries[102],
-                self.entries[103],
-                self.entries[104],
-                self.entries[105],
-                self.entries[106],
-                self.entries[107],
-                self.entries[108],
-                self.entries[109],
-                self.entries[110],
-                self.entries[111],
-                self.entries[112],
-                self.entries[113],
-                self.entries[114],
-                self.entries[115],
-                self.entries[116],
-                self.entries[117],
-                self.entries[118],
-                self.entries[119],
-                self.entries[120],
-                self.entries[121],
-                self.entries[122],
-                self.entries[123],
-                self.entries[124],
-                self.entries[125],
-                self.entries[126],
-                self.entries[127],
-                self.entries[128],
-                self.entries[129],
-                self.entries[130],
-                self.entries[131],
-                self.entries[132],
-                self.entries[133],
-                self.entries[134],
-                self.entries[135],
-                self.entries[136],
-                self.entries[137],
-                self.entries[138],
-                self.entries[139],
-                self.entries[140],
-                self.entries[141],
-                self.entries[142],
-                self.entries[143],
-                self.entries[144],
-                self.entries[145],
-                self.entries[146],
-                self.entries[147],
-                self.entries[148],
-                self.entries[149],
-                self.entries[150],
-                self.entries[151],
-                self.entries[152],
-                self.entries[153],
-                self.entries[154],
-                self.entries[155],
-                self.entries[156],
-                self.entries[157],
-                self.entries[158],
-                self.entries[159],
-                self.entries[160],
-                self.entries[161],
-                self.entries[162],
-                self.entries[163],
-                self.entries[164],
-                self.entries[165],
-                self.entries[166],
-                self.entries[167],
-                self.entries[168],
-                self.entries[169],
-                self.entries[170],
-                self.entries[171],
-                self.entries[172],
-                self.entries[173],
-                self.entries[174],
-                self.entries[175],
-                self.entries[176],
-                self.entries[177],
-                self.entries[178],
-                self.entries[179],
-            ),
-            force_mavlink1=force_mavlink1,
-        )
+        return self._pack(mav, self.crc_extra, self.unpacker.pack(self.window_id, self.chunk, self.n_chunks, self.count, self.signature[0], self.signature[1], self.signature[2], self.signature[3], self.signature[4], self.signature[5], self.signature[6], self.signature[7], self.signature[8], self.signature[9], self.signature[10], self.signature[11], self.signature[12], self.signature[13], self.signature[14], self.signature[15], self.signature[16], self.signature[17], self.signature[18], self.signature[19], self.signature[20], self.signature[21], self.signature[22], self.signature[23], self.signature[24], self.signature[25], self.signature[26], self.signature[27], self.signature[28], self.signature[29], self.signature[30], self.signature[31], self.signature[32], self.signature[33], self.signature[34], self.signature[35], self.signature[36], self.signature[37], self.signature[38], self.signature[39], self.signature[40], self.signature[41], self.signature[42], self.signature[43], self.signature[44], self.signature[45], self.signature[46], self.signature[47], self.signature[48], self.signature[49], self.signature[50], self.signature[51], self.signature[52], self.signature[53], self.signature[54], self.signature[55], self.signature[56], self.signature[57], self.signature[58], self.signature[59], self.signature[60], self.signature[61], self.signature[62], self.signature[63], self.entries[0], self.entries[1], self.entries[2], self.entries[3], self.entries[4], self.entries[5], self.entries[6], self.entries[7], self.entries[8], self.entries[9], self.entries[10], self.entries[11], self.entries[12], self.entries[13], self.entries[14], self.entries[15], self.entries[16], self.entries[17], self.entries[18], self.entries[19], self.entries[20], self.entries[21], self.entries[22], self.entries[23], self.entries[24], self.entries[25], self.entries[26], self.entries[27], self.entries[28], self.entries[29], self.entries[30], self.entries[31], self.entries[32], self.entries[33], self.entries[34], self.entries[35], self.entries[36], self.entries[37], self.entries[38], self.entries[39], self.entries[40], self.entries[41], self.entries[42], self.entries[43], self.entries[44], self.entries[45], self.entries[46], self.entries[47], self.entries[48], self.entries[49], self.entries[50], self.entries[51], self.entries[52], self.entries[53], self.entries[54], self.entries[55], self.entries[56], self.entries[57], self.entries[58], self.entries[59], self.entries[60], self.entries[61], self.entries[62], self.entries[63], self.entries[64], self.entries[65], self.entries[66], self.entries[67], self.entries[68], self.entries[69], self.entries[70], self.entries[71], self.entries[72], self.entries[73], self.entries[74], self.entries[75], self.entries[76], self.entries[77], self.entries[78], self.entries[79], self.entries[80], self.entries[81], self.entries[82], self.entries[83], self.entries[84], self.entries[85], self.entries[86], self.entries[87], self.entries[88], self.entries[89], self.entries[90], self.entries[91], self.entries[92], self.entries[93], self.entries[94], self.entries[95], self.entries[96], self.entries[97], self.entries[98], self.entries[99], self.entries[100], self.entries[101], self.entries[102], self.entries[103], self.entries[104], self.entries[105], self.entries[106], self.entries[107], self.entries[108], self.entries[109], self.entries[110], self.entries[111], self.entries[112], self.entries[113], self.entries[114], self.entries[115], self.entries[116], self.entries[117], self.entries[118], self.entries[119], self.entries[120], self.entries[121], self.entries[122], self.entries[123], self.entries[124], self.entries[125], self.entries[126], self.entries[127], self.entries[128], self.entries[129], self.entries[130], self.entries[131], self.entries[132], self.entries[133], self.entries[134], self.entries[135], self.entries[136], self.entries[137], self.entries[138], self.entries[139], self.entries[140], self.entries[141], self.entries[142], self.entries[143], self.entries[144], self.entries[145], self.entries[146], self.entries[147], self.entries[148], self.entries[149], self.entries[150], self.entries[151], self.entries[152], self.entries[153], self.entries[154], self.entries[155], self.entries[156], self.entries[157], self.entries[158], self.entries[159], self.entries[160], self.entries[161], self.entries[162], self.entries[163], self.entries[164], self.entries[165], self.entries[166], self.entries[167], self.entries[168], self.entries[169], self.entries[170], self.entries[171], self.entries[172], self.entries[173], self.entries[174], self.entries[175], self.entries[176], self.entries[177], self.entries[178], self.entries[179]), force_mavlink1=force_mavlink1)
 
 
 # Define name on the class for backwards compatibility (it is now msgname).
@@ -800,9 +455,51 @@ class MAVLink_gr_commit_message(MAVLink_message):
 setattr(MAVLink_gr_commit_message, "name", mavlink_msg_deprecated_name_property())
 
 
+class MAVLink_gr_link_message(MAVLink_message):
+    """
+    Onboard agent's link report, once per commitment window. Unsigned:
+    it only sizes the ground agent's command-signature redundancy, so
+    a forged value can only cause more unverified commands (alarms),
+    never hide an attack.
+    """
+
+    id = MAVLINK_MSG_ID_GR_LINK
+    msgname = "GR_LINK"
+    fieldnames = ["uplink_loss"]
+    ordered_fieldnames = ["uplink_loss"]
+    fieldtypes = ["uint8_t"]
+    fielddisplays_by_name: Dict[str, str] = {}
+    fieldenums_by_name: Dict[str, str] = {}
+    fieldunits_by_name: Dict[str, str] = {}
+    native_format = bytearray(b"<B")
+    orders = [0]
+    lengths = [1]
+    array_lengths = [0]
+    crc_extra = 28
+    unpacker = struct.Struct("<B")
+    instance_field = None
+    instance_offset = -1
+
+    def __init__(self, uplink_loss: int):
+        MAVLink_message.__init__(self, MAVLink_gr_link_message.id, MAVLink_gr_link_message.msgname)
+        self._fieldnames = MAVLink_gr_link_message.fieldnames
+        self._instance_field = MAVLink_gr_link_message.instance_field
+        self._instance_offset = MAVLink_gr_link_message.instance_offset
+        self.uplink_loss = uplink_loss
+
+    def pack(self, mav: "MAVLink", force_mavlink1: bool = False) -> bytes:
+        return self._pack(mav, self.crc_extra, self.unpacker.pack(self.uplink_loss), force_mavlink1=force_mavlink1)
+
+
+# Define name on the class for backwards compatibility (it is now msgname).
+# Done with setattr to hide the class variable from mypy.
+setattr(MAVLink_gr_link_message, "name", mavlink_msg_deprecated_name_property())
+
+
 mavlink_map: Dict[int, Type[MAVLink_message]] = {
     MAVLINK_MSG_ID_GR_CMD_SIG: MAVLink_gr_cmd_sig_message,
     MAVLINK_MSG_ID_GR_COMMIT: MAVLink_gr_commit_message,
+    MAVLINK_MSG_ID_GR_LINK: MAVLink_gr_link_message,
 }
 
 
@@ -871,7 +568,6 @@ class MAVLinkSigning(object):
 MAVLinkV1Header = Tuple[bytes, int, int, int, int, int]
 MAVLinkV2Header = Tuple[bytes, int, int, int, int, int, int, int, int]
 
-
 class MAVLink(object):
     """MAVLink protocol handling class"""
 
@@ -925,11 +621,7 @@ class MAVLink(object):
         self.seq = (self.seq + 1) % 256
         self.total_packets_sent += 1
         self.total_bytes_sent += len(buf)
-        if (
-            self.send_callback is not None
-            and self.send_callback_args is not None
-            and self.send_callback_kwargs is not None
-        ):
+        if self.send_callback is not None and self.send_callback_args is not None and self.send_callback_kwargs is not None:
             self.send_callback(mavmsg, *self.send_callback_args, **self.send_callback_kwargs)
 
     def buf_len(self) -> int:
@@ -975,20 +667,12 @@ class MAVLink(object):
             header_len = HEADER_LEN_V2
 
         m: Optional[MAVLink_message] = None
-        if (
-            self.buf_len() >= 1
-            and self.buf[self.buf_index] != PROTOCOL_MARKER_V1
-            and self.buf[self.buf_index] != PROTOCOL_MARKER_V2
-        ):
+        if self.buf_len() >= 1 and self.buf[self.buf_index] != PROTOCOL_MARKER_V1 and self.buf[self.buf_index] != PROTOCOL_MARKER_V2:
             magic = self.buf[self.buf_index]
             self.buf_index += 1
             if self.robust_parsing:
                 invalid_prefix_start = self.buf_index - 1
-                while (
-                    self.buf_len() >= 1
-                    and self.buf[self.buf_index] != PROTOCOL_MARKER_V1
-                    and self.buf[self.buf_index] != PROTOCOL_MARKER_V2
-                ):
+                while self.buf_len() >= 1 and self.buf[self.buf_index] != PROTOCOL_MARKER_V1 and self.buf[self.buf_index] != PROTOCOL_MARKER_V2:
                     self.buf_index += 1
                 m = MAVLink_bad_data(self.buf[invalid_prefix_start : self.buf_index], "Bad prefix")
                 self.expected_length = header_len + 2
@@ -1014,18 +698,14 @@ class MAVLink(object):
             if self.robust_parsing:
                 try:
                     if magic == PROTOCOL_MARKER_V2 and (incompat_flags & ~MAVLINK_IFLAG_SIGNED) != 0:
-                        raise MAVError(
-                            "invalid incompat_flags 0x%x 0x%x %u" % (incompat_flags, magic, self.expected_length)
-                        )
+                        raise MAVError("invalid incompat_flags 0x%x 0x%x %u" % (incompat_flags, magic, self.expected_length))
                     m = self.decode(mbuf)
                 except MAVError as reason:
                     m = MAVLink_bad_data(mbuf, reason.message)
                     self.total_receive_errors += 1
             else:
                 if magic == PROTOCOL_MARKER_V2 and (incompat_flags & ~MAVLINK_IFLAG_SIGNED) != 0:
-                    raise MAVError(
-                        "invalid incompat_flags 0x%x 0x%x %u" % (incompat_flags, magic, self.expected_length)
-                    )
+                    raise MAVError("invalid incompat_flags 0x%x 0x%x %u" % (incompat_flags, magic, self.expected_length))
                 m = self.decode(mbuf)
             return m
         return None
@@ -1063,11 +743,7 @@ class MAVLink(object):
             # a new stream has appeared. Accept the timestamp if it is at most
             # one minute behind our current timestamp
             if timestamp + 6000 * 1000 < self.signing.timestamp:
-                logger.info(
-                    "bad new stream %s %s",
-                    timestamp / (100.0 * 1000 * 60 * 60 * 24 * 365),
-                    self.signing.timestamp / (100.0 * 1000 * 60 * 60 * 24 * 365),
-                )
+                logger.info("bad new stream %s %s", timestamp / (100.0 * 1000 * 60 * 60 * 24 * 365), self.signing.timestamp / (100.0 * 1000 * 60 * 60 * 24 * 365))
                 return False
             logger.info("new stream")
 
@@ -1117,10 +793,7 @@ class MAVLink(object):
         if ord(magic) != PROTOCOL_MARKER_V1 and ord(magic) != PROTOCOL_MARKER_V2:
             raise MAVError("invalid MAVLink prefix '{}'".format(hex(ord(magic))))
         if mlen != len(msgbuf) - (headerlen + 2 + signature_len):
-            raise MAVError(
-                "invalid MAVLink message length. Got %u expected %u, msgId=%u headerlen=%u"
-                % (len(msgbuf) - (headerlen + 2 + signature_len), mlen, msgId, headerlen)
-            )
+            raise MAVError("invalid MAVLink message length. Got %u expected %u, msgId=%u headerlen=%u" % (len(msgbuf) - (headerlen + 2 + signature_len), mlen, msgId, headerlen))
 
         if mapkey not in mavlink_map:
             return MAVLink_unknown(msgId, msgbuf)
@@ -1223,9 +896,7 @@ class MAVLink(object):
         m._header = MAVLink_header(msgId, incompat_flags, compat_flags, mlen, seq, srcSystem, srcComponent)
         return m
 
-    def gr_cmd_sig_encode(
-        self, counter: int, cmd_msgid: int, cmd_sysid: int, cmd_compid: int, cmd_seq: int, signature: Sequence[int]
-    ) -> MAVLink_gr_cmd_sig_message:
+    def gr_cmd_sig_encode(self, counter: int, cmd_msgid: int, cmd_sysid: int, cmd_compid: int, cmd_seq: int, signature: Sequence[int]) -> MAVLink_gr_cmd_sig_message:
         """
         Ed25519 signature by the ground agent over one uplink command frame
         and a monotonic counter.
@@ -1240,16 +911,7 @@ class MAVLink(object):
         """
         return MAVLink_gr_cmd_sig_message(counter, cmd_msgid, cmd_sysid, cmd_compid, cmd_seq, signature)
 
-    def gr_cmd_sig_send(
-        self,
-        counter: int,
-        cmd_msgid: int,
-        cmd_sysid: int,
-        cmd_compid: int,
-        cmd_seq: int,
-        signature: Sequence[int],
-        force_mavlink1: bool = False,
-    ) -> None:
+    def gr_cmd_sig_send(self, counter: int, cmd_msgid: int, cmd_sysid: int, cmd_compid: int, cmd_seq: int, signature: Sequence[int], force_mavlink1: bool = False) -> None:
         """
         Ed25519 signature by the ground agent over one uplink command frame
         and a monotonic counter.
@@ -1262,14 +924,9 @@ class MAVLink(object):
         signature                 : Ed25519 signature over counter and the command frame. (type:uint8_t)
 
         """
-        self.send(
-            self.gr_cmd_sig_encode(counter, cmd_msgid, cmd_sysid, cmd_compid, cmd_seq, signature),
-            force_mavlink1=force_mavlink1,
-        )
+        self.send(self.gr_cmd_sig_encode(counter, cmd_msgid, cmd_sysid, cmd_compid, cmd_seq, signature), force_mavlink1=force_mavlink1)
 
-    def gr_commit_encode(
-        self, window_id: int, chunk: int, n_chunks: int, count: int, signature: Sequence[int], entries: Sequence[int]
-    ) -> MAVLink_gr_commit_message:
+    def gr_commit_encode(self, window_id: int, chunk: int, n_chunks: int, count: int, signature: Sequence[int], entries: Sequence[int]) -> MAVLink_gr_commit_message:
         """
         Signed commitment of the security-relevant downlink frames the onboard
         agent forwarded in one window (one chunk). Entries are 6
@@ -1285,16 +942,7 @@ class MAVLink(object):
         """
         return MAVLink_gr_commit_message(window_id, chunk, n_chunks, count, signature, entries)
 
-    def gr_commit_send(
-        self,
-        window_id: int,
-        chunk: int,
-        n_chunks: int,
-        count: int,
-        signature: Sequence[int],
-        entries: Sequence[int],
-        force_mavlink1: bool = False,
-    ) -> None:
+    def gr_commit_send(self, window_id: int, chunk: int, n_chunks: int, count: int, signature: Sequence[int], entries: Sequence[int], force_mavlink1: bool = False) -> None:
         """
         Signed commitment of the security-relevant downlink frames the onboard
         agent forwarded in one window (one chunk). Entries are 6
@@ -1308,6 +956,28 @@ class MAVLink(object):
         entries                   : Up to 30 entries; declared last so MAVLink2 trims unused bytes. (type:uint8_t)
 
         """
-        self.send(
-            self.gr_commit_encode(window_id, chunk, n_chunks, count, signature, entries), force_mavlink1=force_mavlink1
-        )
+        self.send(self.gr_commit_encode(window_id, chunk, n_chunks, count, signature, entries), force_mavlink1=force_mavlink1)
+
+    def gr_link_encode(self, uplink_loss: int) -> MAVLink_gr_link_message:
+        """
+        Onboard agent's link report, once per commitment window. Unsigned: it
+        only sizes the ground agent's command-signature redundancy, so
+        a forged value can only cause more unverified commands
+        (alarms), never hide an attack.
+
+        uplink_loss               : Uplink frame loss measured onboard over the last 30 s, percent; 255 = unknown. (type:uint8_t)
+
+        """
+        return MAVLink_gr_link_message(uplink_loss)
+
+    def gr_link_send(self, uplink_loss: int, force_mavlink1: bool = False) -> None:
+        """
+        Onboard agent's link report, once per commitment window. Unsigned: it
+        only sizes the ground agent's command-signature redundancy, so
+        a forged value can only cause more unverified commands
+        (alarms), never hide an attack.
+
+        uplink_loss               : Uplink frame loss measured onboard over the last 30 s, percent; 255 = unknown. (type:uint8_t)
+
+        """
+        self.send(self.gr_link_encode(uplink_loss), force_mavlink1=force_mavlink1)
