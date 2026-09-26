@@ -33,19 +33,32 @@ from .evidence import EvidenceEvent, Severity
 GROUND_SYSID, GROUND_COMPID = 255, 191  # the ground agent speaks as part of the GCS system
 COPIES_ALPHA = 1e-3  # accepted probability that every signature copy of a command is lost
 COPIES_MAX = 16
+COPIES_MIN = 4  # commands are rare: extra copies cost almost nothing (all 4 lost at 40 % loss: 2.6 %)
 COPIES_DEFAULT = 6  # before the first uplink-loss report (covers up to ~31 % loss)
 
 
 def copies_for(uplink_loss: float | None) -> int:
     """Signature copies so that all are lost with probability <= COPIES_ALPHA, given the uplink
-    loss the onboard agent measured: k = ceil(ln alpha / ln p), at least 2, at most COPIES_MAX."""
+    loss: k = ceil(ln alpha / ln p), at least COPIES_MIN, at most COPIES_MAX."""
     if uplink_loss is None:
-        return COPIES_DEFAULT
+        return max(COPIES_MIN, COPIES_DEFAULT)
     if uplink_loss <= 0:
-        return 2
+        return COPIES_MIN
     if uplink_loss >= 1:
         return COPIES_MAX
-    return max(2, min(COPIES_MAX, math.ceil(math.log(COPIES_ALPHA) / math.log(uplink_loss))))
+    return max(COPIES_MIN, min(COPIES_MAX, math.ceil(math.log(COPIES_ALPHA) / math.log(uplink_loss))))
+
+
+def loss_upper(received: int, missing: int, z: float = 1.645) -> float:
+    """One-sided 95 % Wilson upper bound of a loss rate: few samples (the GCS sends ~1 frame/s)
+    cannot show that loss is low, and signature copies must not be sized from a lucky zero."""
+    n = received + missing
+    if n == 0:
+        return 1.0
+    p = missing / n
+    centre = p + z * z / (2 * n)
+    half = z * math.sqrt(p * (1 - p) / n + z * z / (4 * n * n))
+    return min(1.0, (centre + half) / (1 + z * z / n))
 
 
 def _signed_bytes(counter: int, frame: bytes) -> bytes:
@@ -84,10 +97,14 @@ class LinkReports:
         self.uplink_loss = None if msg.uplink_loss == 255 else msg.uplink_loss / 100
         return True
 
-    def copies(self, now: float) -> int:
+    def copies(self, now: float, downlink_loss: float = 0.0) -> int:
+        """From the worse of the reported uplink loss (an upper bound) and the downlink loss the
+        ground measures itself: the downlink is dense and sees a fade at once; more copies only help."""
         if self.t is None or now - self.t > LINK_STALE_S:
             return COPIES_MAX  # no trustworthy loss report: assume the worst
-        return copies_for(self.uplink_loss)
+        if self.uplink_loss is None:
+            return copies_for(None)
+        return copies_for(max(self.uplink_loss, downlink_loss))
 
 
 def is_command(msg) -> bool:
@@ -161,7 +178,7 @@ class CmdVerifier:
             self._uplink.popleft()
         got = sum(x[1] for x in self._uplink)
         miss = sum(x[2] for x in self._uplink)
-        return miss / (got + miss) if got >= 10 else 0.0  # loss is claimed only from evidence
+        return loss_upper(got, miss)
 
     def observe(self, msg, samples, direction, t):
         if direction != "U":
@@ -228,31 +245,13 @@ class CmdVerifier:
                     out.append(self._ev(t, "bad_signature", Severity.HIGH, "command_injection", command=name))
                     continue
                 self._set(k, "unsigned")
+                # Never downgraded by loss: an attacker can cause uplink loss (jamming) exactly when
+                # injecting. The loss context goes to the operator as metadata only.
                 p = self.uplink_loss(t)
-                if p * p > self.alpha:  # both signature copies lost is plausible on this link
-                    out.append(
-                        self._ev(
-                            t,
-                            "unsigned_command",
-                            Severity.LOW,
-                            "dos",
-                            command=name,
-                            sysid=k[0],
-                            uplink_loss=round(p, 3),
-                        )
-                    )
-                else:
-                    out.append(
-                        self._ev(
-                            t,
-                            "unsigned_command",
-                            Severity.MEDIUM,
-                            "command_injection",
-                            command=name,
-                            sysid=k[0],
-                            uplink_loss=round(p, 3),
-                        )
-                    )
+                kk = copies_for(p)
+                meta = {"command": name, "sysid": k[0], "uplink_loss_upper": round(p, 3), "copies_expected": kk}
+                meta["all_copies_lost_probability"] = round(p**kk, 5)
+                out.append(self._ev(t, "unsigned_command", Severity.MEDIUM, "command_injection", **meta))
         for k in list(self._sigs):  # keep signatures one wait period, for frames sharing their key
             self._sigs[k] = [(ts, sg) for ts, sg in self._sigs[k] if t - ts <= 2 * self.wait_s]
             if not self._sigs[k] and k not in self._cmds:

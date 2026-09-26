@@ -29,8 +29,8 @@ from pathlib import Path
 from pymavlink import mavutil
 from pymavlink.dialects.v20 import ardupilotmega as mav2
 
-from .cmd_sign import LinkReports, Signer, is_command, link_report
-from .commit import CommitTx
+from .cmd_sign import LinkReports, Signer, is_command, link_report, loss_upper
+from .commit import CommitRx, CommitTx
 
 MAV = mavutil.mavlink
 ROUTER_SYSID, ROUTER_COMPID = 1, MAV.MAV_COMP_ID_ONBOARD_COMPUTER
@@ -116,6 +116,8 @@ class Router:
         self.commit = CommitTx(commit_key) if commit_key else None  # onboard agent only
         self._link_counter = time.time_ns() // 1000  # GR_LINK_SIGNED counter, monotonic across restarts (onboard)
         self.links = LinkReports(commit_pub)  # verified GR_LINK_SIGNED reports (ground)
+        # ground: downlink frame loss from the commitments, for sizing signature copies
+        self.downlink_rx = CommitRx(commit_pub) if (sign_key and commit_pub) else None
         self._gcs_seq: int | None = None
         self._uplink: deque = deque()  # (t, received, missing) of GCS frames, last 30 s (onboard)
         self._link_mav = mav2.MAVLink(None, srcSystem=ROUTER_SYSID, srcComponent=ROUTER_COMPID)
@@ -193,7 +195,14 @@ class Router:
             self._uplink.popleft()
         got = sum(x[1] for x in self._uplink)
         miss = sum(x[2] for x in self._uplink)
-        return miss / (got + miss) if got >= 10 else None
+        return loss_upper(got, miss) if got + miss else None  # an upper bound: few samples cannot show low loss
+
+    def downlink_loss(self, windows: int = 5) -> float:
+        """Recent downlink frame loss the ground measures from the commitments (0 before any)."""
+        if self.downlink_rx is None:
+            return 0.0
+        listed, missing, _ = self.downlink_rx.recent_loss(windows)
+        return missing / listed if listed >= 20 else 0.0
 
     def _pump(self, src, dst, direction: bytes, key: str):
         while not self._stop.is_set():
@@ -229,6 +238,8 @@ class Router:
             # the unsigned GR_LINK of earlier versions is ignored: it cannot be trusted to size anything
             if self.signer and direction == b"D" and name == "GR_LINK_SIGNED":
                 self.links.accept(msg, time.monotonic())  # unsigned, invalid or replayed reports are ignored
+            if self.downlink_rx is not None and direction == b"D":
+                self.downlink_rx.observe(msg, [], "D", time.monotonic())
             if self.onboard and direction == b"U" and (name.startswith("GR_") or self._intercept_uplink(msg)):
                 self.stats["dropped"][name] += 1  # IDS traffic and rate requests end here
                 continue
@@ -240,7 +251,8 @@ class Router:
             if self.commit and direction == b"D":
                 self.commit.add(bytes(buf), msg)
             if self.signer and direction == b"U" and is_command(msg):
-                for sig in self.signer.sign(bytes(buf), msg, self.links.copies(time.monotonic())):
+                copies = self.links.copies(time.monotonic(), self.downlink_loss())
+                for sig in self.signer.sign(bytes(buf), msg, copies):
                     dst.write(sig)
             self.stats[key][name] += 1
             if key == "a_to_b":

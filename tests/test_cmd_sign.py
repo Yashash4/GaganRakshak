@@ -56,7 +56,8 @@ def test_injected_command_is_unsigned():
     assert run([Gcs().land()], classes=True)[0] == [("unsigned_command", "command_injection")]
 
 
-def test_unsigned_on_a_lossy_uplink_is_link_evidence():
+def test_unsigned_on_a_lossy_uplink_stays_an_alarm_with_the_loss_as_context():
+    """Never downgraded by loss: an attacker can cause the loss when injecting."""
     gcs = Gcs()
 
     def hb():
@@ -68,7 +69,7 @@ def test_unsigned_on_a_lossy_uplink_is_link_evidence():
         gcs.m.seq = (gcs.m.seq + 2) % 256
         frames.append(buf)
     frames.append(gcs.land())  # its signatures were lost too
-    assert run(frames, classes=True)[0] == [("unsigned_command", "dos")]
+    assert run(frames, classes=True)[0] == [("unsigned_command", "command_injection")]
 
 
 def test_altered_command_fails_signature():
@@ -95,11 +96,18 @@ def test_replayed_command_detected():
 
 
 def test_copies_follow_the_measured_uplink_loss():
-    from gaganrakshak.cmd_sign import copies_for
+    from gaganrakshak.cmd_sign import COPIES_MIN, copies_for, loss_upper
 
-    assert copies_for(None) == 6 and copies_for(0.0) == 2 and copies_for(0.6) == 14 and copies_for(0.99) == 16
+    assert (
+        copies_for(None) == 6
+        and copies_for(0.0) == COPIES_MIN == 4
+        and copies_for(0.6) == 14
+        and copies_for(0.99) == 16
+    )
     for p in (0.05, 0.3, 0.6):
         assert p ** copies_for(p) <= 1e-3
+    # a lucky zero from ~1 frame/s cannot show low loss: the reported loss is a 95 % upper bound
+    assert 0.07 < loss_upper(30, 0) < 0.09 and loss_upper(300, 0) < 0.01 and loss_upper(20, 20) > 0.6
 
 
 def lossy_uplink(signer, n_commands, loss, seed=1):
@@ -128,11 +136,11 @@ def test_adaptive_copies_keep_commands_verified_on_a_lossy_uplink():
     adaptive = Signer(SEED)
     adaptive.uplink_loss = 0.6
     fixed = Signer(SEED)
-    fixed.uplink_loss = 0.0  # 2 copies, as before
+    fixed.uplink_loss = 0.0  # the minimum number of copies (4)
     arrived_a, unverified_a = lossy_uplink(adaptive, 300, 0.6)
     arrived_f, unverified_f = lossy_uplink(fixed, 300, 0.6)
     assert arrived_a > 90 and unverified_a <= 1  # expected 300 * 0.4 * 0.6^14 ~ 0.1
-    assert unverified_f > 20  # expected 300 * 0.4 * 0.36 ~ 43
+    assert unverified_f > 5  # expected 300 * 0.4 * 0.6^4 ~ 16
 
 
 def test_only_a_valid_fresh_link_report_reduces_signature_copies():
@@ -147,7 +155,8 @@ def test_only_a_valid_fresh_link_report_reduces_signature_copies():
     forged = link_report(100, 0.0, crypto.generate_keypair()[0])  # another key, claims a perfect link
     assert not links.accept(wire(forged), 1.0) and links.copies(1.0) == COPIES_MAX
     valid = link_report(100, 0.0, onboard_seed)
-    assert links.accept(wire(valid), 2.0) and links.copies(2.0) == copies_for(0.0) == 2
+    assert links.accept(wire(valid), 2.0) and links.copies(2.0) == copies_for(0.0) == 4
+    assert links.copies(2.0, downlink_loss=0.5) == copies_for(0.5)  # a fade seen on the downlink adds copies
     tampered = wire(valid)
     tampered.counter = 101
     links.uplink_loss = 0.3  # stands for a later genuine value: a replay must not reset it
