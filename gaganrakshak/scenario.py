@@ -78,6 +78,7 @@ def resolve(spec: dict, seed: int) -> dict:
     return {
         "run_id": f"{spec['name']}-s{seed}",
         "scenario": spec["name"],
+        "split": spec.get("split", "development"),  # held-out variants are never used for tuning
         "seed": seed,
         "duration_s": spec.get("duration_s", 120),
         "takeoff_alt_m": round(alt, 2),

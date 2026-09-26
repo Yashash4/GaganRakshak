@@ -1,0 +1,8 @@
+# A5 — link flood from an attacker spoofing the GCS system id. HELD-OUT variant: never used for calibration or tuning.
+name: a5h_flood_gcs_sysid
+duration_s: 100
+mission: {legs: 4, radius_m: [30, 60], alt_m: [15, 25], speed_ms: [3, 6]}
+wind: {spd: [0, 2], dir: [0, 360], turb: 0}
+gnss_noise: {sigma_m: 2.1, tau_s: 60}
+split: heldout
+attack: {type: link_flood, start_s: [30, 50], duration_s: [15, 25], params: {bytes_per_s: [10000, 20000], sysid: 255}}
