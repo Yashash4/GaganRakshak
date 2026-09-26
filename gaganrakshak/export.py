@@ -1,22 +1,30 @@
 """Per-run export for independent verification: one small JSON per recorded run with the
 ground truth and the IDS's final output, and no computed metrics.
 
-    python -m gaganrakshak.export --split calibration results/raw/calib3/*
-writes results/runs/<split>/<run_id>.json with: run_id, scenario, seed, split, variant
+    python -m gaganrakshak.export --split validation --raw-root results/raw results/raw/val2/*
+    python -m gaganrakshak.export --split calibration --guard --raw-root results/raw results/raw/calib3/*
+writes results/runs/<split>/<source>.json (source = the run's path under --raw-root, so runs of
+the same scenario and seed from different batches stay apart; else the run id) with: run_id,
+source, calibration (the calibration files the IDS used, with their git blob hashes), scenario,
+seed, split, variant
 ("dev" | "held_out" | null for runs without an attack), status, attack {type, params},
 events (labels, scenario time t), flight_s (takeoff to touchdown) and episodes
 [{agent, class, severity, t_start, t_end}] from replaying the run through both agents, and
 baseline_episodes in the same format: what stock ArduPilot itself flagged (see baseline.py).
+--guard exports only the runs the calibration guard accepts (calibration.select). A run recorded
+as a test seed is exported only into the test split.
 """
 
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 
 from .baseline import baseline_episodes
-from .evaluate import evaluate
+from .evaluate import CPCE_CALIB, LINK_CURVES, evaluate
 
 ROOT = Path(__file__).resolve().parent.parent
 SPLITS = ("calibration", "validation", "test")
@@ -35,15 +43,30 @@ KEEP = (
 )
 
 
-def export_run(run: Path, split: str, out_root: Path = ROOT / "results" / "runs") -> Path:
+def calibration_used() -> dict:
+    """{file name: git blob hash} of the calibration files the IDS loads (present ones only)."""
+    out = {}
+    for f in (CPCE_CALIB, LINK_CURVES):
+        if f.exists():
+            data = f.read_bytes()
+            out[f.name] = hashlib.sha1(b"blob %d\0" % len(data) + data).hexdigest()
+    return out
+
+
+def export_run(run: Path, split: str, out_root: Path = ROOT / "results" / "runs", source: str | None = None) -> Path:
     if split not in SPLITS:
         raise ValueError(f"split must be one of {SPLITS}")
     labels = json.loads((run / "labels.json").read_text())
+    if labels.get("split") == "test" and split != "test":
+        raise ValueError(f"{run}: a test seed; it may only be exported into the test split")
+    source = source or labels["run_id"]
     events = [{k: v for k, v in e.items() if k != "wall"} for e in labels["events"] if e["event"] in KEEP]
     t = {e["event"]: e["t"] for e in events if e["event"] in ("takeoff", "touchdown")}
     attack = labels.get("attack")
     doc = {
         "run_id": labels["run_id"],
+        "source": source,
+        "calibration": calibration_used(),
         "scenario": labels["scenario"],
         "seed": labels["seed"],
         "split": split,
@@ -68,7 +91,7 @@ def export_run(run: Path, split: str, out_root: Path = ROOT / "results" / "runs"
             {k: ep[k] for k in ("agent", "class", "severity", "t_start", "t_end")} for ep in evaluate(run)["episodes"]
         ]
         doc["baseline_episodes"] = baseline_episodes(run)
-    out = out_root / split / f"{labels['run_id']}.json"
+    out = out_root / split / f"{source}.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(doc, indent=1))
     return out
@@ -79,10 +102,21 @@ def main() -> None:
     ap.add_argument("runs", nargs="+", type=Path)
     ap.add_argument("--split", required=True, choices=SPLITS)
     ap.add_argument("--out", type=Path, default=ROOT / "results" / "runs")
+    ap.add_argument("--raw-root", type=Path, help="name each export by the run's path under this directory")
+    ap.add_argument("--guard", action="store_true", help="only runs the calibration guard accepts")
+    ap.add_argument("--workers", type=int, default=4)
     a = ap.parse_args()
-    for run in a.runs:
-        if (run / "labels.json").exists():
-            print(export_run(run, a.split, a.out))
+    runs = [r for r in a.runs if (r / "labels.json").exists()]
+    if a.guard:
+        from .calibration import select
+
+        runs = select(runs, workers=a.workers)
+    sources = [str(r.resolve().relative_to(a.raw_root.resolve())) if a.raw_root else None for r in runs]
+    if len({s or r.name for s, r in zip(sources, runs, strict=True)}) != len(runs):
+        raise SystemExit("two runs would be written to the same file; pass --raw-root")
+    with ProcessPoolExecutor(a.workers) as ex:
+        for out in ex.map(export_run, runs, [a.split] * len(runs), [a.out] * len(runs), sources):
+            print(out)
 
 
 if __name__ == "__main__":
