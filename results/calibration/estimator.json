@@ -8,27 +8,27 @@
  },
  "persist_s": 2.0,
  "meta": {
-  "calibration_hours": 13.92,
+  "calibration_hours": 14.206,
   "budget_per_hour": 0.3333333333333333,
   "false_onsets": 2,
-  "false_onsets_per_hour": 0.144,
-  "upper95_per_hour": 0.452,
+  "false_onsets_per_hour": 0.141,
+  "upper95_per_hour": 0.443,
   "per_ratio": {
    "velocity_variance": {
     "false_onsets": 1,
-    "upper95_per_hour": 0.341
+    "upper95_per_hour": 0.334
    },
    "pos_horiz_variance": {
     "false_onsets": 1,
-    "upper95_per_hour": 0.341
+    "upper95_per_hour": 0.334
    },
    "pos_vert_variance": {
     "false_onsets": 0,
-    "upper95_per_hour": 0.215
+    "upper95_per_hour": 0.211
    },
    "compass_variance": {
     "false_onsets": 0,
-    "upper95_per_hour": 0.215
+    "upper95_per_hour": 0.211
    }
   },
   "off": [
@@ -47,6 +47,7 @@
    "b3_aggressive-s2002",
    "b3_aggressive-s2003",
    "b3_aggressive-s2004",
+   "b5_link_fade-s2001",
    "b5_link_fade-s2002",
    "b5_link_fade-s2003",
    "b5_link_fade-s2004",
@@ -109,6 +110,7 @@
    "b5_link_fade-s1003",
    "b5_link_fade-s1004",
    "b5_link_fade-s1005",
+   "b5_link_fade-s1006",
    "b5_link_fade-s1007",
    "b5_link_fade-s1008",
    "b5_link_fade-s1009",
@@ -118,6 +120,7 @@
    "b5_link_fade-s1013",
    "b5_link_fade-s1014",
    "b5_link_fade-s1015",
+   "b5_link_fade-s1016",
    "b6_operator-s1001",
    "b6_operator-s1002",
    "b6_operator-s1003",
@@ -227,6 +230,7 @@
    "b5_link_fade-s1020",
    "b5_link_fade-s1021",
    "b5_link_fade-s1022",
+   "b5_link_fade-s1023",
    "b5_link_fade-s1024",
    "b5_link_fade-s1025",
    "b5_link_fade-s1026",

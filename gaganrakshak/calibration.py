@@ -49,7 +49,15 @@ def usable(run: Path, check_ids: bool = True) -> tuple[bool, str]:
         # clean, and these flights are the deepest fades the link bands must learn. The evidence is
         # not a sign of an unclean flight, so it is ignored here (and listed by calibrate_all).
         unsigned = [e for e in ev if e["type"] == "unsigned_command"]
-        ev = [e for e in ev if e["type"] != "unsigned_command"]
+        # an unsafe command (e.g. the operator's disarm) judged so only because its own signatures
+        # were lost the same way (unsigned within the second before) is the same fade loss
+        lost = [e["t"] for e in unsigned]
+        ev = [
+            e
+            for e in ev
+            if e["type"] != "unsigned_command"
+            and not (e["type"] == "unsafe_command" and any(0.0 <= e["t"] - t <= 1.0 for t in lost))
+        ]
         if ev:
             return False, f"IDS evidence: {sorted({(e['agent'], e['type']) for e in ev})}"
         if unsigned:
@@ -109,7 +117,9 @@ def _count(args) -> tuple[dict, dict]:
     for ep in r["episodes"]:
         if ep["severity"] >= 2:
             # signature copies all lost in a fade, recorded with the earlier sizing: counted apart
-            key = "unsigned_command_old_sizing" if ep.get("evidence_types") == ["unsigned_command"] else ep["class"]
+            types = set(ep.get("evidence_types") or [])
+            lost = "unsigned_command" in types and types <= {"unsigned_command", "unsafe_command"}
+            key = "unsigned_command_old_sizing" if lost else ep["class"]
             alarms[key] = alarms.get(key, 0) + 1
     return by_type, alarms
 

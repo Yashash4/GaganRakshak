@@ -13,10 +13,11 @@
   "inertial_trend",
   "estimator_innovation_high"
  ],
- "runs": 257,
- "hours": 13.920158888888889,
+ "runs": 261,
+ "hours": 14.205698333333332,
  "evidence_onsets_by_type": {
-  "unsigned_command": 26,
+  "unsigned_command": 31,
+  "unsafe_command": 4,
   "inertial_trend": 4,
   "excess_loss": 2,
   "commit_timeout": 2,
@@ -26,20 +27,16 @@
   "selective_commit_loss": 2
  },
  "alarm_episodes_by_class": {
-  "unsigned_command_old_sizing": 25,
+  "unsigned_command_old_sizing": 30,
   "dos": 2,
   "telemetry_manipulation": 4,
   "gps_spoofing": 2
  },
- "alarms_per_hour": 0.575,
- "alarms_upper95_per_hour": 1.037,
- "advisories_per_hour": 0.575,
- "advisories_upper95_per_hour": 1.037,
+ "alarms_per_hour": 0.563,
+ "alarms_upper95_per_hour": 1.016,
+ "advisories_per_hour": 0.563,
+ "advisories_upper95_per_hour": 1.016,
  "guard_skipped": [
-  {
-   "run": "phys1/b5_link_fade-s2001",
-   "reason": "IDS evidence: [('onboard', 'unsafe_command')]"
-  },
   {
    "run": "calib3/b1_calm-s1009",
    "reason": "status failed: ConnectionRefusedError(111, 'Connection refused')"
@@ -49,23 +46,15 @@
    "reason": "status failed: ConnectionRefusedError(111, 'Connection refused')"
   },
   {
-   "run": "calib3/b5_link_fade-s1006",
-   "reason": "IDS evidence: [('onboard', 'unsafe_command')]"
-  },
-  {
-   "run": "calib3/b5_link_fade-s1016",
-   "reason": "IDS evidence: [('onboard', 'unsafe_command')]"
-  },
-  {
    "run": "calib3/b7_takeoff_landing-s1008",
    "reason": "status failed: ConnectionRefusedError(111, 'Connection refused')"
-  },
-  {
-   "run": "calib4/b5_link_fade-s1023",
-   "reason": "IDS evidence: [('onboard', 'unsafe_command')]"
   }
  ],
  "guard_ignored_unsigned_command": [
+  {
+   "run": "phys1/b5_link_fade-s2001",
+   "note": "ok; ignored unsigned_command x1"
+  },
   {
    "run": "phys1/b5_link_fade-s2002",
    "note": "ok; ignored unsigned_command x1"
@@ -88,6 +77,10 @@
   },
   {
    "run": "calib3/b5_link_fade-s1005",
+   "note": "ok; ignored unsigned_command x1"
+  },
+  {
+   "run": "calib3/b5_link_fade-s1006",
    "note": "ok; ignored unsigned_command x1"
   },
   {
@@ -115,6 +108,10 @@
    "note": "ok; ignored unsigned_command x1"
   },
   {
+   "run": "calib3/b5_link_fade-s1016",
+   "note": "ok; ignored unsigned_command x2"
+  },
+  {
    "run": "calib4/b5_link_fade-s1017",
    "note": "ok; ignored unsigned_command x2"
   },
@@ -124,6 +121,10 @@
   },
   {
    "run": "calib4/b5_link_fade-s1019",
+   "note": "ok; ignored unsigned_command x1"
+  },
+  {
+   "run": "calib4/b5_link_fade-s1023",
    "note": "ok; ignored unsigned_command x1"
   },
   {
