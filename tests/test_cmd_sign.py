@@ -133,3 +133,33 @@ def test_adaptive_copies_keep_commands_verified_on_a_lossy_uplink():
     arrived_f, unverified_f = lossy_uplink(fixed, 300, 0.6)
     assert arrived_a > 90 and unverified_a <= 1  # expected 300 * 0.4 * 0.6^14 ~ 0.1
     assert unverified_f > 20  # expected 300 * 0.4 * 0.36 ~ 43
+
+
+def test_only_a_valid_fresh_link_report_reduces_signature_copies():
+    from gaganrakshak.cmd_sign import COPIES_MAX, LINK_STALE_S, LinkReports, copies_for, link_report
+
+    def wire(m):
+        return parse(m.pack(mav.MAVLink(None)))
+
+    onboard_seed, onboard_pub = crypto.generate_keypair()
+    links = LinkReports(onboard_pub)
+    assert links.copies(0.0) == COPIES_MAX  # no report yet
+    forged = link_report(100, 0.0, crypto.generate_keypair()[0])  # another key, claims a perfect link
+    assert not links.accept(wire(forged), 1.0) and links.copies(1.0) == COPIES_MAX
+    valid = link_report(100, 0.0, onboard_seed)
+    assert links.accept(wire(valid), 2.0) and links.copies(2.0) == copies_for(0.0) == 2
+    tampered = wire(valid)
+    tampered.counter = 101
+    links.uplink_loss = 0.3  # stands for a later genuine value: a replay must not reset it
+    assert not links.accept(tampered, 3.0) and not links.accept(wire(valid), 3.0) and links.uplink_loss == 0.3
+    assert links.copies(2.0 + LINK_STALE_S + 0.1) == COPIES_MAX  # reports stopped: assume the worst
+    assert LinkReports(None).copies(0.0) == COPIES_MAX  # no key to verify with
+
+
+def test_earlier_unsigned_link_report_still_decodes():
+    # a GR_LINK frame as earlier versions sent it (id 52502, one byte): recordings must replay cleanly
+    old = bytes.fromhex("fd0100000001bf16cd00") + bytes([7])  # len 1, sys 1, comp 191, id 52502
+    crc = mavutil.x25crc(old[1:])
+    crc.accumulate(bytes([28]))  # the message's CRC_EXTRA
+    m = parse(old + crc.crc.to_bytes(2, "little"))
+    assert m.get_type() == "GR_LINK" and m.uplink_loss == 7

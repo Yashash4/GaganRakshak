@@ -364,6 +364,7 @@ MAVLINK_MSG_ID_UNKNOWN = -2
 MAVLINK_MSG_ID_GR_CMD_SIG = 52500
 MAVLINK_MSG_ID_GR_COMMIT = 52501
 MAVLINK_MSG_ID_GR_LINK = 52502
+MAVLINK_MSG_ID_GR_LINK_SIGNED = 52503
 
 
 class MAVLink_gr_cmd_sig_message(MAVLink_message):
@@ -457,10 +458,9 @@ setattr(MAVLink_gr_commit_message, "name", mavlink_msg_deprecated_name_property(
 
 class MAVLink_gr_link_message(MAVLink_message):
     """
-    Onboard agent's link report, once per commitment window. Unsigned:
-    it only sizes the ground agent's command-signature redundancy, so
-    a forged value can only cause more unverified commands (alarms),
-    never hide an attack.
+    Superseded by GR_LINK_SIGNED and no longer sent; kept so earlier
+    recordings still decode. Onboard agent's unsigned link report; the
+    ground agent does not use it.
     """
 
     id = MAVLINK_MSG_ID_GR_LINK
@@ -496,10 +496,54 @@ class MAVLink_gr_link_message(MAVLink_message):
 setattr(MAVLink_gr_link_message, "name", mavlink_msg_deprecated_name_property())
 
 
+class MAVLink_gr_link_signed_message(MAVLink_message):
+    """
+    Onboard agent's link report, once per commitment window, signed
+    with the onboard commitment key. Sizes the ground agent's command-
+    signature redundancy; the ground agent ignores reports that do not
+    verify or are not newer than the last one.
+    """
+
+    id = MAVLINK_MSG_ID_GR_LINK_SIGNED
+    msgname = "GR_LINK_SIGNED"
+    fieldnames = ["counter", "uplink_loss", "signature"]
+    ordered_fieldnames = ["counter", "uplink_loss", "signature"]
+    fieldtypes = ["uint64_t", "uint8_t", "uint8_t"]
+    fielddisplays_by_name: Dict[str, str] = {}
+    fieldenums_by_name: Dict[str, str] = {}
+    fieldunits_by_name: Dict[str, str] = {}
+    native_format = bytearray(b"<QBB")
+    orders = [0, 1, 2]
+    lengths = [1, 1, 64]
+    array_lengths = [0, 0, 64]
+    crc_extra = 208
+    unpacker = struct.Struct("<QB64B")
+    instance_field = None
+    instance_offset = -1
+
+    def __init__(self, counter: int, uplink_loss: int, signature: Sequence[int]):
+        MAVLink_message.__init__(self, MAVLink_gr_link_signed_message.id, MAVLink_gr_link_signed_message.msgname)
+        self._fieldnames = MAVLink_gr_link_signed_message.fieldnames
+        self._instance_field = MAVLink_gr_link_signed_message.instance_field
+        self._instance_offset = MAVLink_gr_link_signed_message.instance_offset
+        self.counter = counter
+        self.uplink_loss = uplink_loss
+        self.signature = signature
+
+    def pack(self, mav: "MAVLink", force_mavlink1: bool = False) -> bytes:
+        return self._pack(mav, self.crc_extra, self.unpacker.pack(self.counter, self.uplink_loss, self.signature[0], self.signature[1], self.signature[2], self.signature[3], self.signature[4], self.signature[5], self.signature[6], self.signature[7], self.signature[8], self.signature[9], self.signature[10], self.signature[11], self.signature[12], self.signature[13], self.signature[14], self.signature[15], self.signature[16], self.signature[17], self.signature[18], self.signature[19], self.signature[20], self.signature[21], self.signature[22], self.signature[23], self.signature[24], self.signature[25], self.signature[26], self.signature[27], self.signature[28], self.signature[29], self.signature[30], self.signature[31], self.signature[32], self.signature[33], self.signature[34], self.signature[35], self.signature[36], self.signature[37], self.signature[38], self.signature[39], self.signature[40], self.signature[41], self.signature[42], self.signature[43], self.signature[44], self.signature[45], self.signature[46], self.signature[47], self.signature[48], self.signature[49], self.signature[50], self.signature[51], self.signature[52], self.signature[53], self.signature[54], self.signature[55], self.signature[56], self.signature[57], self.signature[58], self.signature[59], self.signature[60], self.signature[61], self.signature[62], self.signature[63]), force_mavlink1=force_mavlink1)
+
+
+# Define name on the class for backwards compatibility (it is now msgname).
+# Done with setattr to hide the class variable from mypy.
+setattr(MAVLink_gr_link_signed_message, "name", mavlink_msg_deprecated_name_property())
+
+
 mavlink_map: Dict[int, Type[MAVLink_message]] = {
     MAVLINK_MSG_ID_GR_CMD_SIG: MAVLink_gr_cmd_sig_message,
     MAVLINK_MSG_ID_GR_COMMIT: MAVLink_gr_commit_message,
     MAVLINK_MSG_ID_GR_LINK: MAVLink_gr_link_message,
+    MAVLINK_MSG_ID_GR_LINK_SIGNED: MAVLink_gr_link_signed_message,
 }
 
 
@@ -960,10 +1004,9 @@ class MAVLink(object):
 
     def gr_link_encode(self, uplink_loss: int) -> MAVLink_gr_link_message:
         """
-        Onboard agent's link report, once per commitment window. Unsigned: it
-        only sizes the ground agent's command-signature redundancy, so
-        a forged value can only cause more unverified commands
-        (alarms), never hide an attack.
+        Superseded by GR_LINK_SIGNED and no longer sent; kept so earlier
+        recordings still decode. Onboard agent's unsigned link report;
+        the ground agent does not use it.
 
         uplink_loss               : Uplink frame loss measured onboard over the last 30 s, percent; 255 = unknown. (type:uint8_t)
 
@@ -972,12 +1015,39 @@ class MAVLink(object):
 
     def gr_link_send(self, uplink_loss: int, force_mavlink1: bool = False) -> None:
         """
-        Onboard agent's link report, once per commitment window. Unsigned: it
-        only sizes the ground agent's command-signature redundancy, so
-        a forged value can only cause more unverified commands
-        (alarms), never hide an attack.
+        Superseded by GR_LINK_SIGNED and no longer sent; kept so earlier
+        recordings still decode. Onboard agent's unsigned link report;
+        the ground agent does not use it.
 
         uplink_loss               : Uplink frame loss measured onboard over the last 30 s, percent; 255 = unknown. (type:uint8_t)
 
         """
         self.send(self.gr_link_encode(uplink_loss), force_mavlink1=force_mavlink1)
+
+    def gr_link_signed_encode(self, counter: int, uplink_loss: int, signature: Sequence[int]) -> MAVLink_gr_link_signed_message:
+        """
+        Onboard agent's link report, once per commitment window, signed with
+        the onboard commitment key. Sizes the ground agent's command-
+        signature redundancy; the ground agent ignores reports that do
+        not verify or are not newer than the last one.
+
+        counter                   : Monotonic per-onboard-agent report counter. (type:uint64_t)
+        uplink_loss               : Uplink frame loss measured onboard over the last 30 s, percent; 255 = unknown. (type:uint8_t)
+        signature                 : Ed25519 signature over "GR_LINK", counter and uplink_loss. (type:uint8_t)
+
+        """
+        return MAVLink_gr_link_signed_message(counter, uplink_loss, signature)
+
+    def gr_link_signed_send(self, counter: int, uplink_loss: int, signature: Sequence[int], force_mavlink1: bool = False) -> None:
+        """
+        Onboard agent's link report, once per commitment window, signed with
+        the onboard commitment key. Sizes the ground agent's command-
+        signature redundancy; the ground agent ignores reports that do
+        not verify or are not newer than the last one.
+
+        counter                   : Monotonic per-onboard-agent report counter. (type:uint64_t)
+        uplink_loss               : Uplink frame loss measured onboard over the last 30 s, percent; 255 = unknown. (type:uint8_t)
+        signature                 : Ed25519 signature over "GR_LINK", counter and uplink_loss. (type:uint8_t)
+
+        """
+        self.send(self.gr_link_signed_encode(counter, uplink_loss, signature), force_mavlink1=force_mavlink1)

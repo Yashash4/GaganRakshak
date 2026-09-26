@@ -24,8 +24,14 @@
       <field type="uint8_t[180]" name="entries">Up to 30 entries; declared last so MAVLink2 trims unused bytes.</field>
     </message>
     <message id="52502" name="GR_LINK">
-      <description>Onboard agent's link report, once per commitment window. Unsigned: it only sizes the ground agent's command-signature redundancy, so a forged value can only cause more unverified commands (alarms), never hide an attack.</description>
+      <description>Superseded by GR_LINK_SIGNED and no longer sent; kept so earlier recordings still decode. Onboard agent's unsigned link report; the ground agent does not use it.</description>
       <field type="uint8_t" name="uplink_loss">Uplink frame loss measured onboard over the last 30 s, percent; 255 = unknown.</field>
+    </message>
+    <message id="52503" name="GR_LINK_SIGNED">
+      <description>Onboard agent's link report, once per commitment window, signed with the onboard commitment key. Sizes the ground agent's command-signature redundancy; the ground agent ignores reports that do not verify or are not newer than the last one.</description>
+      <field type="uint64_t" name="counter">Monotonic per-onboard-agent report counter.</field>
+      <field type="uint8_t" name="uplink_loss">Uplink frame loss measured onboard over the last 30 s, percent; 255 = unknown.</field>
+      <field type="uint8_t[64]" name="signature">Ed25519 signature over "GR_LINK", counter and uplink_loss.</field>
     </message>
   </messages>
 </mavlink>

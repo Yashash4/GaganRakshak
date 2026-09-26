@@ -400,6 +400,8 @@ class Run:
                         str(p["ids_gnd"]),
                         "--sign-key",
                         keys["ground_sign"],
+                        "--commit-pub",
+                        str(out / "onboard_commit.pub"),
                     ]
                 )
             )

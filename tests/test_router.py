@@ -126,9 +126,10 @@ def test_onboard_router_reports_uplink_loss_after_each_commitment():
 
     fc = mavutil.mavlink_connection("udpout:127.0.0.1:16200", source_system=1, source_component=1)
     gcs = mavutil.mavlink_connection("udpin:127.0.0.1:16201", source_system=255, source_component=190)
-    r = Router(
-        "udpin:127.0.0.1:16200", "udpout:127.0.0.1:16201", 16202, onboard=True, commit_key=crypto.generate_keypair()[0]
-    )
+    from gaganrakshak.cmd_sign import LinkReports
+
+    seed, pub = crypto.generate_keypair()
+    r = Router("udpin:127.0.0.1:16200", "udpout:127.0.0.1:16201", 16202, onboard=True, commit_key=seed)
     try:
         fc.mav.heartbeat_send(MAV.MAV_TYPE_QUADROTOR, MAV.MAV_AUTOPILOT_ARDUPILOTMEGA, 0, 0, 0)
         r.start()
@@ -137,8 +138,10 @@ def test_onboard_router_reports_uplink_loss_after_each_commitment():
         while time.monotonic() - t0 < 2.5:
             fc.mav.heartbeat_send(MAV.MAV_TYPE_QUADROTOR, MAV.MAV_AUTOPILOT_ARDUPILOTMEGA, 0, 0, 0)
             types += [m for m in drain(gcs, 0.2) if m.get_type().startswith("GR_")]
-        links = [m for m in types if m.get_type() == "GR_LINK"]
+        links = [m for m in types if m.get_type() == "GR_LINK_SIGNED"]
         assert links and all(m.uplink_loss == 255 for m in links)  # no GCS traffic yet: unknown
+        ground = LinkReports(pub)
+        assert all(ground.accept(m, 0.0) for m in links)  # signed with the commitment key, counter rising
         assert any(m.get_type() == "GR_COMMIT" for m in types)
     finally:
         r.stop()

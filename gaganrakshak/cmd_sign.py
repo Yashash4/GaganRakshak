@@ -3,7 +3,8 @@
 Ground agent (``Signer``, inside the ground router): after forwarding each command frame from
 the GCS it sends a GR_CMD_SIG = Ed25519 over (monotonic counter || exact command frame bytes).
 The signature is sent k times, k chosen from the uplink loss the onboard agent measures and reports
-(GR_LINK) so that losing every copy is rarer than 1e-3.
+(GR_LINK_SIGNED, signed with the onboard commitment key) so that losing every copy is rarer than 1e-3;
+without a valid report in the last LINK_STALE_S the ground agent sends COPIES_MAX.
 
 Onboard agent (``CmdVerifier``, an IDS detector): pairs each uplink command with its
 signature. Evidence (class ``command_injection`` unless noted):
@@ -51,6 +52,44 @@ def _signed_bytes(counter: int, frame: bytes) -> bytes:
     return counter.to_bytes(8, "big") + frame
 
 
+LINK_STALE_S = 10.0  # without a valid GR_LINK_SIGNED this recent, the ground agent sends COPIES_MAX
+
+
+def _link_bytes(counter: int, uplink_loss: int) -> bytes:
+    return b"GR_LINK" + counter.to_bytes(8, "big") + bytes([uplink_loss])  # domain tag: the key also signs GR_COMMIT
+
+
+def link_report(counter: int, uplink_loss: float | None, seed: bytes):
+    """Onboard agent's GR_LINK_SIGNED (uplink loss in percent, 255 = unknown)."""
+    pct = 255 if uplink_loss is None else round(100 * uplink_loss)
+    return mav2.MAVLink_gr_link_signed_message(counter, pct, crypto.sign(_link_bytes(counter, pct), seed))
+
+
+class LinkReports:
+    """Ground agent: accepts GR_LINK_SIGNED only if it verifies with the onboard commitment key and its
+    counter is newer than the last accepted one; sizes signature copies from the latest."""
+
+    def __init__(self, public_key: bytes | None):
+        self.pub = public_key
+        self.counter = -1
+        self.t: float | None = None
+        self.uplink_loss: float | None = None
+
+    def accept(self, msg, now: float) -> bool:
+        if self.pub is None or msg.counter <= self.counter:
+            return False
+        if not crypto.verify(_link_bytes(msg.counter, msg.uplink_loss), bytes(msg.signature), self.pub):
+            return False
+        self.counter, self.t = msg.counter, now
+        self.uplink_loss = None if msg.uplink_loss == 255 else msg.uplink_loss / 100
+        return True
+
+    def copies(self, now: float) -> int:
+        if self.t is None or now - self.t > LINK_STALE_S:
+            return COPIES_MAX  # no trustworthy loss report: assume the worst
+        return copies_for(self.uplink_loss)
+
+
 def is_command(msg) -> bool:
     return msg.get_type() in COMMAND_MSGS
 
@@ -60,16 +99,17 @@ class Signer:
         self.seed = private_seed
         self.counter = time.time_ns() // 1000  # monotonic across restarts of the ground agent
         self._mav = mav2.MAVLink(None, srcSystem=GROUND_SYSID, srcComponent=GROUND_COMPID)
-        self.uplink_loss: float | None = None  # from the onboard agent's GR_LINK reports
+        self.uplink_loss: float | None = None  # used when sign() is not given a copy count
 
-    def sign(self, frame: bytes, msg) -> list[bytes]:
+    def sign(self, frame: bytes, msg, copies: int | None = None) -> list[bytes]:
+        """``copies`` signature frames (default: from ``uplink_loss``)."""
         self.counter += 1
         sig = crypto.sign(_signed_bytes(self.counter, frame), self.seed)
         m = mav2.MAVLink_gr_cmd_sig_message(
             self.counter, msg.get_msgId(), msg.get_srcSystem(), msg.get_srcComponent(), msg.get_seq(), sig
         )
         out = []
-        for _ in range(copies_for(self.uplink_loss)):
+        for _ in range(copies_for(self.uplink_loss) if copies is None else copies):
             out.append(m.pack(self._mav))
             self._mav.seq = (self._mav.seq + 1) % 256
         return out

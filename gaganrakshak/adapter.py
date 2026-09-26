@@ -95,7 +95,8 @@ IGNORED = {
     "PARAM_VALUE(SIM_*)": "simulator-only parameter; does not exist on a real flight controller",
     "GR_CMD_SIG": "IDS command signature; verified by cmd_sign, not vehicle state",
     "GR_COMMIT": "IDS downlink commitment; verified by commit_rx, not vehicle state",
-    "GR_LINK": "onboard agent's uplink-loss report; sizes command-signature redundancy",
+    "GR_LINK": "superseded unsigned uplink-loss report of earlier versions; not used",
+    "GR_LINK_SIGNED": "onboard agent's signed uplink-loss report; sizes command-signature redundancy",
 }
 
 

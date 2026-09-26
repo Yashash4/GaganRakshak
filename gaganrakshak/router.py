@@ -29,7 +29,7 @@ from pathlib import Path
 from pymavlink import mavutil
 from pymavlink.dialects.v20 import ardupilotmega as mav2
 
-from .cmd_sign import Signer, is_command
+from .cmd_sign import LinkReports, Signer, is_command, link_report
 from .commit import CommitTx
 
 MAV = mavutil.mavlink
@@ -103,6 +103,7 @@ class Router:
         sign_key: bytes | None = None,
         commit_key: bytes | None = None,
         imu_rate_hz: int = 0,
+        commit_pub: bytes | None = None,
     ):
         self.a = mavutil.mavlink_connection(a, source_system=ROUTER_SYSID, source_component=ROUTER_COMPID)
         self.b = mavutil.mavlink_connection(b, source_system=ROUTER_SYSID, source_component=ROUTER_COMPID)
@@ -113,6 +114,8 @@ class Router:
         self.imu_rate_hz = imu_rate_hz
         self.signer = Signer(sign_key) if sign_key else None  # ground agent only
         self.commit = CommitTx(commit_key) if commit_key else None  # onboard agent only
+        self._link_counter = time.time_ns() // 1000  # GR_LINK_SIGNED counter, monotonic across restarts (onboard)
+        self.links = LinkReports(commit_pub)  # verified GR_LINK_SIGNED reports (ground)
         self._gcs_seq: int | None = None
         self._uplink: deque = deque()  # (t, received, missing) of GCS frames, last 30 s (onboard)
         self._link_mav = mav2.MAVLink(None, srcSystem=ROUTER_SYSID, srcComponent=ROUTER_COMPID)
@@ -197,8 +200,8 @@ class Router:
             if self.commit and direction == b"D":
                 frames = self.commit.flush(time.monotonic())
                 if frames:  # one link report per commitment window
-                    p = self.uplink_loss(time.monotonic())
-                    report = mav2.MAVLink_gr_link_message(255 if p is None else round(100 * p))
+                    self._link_counter += 1
+                    report = link_report(self._link_counter, self.uplink_loss(time.monotonic()), self.commit.seed)
                     frames.append(report.pack(self._link_mav))
                     self._link_mav.seq = (self._link_mav.seq + 1) % 256
                 for frame in frames:
@@ -223,8 +226,9 @@ class Router:
                 if gap < 128:
                     self._uplink.append((time.monotonic(), 1, gap))
                 self._gcs_seq = seq
-            if self.signer and direction == b"D" and name == "GR_LINK":
-                self.signer.uplink_loss = None if msg.uplink_loss == 255 else msg.uplink_loss / 100
+            # the unsigned GR_LINK of earlier versions is ignored: it cannot be trusted to size anything
+            if self.signer and direction == b"D" and name == "GR_LINK_SIGNED":
+                self.links.accept(msg, time.monotonic())  # unsigned, invalid or replayed reports are ignored
             if self.onboard and direction == b"U" and (name.startswith("GR_") or self._intercept_uplink(msg)):
                 self.stats["dropped"][name] += 1  # IDS traffic and rate requests end here
                 continue
@@ -236,7 +240,7 @@ class Router:
             if self.commit and direction == b"D":
                 self.commit.add(bytes(buf), msg)
             if self.signer and direction == b"U" and is_command(msg):
-                for sig in self.signer.sign(bytes(buf), msg):
+                for sig in self.signer.sign(bytes(buf), msg, self.links.copies(time.monotonic())):
                     dst.write(sig)
             self.stats[key][name] += 1
             if key == "a_to_b":
@@ -264,6 +268,7 @@ def main():
     ap.add_argument("--imu-rate", type=int, default=0, help="onboard: RAW_IMU rate to request from the FC, Hz")
     ap.add_argument("--sign-key", type=Path, help="ground agent: file with the hex Ed25519 private seed")
     ap.add_argument("--commit-key", type=Path, help="onboard agent: file with the hex Ed25519 private seed")
+    ap.add_argument("--commit-pub", type=Path, help="ground agent: file with the onboard agent's hex public key")
     args = ap.parse_args()
 
     def load(p):
@@ -278,6 +283,7 @@ def main():
         load(args.sign_key),
         load(args.commit_key),
         args.imu_rate,
+        load(args.commit_pub),
     ).start()
     while True:
         time.sleep(10)
