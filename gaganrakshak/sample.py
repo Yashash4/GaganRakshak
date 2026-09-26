@@ -85,7 +85,32 @@ class LinkStats:
     seq_gap: Optional[int] = None
 
 
-Payload = Union[Imu, Gnss, Baro, Attitude, Command, Status, EstimatorRatios, LinkStats]
+@dataclass(frozen=True)
+class ParamValue:
+    """A parameter value reported by the autopilot (e.g. after a write)."""
+
+    name: str
+    value: float
+
+
+@dataclass(frozen=True)
+class VersionInfo:
+    """Autopilot self-reported firmware identity. Self-report, not attestation."""
+
+    flight_sw_version: int
+    git_hash: str
+
+
+@dataclass(frozen=True)
+class StatusText:
+    severity: int
+    text: str
+
+
+Payload = Union[
+    Imu, Gnss, Baro, Attitude, Command, Status, EstimatorRatios, LinkStats,
+    ParamValue, VersionInfo, StatusText,
+]
 
 
 @dataclass(frozen=True)
