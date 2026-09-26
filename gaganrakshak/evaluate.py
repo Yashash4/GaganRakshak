@@ -29,21 +29,21 @@ def _pub(run: Path, name: str) -> bytes:
     return bytes.fromhex((run / f"{name}.pub").read_text())
 
 
-def detectors(side: str, run: Path, link_curves: Path = LINK_CURVES) -> list:
-    """Each agent's detector set for a recorded run; learned link settings if calibrated."""
+def detectors(side: str, run: Path, link_curves: Path = LINK_CURVES, cpce_calib: Path = CPCE_CALIB) -> list:
+    """Each agent's detector set for a recorded run; learned link and physics settings if calibrated."""
     if side == "onboard":
         verifier = CmdVerifier(_pub(run, "ground_sign"))
         baseline = load_baseline(BASELINE.with_suffix(".json"), bytes.fromhex(BASELINE.with_suffix(".pub").read_text()))
         onboard = [for_agent("onboard", verifier=verifier), verifier, IntegrityMonitor(baseline, verifier)]
-        if CPCE_CALIB.exists():
-            onboard.append(Cpce(json.loads(CPCE_CALIB.read_text())))
+        if cpce_calib.exists():
+            onboard.append(Cpce(json.loads(cpce_calib.read_text())))
         return onboard
     curves = load_curves(link_curves) if link_curves.exists() else {}
     rx = CommitRx(_pub(run, "onboard_commit"), **curves.pop("commit", {}))
     return [for_agent("ground"), rx, LinkMonitor(rx, curves=curves or None), ResponseMonitor()]
 
 
-def evaluate(run: Path, link_curves: Path = LINK_CURVES) -> dict:
+def evaluate(run: Path, link_curves: Path = LINK_CURVES, cpce_calib: Path = CPCE_CALIB) -> dict:
     labels = json.loads((run / "labels.json").read_text())
     t0 = labels["t0_wall"]
     out = {
@@ -56,7 +56,7 @@ def evaluate(run: Path, link_curves: Path = LINK_CURVES) -> dict:
         "adapter_unknown": {},
     }
     for side in ("onboard", "ground"):
-        ids = Ids(detectors(side, run, link_curves))
+        ids = Ids(detectors(side, run, link_curves, cpce_calib))
         run_replay(ids, run / side)
         out["adapter_unknown"][side] = dict(ids.adapter.stats["unknown"])
         for a in ids.alerts:

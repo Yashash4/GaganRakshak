@@ -38,9 +38,10 @@ def usable(run: Path, check_ids: bool = True) -> tuple[bool, str]:
     if check_ids:
         from .evaluate import evaluate
 
+        # judged without any earlier calibration: a stale artefact must not decide what is clean
         ev = [
             e
-            for e in evaluate(run, link_curves=Path("/nonexistent"))["evidence"]
+            for e in evaluate(run, link_curves=Path("/nonexistent"), cpce_calib=Path("/nonexistent"))["evidence"]
             if e["type"] not in CALIBRATED_EVIDENCE and e["class"] not in CALIBRATED_CLASSES
         ]
         if ev:
