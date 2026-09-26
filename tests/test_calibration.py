@@ -27,4 +27,4 @@ def test_rejects_failed_attacked_or_anomalous_runs(tmp_path):
 def test_rejects_run_with_ids_episode():
     """b5-s103 was flown with the old harness, which force-disarmed in flight: the IDS flags it."""
     ok, why = usable(RAW / "calib" / "b5_link_fade-s103")
-    assert not ok and "IDS episodes" in why
+    assert not ok and "unsafe_command" in why

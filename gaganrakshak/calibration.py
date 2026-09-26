@@ -6,11 +6,16 @@ import json
 from pathlib import Path
 
 HARNESS_ANOMALIES = {"touchdown_not_seen"}
+# Evidence whose thresholds calibration learns: judged with uncalibrated defaults it would
+# reject exactly the flights that show the behaviour to be learned. Everything else
+# (protocol, signatures, altered/injected frames, integrity) disqualifies a run.
+CALIBRATED_EVIDENCE = {"selective_commit_loss", "commit_timeout", "excess_loss", "telemetry_gap",
+                       "radio_congestion", "gnss_inertial_inconsistency", "gps_spoofing"}
 
 
 def usable(run: Path, check_ids: bool = True) -> tuple[bool, str]:
     """A calibration run must have flown as planned, contain no attack and no harness anomaly,
-    and raise no IDS episode when replayed (with default, uncalibrated settings)."""
+    and raise no IDS evidence on replay apart from the statistics being calibrated."""
     labels = json.loads((run / "labels.json").read_text())
     if labels["status"] != "ok":
         return False, f"status {labels['status']}"
@@ -21,9 +26,10 @@ def usable(run: Path, check_ids: bool = True) -> tuple[bool, str]:
         return False, f"harness anomaly: {bad}"
     if check_ids:
         from .evaluate import evaluate
-        eps = evaluate(run, link_curves=Path("/nonexistent"))["episodes"]
-        if eps:
-            return False, f"IDS episodes: {sorted({(e['agent'], e['class']) for e in eps})}"
+        ev = [e for e in evaluate(run, link_curves=Path("/nonexistent"))["evidence"]
+              if e["type"] not in CALIBRATED_EVIDENCE]
+        if ev:
+            return False, f"IDS evidence: {sorted({(e['agent'], e['type']) for e in ev})}"
     return True, "ok"
 
 
