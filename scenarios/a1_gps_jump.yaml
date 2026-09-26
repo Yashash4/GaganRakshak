@@ -1,0 +1,7 @@
+# A1 — GNSS spoofing, jump: position offset step held for the attack window.
+name: a1_gps_jump
+duration_s: 100
+mission: {legs: 4, radius_m: [30, 60], alt_m: [15, 25], speed_ms: [3, 6]}
+wind: {spd: [0, 2], dir: [0, 360], turb: 0}
+gnss_noise: {sigma_m: 2.1, tau_s: 60}
+attack: {type: gps_jump, start_s: [30, 50], duration_s: [20, 30], params: {offset_m: [20, 60], bearing_deg: [0, 360]}}

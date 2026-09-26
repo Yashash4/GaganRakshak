@@ -62,3 +62,11 @@ def test_eight_parallel_runs(tmp_path):
         assert verifier.verified >= 5  # every pilot command (mode, arm, takeoff, targets) signed
         st = commit_rx.stats
         assert st["match"] > 500 and st["altered"] == st["unexpected"] == 0, st
+
+
+def test_benign_glitch_windows_are_deterministic_and_inside_the_flight():
+    spec = yaml.safe_load((SCEN / "b4_gnss_glitch.yaml").read_text())
+    a, b = resolve(spec, 5)["benign"], resolve(spec, 5)["benign"]
+    assert a == b and a["type"] == "gnss_glitch" and 1 <= len(a["windows"]) <= 3
+    assert all(0 < s < e < spec["duration_s"] for s, e in a["windows"])
+    assert resolve(yaml.safe_load((SCEN / "b1_calm.yaml").read_text()), 5)["benign"] is None

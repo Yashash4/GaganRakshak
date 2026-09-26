@@ -14,6 +14,11 @@ logs its actual timeline into the run labels: ``attack_start``, ``attack_end`` a
 | replay             A7  | A7    | re-sends a captured, validly signed GCS command                    |
 | fc_impersonation   A8  | A8    | fake FC telemetry (sysid 1) toward the ground                      |
 | jamming            A9  | A9    | nothing gets through, both directions                              |
+| gps_jump           A1  | A1    | GNSS position offset step, held (SIM_GPS1_GLTCH over the harness link) |
+| gps_drift_naive    A2n | A2n   | GNSS position ramp only; GNSS velocity untouched (labelled naive)  |
+
+GNSS attacks set ``run.gnss_attack_offset(t) -> (north_m, east_m)``, which the harness adds to
+its GNSS error model at 1 Hz over the simulator-only port.
 """
 
 from __future__ import annotations
@@ -221,6 +226,37 @@ class Jamming(LinkAttack):
         return [buf]
 
 
+class GnssAttack(LinkAttack):
+    """Not on the radio: installs an offset function the harness applies to simulated GNSS."""
+
+    def __init__(self, run):
+        super().__init__(run)
+        self.link_attacker = None
+        b = math.radians(self.p.get("bearing_deg", 0.0))
+        self.unit = (math.cos(b), math.sin(b))
+        run.gnss_attack_offset = self.offset
+
+    def magnitude(self, t: float) -> float:
+        raise NotImplementedError
+
+    def offset(self, t: float):
+        if not self.start <= t < self.end:
+            return 0.0, 0.0
+        m = self.magnitude(t - self.start)
+        return m * self.unit[0], m * self.unit[1]
+
+
+class GpsJump(GnssAttack):
+    def magnitude(self, dt):
+        return self.p.get("offset_m", 50.0)
+
+
+class GpsDriftNaive(GnssAttack):
+    def magnitude(self, dt):
+        return self.p.get("rate_ms", 1.0) * dt
+
+
 ATTACKS = {"command_injection": CommandInjection, "telemetry_manipulation": TelemetryManipulation,
            "link_flood": LinkFlood, "param_tamper": ParamTamper, "replay": Replay,
-           "fc_impersonation": FcImpersonation, "jamming": Jamming}
+           "fc_impersonation": FcImpersonation, "jamming": Jamming, "gps_jump": GpsJump,
+           "gps_drift_naive": GpsDriftNaive}

@@ -1,0 +1,7 @@
+# B4 — benign GNSS glitches: short, incoherent jumps (random direction each second) that return.
+name: b4_gnss_glitch
+duration_s: 150
+mission: {legs: 4, radius_m: [30, 60], alt_m: [15, 25], speed_ms: [3, 6]}
+wind: {spd: [0, 2], dir: [0, 360], turb: 0}
+gnss_noise: {sigma_m: 2.1, tau_s: 60}
+benign: {type: gnss_glitch, first_s: [20, 40], duration_s: [2, 5], spacing_s: [25, 40], count: 3, magnitude_m: [5, 15]}

@@ -91,7 +91,20 @@ def resolve(spec: dict, seed: int) -> dict:
         "link": spec.get("link", {}),
         "operator": spec.get("operator", []),
         "attack": attack,
+        "benign": _benign(spec.get("benign"), rng, spec.get("duration_s", 120)),
     }
+
+
+def _benign(b, rng, duration):
+    """Benign disturbances (labelled, not attacks): B4 GNSS glitch windows."""
+    if not b:
+        return None
+    wins, t = [], _draw(rng, b.get("first_s", [20, 40]))
+    while t < duration - 10 and len(wins) < b.get("count", 3):
+        d = _draw(rng, b.get("duration_s", [2, 5]))
+        wins.append([round(t, 2), round(t + d, 2)])
+        t += d + _draw(rng, b.get("spacing_s", [20, 40]))
+    return {"type": b["type"], "windows": wins, "magnitude_m": b.get("magnitude_m", [5, 15])}
 
 
 # -- recording ----------------------------------------------------------------------------
@@ -153,6 +166,7 @@ class Run:
         self.t0 = None  # monotonic time of the takeoff command = scenario t = 0
         self.gnss_attack_offset = lambda t: (0.0, 0.0)  # metres N/E, set by GNSS attacks
         self.link = None
+        self._glitching = False
         self._home = None
         self._stop = threading.Event()
 
@@ -185,10 +199,29 @@ class Run:
             next_t += 1.0
             gm = [x * phi + sig * math.sqrt(1 - phi * phi) * rng.gauss(0, 1) for x in gm]
             an, ae = self.gnss_attack_offset(self.t()) if self.t0 is not None else (0.0, 0.0)
+            gn, ge = self._benign_glitch(rng) if self.t0 is not None else (0.0, 0.0)
+            an, ae = an + gn, ae + ge
             n, e = gm[0] + an, gm[1] + ae
             h.param_set_send("SIM_GPS1_GLTCH_X", n / M_PER_DEG)
             h.param_set_send("SIM_GPS1_GLTCH_Y", e / (M_PER_DEG * math.cos(math.radians(HOME_LAT))))
             self.gnss_log.write(f"{self.t():.3f},{gm[0]:.3f},{gm[1]:.3f},{an:.3f},{ae:.3f}\n")
+
+    def _benign_glitch(self, rng):
+        """B4: short incoherent GNSS glitches (random direction each second) that return."""
+        g = self.plan.get("benign") or {}
+        if g.get("type") != "gnss_glitch":
+            return 0.0, 0.0
+        for w in g["windows"]:
+            if w[0] <= self.t() < w[1]:
+                if not self._glitching:
+                    self._glitching = True
+                    self.event("benign_glitch_start", window=w)
+                m, b = rng.uniform(*g["magnitude_m"]), rng.uniform(0, 2 * math.pi)
+                return m * math.cos(b), m * math.sin(b)
+        if self._glitching:
+            self._glitching = False
+            self.event("benign_glitch_end")
+        return 0.0, 0.0
 
     # scripted operator
     def _pump(self, g, seconds, until=None):
