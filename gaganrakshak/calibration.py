@@ -44,10 +44,14 @@ def usable(run: Path, check_ids: bool = True) -> tuple[bool, str]:
     return True, "ok"
 
 
-def select(runs: list[Path], check_ids: bool = True) -> list[Path]:
+def select(runs: list[Path], check_ids: bool = True, workers: int = 16) -> list[Path]:
+    """The usable calibration runs; every decision is printed with its reason."""
+    from concurrent.futures import ProcessPoolExecutor
+
+    with ProcessPoolExecutor(workers) as ex:
+        verdicts = list(ex.map(usable, runs, [check_ids] * len(runs)))
     keep = []
-    for r in runs:
-        ok, why = usable(r, check_ids)
+    for r, (ok, why) in zip(runs, verdicts, strict=True):
         print(f"calibration {'use ' if ok else 'SKIP'} {r.name}: {why}")
         if ok:
             keep.append(r)

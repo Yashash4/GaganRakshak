@@ -32,8 +32,8 @@ from .evidence_log import EvidenceLog
 
 
 class PassThroughFusion:
-    """Minimal fusion: evidence of MEDIUM+ severity with a class hint becomes an alert.
-    Replaced by CUSUM + evidence templates in the physics/fusion track."""
+    """Minimal fusion: evidence with a class hint becomes an alert; its severity decides whether
+    the episode is an alarm (MEDIUM or HIGH) or an advisory (LOW). INFO evidence is logged only."""
 
     def update(self, events: list[EvidenceEvent], t: float) -> list[Alert]:
         return [
@@ -46,7 +46,7 @@ class PassThroughFusion:
                 evidence=(e,),
             )
             for e in events
-            if e.class_hint and e.severity >= Severity.MEDIUM
+            if e.class_hint and e.severity >= Severity.LOW
         ]
 
 

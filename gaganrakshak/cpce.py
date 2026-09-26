@@ -30,6 +30,9 @@ from .sample import Attitude, Baro, Gnss, Imu, Status
 
 G = 9.80665
 R_EARTH = 6371000.0
+HORIZONS = (2.0, 5.0, 15.0, 30.0, 60.0)  # s: short windows see jumps, long ones slow drift
+LEARN_H = 15.0  # bias is learned from these windows
+ANCHOR_MAX_S = 300.0  # s: longest pure-inertial prediction from a trusted anchor
 REGIMES = (0.5, 2.0)  # m/s² mean horizontal inertial acceleration over the window: steady / manoeuvre / aggressive
 
 
@@ -55,6 +58,54 @@ def baro_alt(pressure_pa: float) -> float:
     return 44330.0 * (1.0 - (pressure_pa / 101325.0) ** 0.190295)
 
 
+class Timeline:
+    """Append-only time series with O(1) indexing and amortised trimming of old entries
+    (deques index in O(n), which made long histories slow)."""
+
+    def __init__(self, max_s: float):
+        self.max_s = max_s
+        self._t: list[float] = []
+        self._v: list = []
+        self._head = 0
+
+    def __len__(self) -> int:
+        return len(self._t) - self._head
+
+    def clear(self):
+        self._t, self._v, self._head = [], [], 0
+
+    def append(self, t: float, v):
+        self._t.append(t)
+        self._v.append(v)
+        while self._head < len(self._t) and t - self._t[self._head] > self.max_s:
+            self._head += 1
+        if self._head > 4096 and self._head > len(self._t) // 2:
+            del self._t[: self._head], self._v[: self._head]
+            self._head = 0
+
+    def first_t(self) -> float:
+        return self._t[self._head]
+
+    def last(self):
+        return self._t[-1], self._v[-1]
+
+    def nearest(self, t: float):
+        """(t_i, v_i) nearest to t, or None outside the stored span."""
+        if not len(self) or t < self._t[self._head] or t > self._t[-1]:
+            return None
+        i = bisect.bisect_left(self._t, t, self._head)
+        if i > self._head and (i == len(self._t) or t - self._t[i - 1] < self._t[i] - t):
+            i -= 1
+        return self._t[i], self._v[i]
+
+    def at_or_before(self, t: float):
+        """Latest (t_i, v_i) with t_i <= t, or None."""
+        if not len(self) or t < self._t[self._head]:
+            return None
+        i = bisect.bisect_right(self._t, t, self._head) - 1
+        return self._t[i], self._v[i]
+
+
 class Integrator:
     """Running integrals with a gyro-propagated heading. Q(t) = attitude built from the
     autopilot's roll/pitch (gravity-referenced) and a heading ψg integrated from the gyro
@@ -65,23 +116,28 @@ class Integrator:
     otherwise steer the prediction)."""
 
     def __init__(self, max_s: float = 60.0):
-        self.t: deque = deque()
-        self.s: deque = deque()  # (Q, Vg, Pg, M1, M2)
+        self.hist = Timeline(max_s)  # t -> (Q, Vg, Pg, M1, M2)
         self._v, self._p = np.zeros(3), np.zeros(3)
         self._m1, self._m2 = np.zeros((3, 3)), np.zeros((3, 3))
         self.psi = 0.0  # gyro heading
-        self.max_s = max_s
+
+    @property
+    def max_s(self) -> float:
+        return self.hist.max_s
+
+    @max_s.setter
+    def max_s(self, v: float):
+        self.hist.max_s = v
 
     def add(self, t: float, f: np.ndarray, w: np.ndarray, roll: float, pitch: float):
-        if self.t:
-            dt = t - self.t[-1]
+        if len(self.hist):
+            t_last, (q, *_) = self.hist.last()
+            dt = t - t_last
             if dt <= 0:
                 return
             if dt > 0.2:  # IMU gap: integrals across it are meaningless; restart
-                self.t.clear()
-                self.s.clear()
+                self.hist.clear()
             else:
-                q = self.s[-1][0]
                 a = q @ f
                 self._p = self._p + self._v * dt + 0.5 * a * dt * dt
                 self._v = self._v + a * dt
@@ -89,21 +145,18 @@ class Integrator:
                 self._m1 = self._m1 + q * dt
                 # heading rate from body rates (ZYX Euler kinematics)
                 self.psi += (w[1] * math.sin(roll) + w[2] * math.cos(roll)) / math.cos(pitch) * dt
-        self.t.append(t)
-        self.s.append(
-            (rot_body_to_ned(roll, pitch, self.psi), self._v.copy(), self._p.copy(), self._m1.copy(), self._m2.copy())
+        state = (
+            rot_body_to_ned(roll, pitch, self.psi),
+            self._v.copy(),
+            self._p.copy(),
+            self._m1.copy(),
+            self._m2.copy(),
         )
-        while self.t and t - self.t[0] > self.max_s:
-            self.t.popleft(), self.s.popleft()
+        self.hist.append(t, state)
 
     def at(self, t: float):
-        """State at the IMU sample nearest to t (20 ms at 50 Hz), or None outside the buffer."""
-        if not self.t or t < self.t[0] or t > self.t[-1]:
-            return None
-        i = bisect.bisect_left(self.t, t)
-        if i > 0 and (i == len(self.t) or t - self.t[i - 1] < self.t[i] - t):
-            i -= 1
-        return self.t[i], self.s[i]
+        """State at the IMU sample nearest to t, or None outside the buffer."""
+        return self.hist.nearest(t)
 
 
 def window(start, now, R0, bias):
@@ -132,12 +185,12 @@ class Residuals:
              speed is zero): catches a constant spoofed velocity, which RS cannot
     Before arming (see warm-up) only RS and R3 count; they need no heading."""
 
-    def __init__(self, horizons=(2.0, 5.0, 15.0), gnss_lag_s: float = 0.10, bias_memory: float = 1000.0):
+    def __init__(self, horizons=HORIZONS, gnss_lag_s: float = 0.10, bias_memory: float = 1000.0):
         self.horizons = horizons
         self.lag = gnss_lag_s  # GNSS velocity latency vs IMU: 0.10 s by cross-correlation on clean flights
         self.imu = Integrator(max_s=max(horizons) + 5)
         self.att: tuple[float, float, float] | None = None
-        self.att_hist: deque = deque(maxlen=4000)  # (t, roll, pitch, yaw) for window-start attitude
+        self.att_hist = Timeline(max(horizons) + 10)  # t -> (roll, pitch, yaw), window-start attitude
         self.bias = np.zeros(3)  # body-frame accelerometer bias, learned in trusted periods
         self._forget = 1.0 - 1.0 / bias_memory  # per long-window update (~200 s at 5 Hz)
         self._A = np.eye(3) * 1e-3  # recursive least squares with forgetting; small prior on 0
@@ -154,6 +207,17 @@ class Residuals:
         self._v_prev: tuple | None = None
         self.armed_at: float | None = None
         self.freeze_bias = False
+        # Bias guard. A true accelerometer bias is fixed in the BODY frame (rotates in NED with
+        # heading); a spoofer's acceleration is fixed in NED. Free learning only while trusted
+        # (after arming, at most trusted_learning_s, no suspicion); otherwise the bias may move only
+        # within a bias-stability bound (assumption: 0.2 mg/K temperature drift at <=1 K/min,
+        # consumer MEMS accelerometer). The turn-on bias, much larger, is what early learning finds.
+        self.t_armed: float | None = None
+        self.trusted_learning_s = 180.0
+        self.bias_rate_bound = 0.002 / 60.0  # m/s^2 per s
+        self._t_bias: float | None = None
+        self._learn: deque = deque(maxlen=600)  # (J 2x3, y 2, h, heading) of recent learning windows
+        self.inertial_trend: dict | None = None  # set when an NED-fixed residual trend is found
         self._rest: deque = deque(maxlen=50)  # (|f|, |ω|) of the last second of IMU samples
         self.armed: bool | None = None
         # autopilot-measured vibration (VIBRATION): level scales the expected inertial error
@@ -185,11 +249,8 @@ class Residuals:
         return abs(float(np.mean(f)) - G) < 0.3 and float(np.std(f)) < 0.05 and w < 0.02
 
     def attitude_at(self, t):
-        a = self.att_hist
-        if not a or t < a[0][0]:
-            return None
-        i = bisect.bisect_right([x[0] for x in a], t) - 1
-        return rot_body_to_ned(*a[i][1:])
+        x = self.att_hist.at_or_before(t)
+        return None if x is None else rot_body_to_ned(*x[1])
 
     def gnss_sample(self, t, g: Gnss) -> list[dict]:
         if g.fix_type is None or g.fix_type < 3 or g.vn is None or g.ve is None:
@@ -261,23 +322,63 @@ class Residuals:
             if r_rest is not None and H == min(self.horizons):
                 r["rh"] = r_rest
             out.append(r)
-            if H == max(self.horizons) and not self.freeze_bias:
-                # the long-window velocity residual is linear in the body-frame bias (dM1 b);
-                # the bias is applied per window, so estimating it creates no feedback loop
-                raw = r["r1"] - (dM1 @ self.bias)[:2]  # residual as if no bias were applied
-                J = dM1[:2]
-                self._A = self._forget * self._A + J.T @ J
-                self._y = self._forget * self._y + J.T @ (-raw)
-                self.bias = np.linalg.solve(self._A, self._y)
+            if H == LEARN_H and not self.freeze_bias:
+                self._learn_bias(t, r, dM1, h)
         return out
+
+    def _learn_bias(self, t, r, dM1, h):
+        """The long-window velocity residual is linear in the body-frame bias (dM1 b); the bias
+        is applied per window, so estimating it creates no feedback loop."""
+        raw = r["r1"] - (dM1 @ self.bias)[:2]  # residual as if no bias were applied
+        J, y = dM1[:2], -raw
+        self._learn.append((J, y, h, self.imu.psi))
+        trend = self._ned_trend()
+        if trend is not None:
+            self.inertial_trend = {"t": t, **trend}
+            r["trend"] = trend
+            return  # a spoof-like trend is reported, never learned
+        self._A = self._forget * self._A + J.T @ J
+        self._y = self._forget * self._y + J.T @ y
+        candidate = np.linalg.solve(self._A, self._y)
+        trusted = self.t_armed is not None and t - self.t_armed <= self.trusted_learning_s
+        if trusted or self._t_bias is None:
+            self.bias = candidate
+        else:
+            step = candidate - self.bias
+            limit = self.bias_rate_bound * max(0.0, t - self._t_bias)
+            n = float(np.linalg.norm(step))
+            self.bias = self.bias + (step if n <= limit else step * (limit / n))
+        self._t_bias = t
+
+    def _ned_trend(self, min_windows: int = 60, min_heading_deg: float = 45.0) -> dict | None:
+        """Body-fixed bias vs NED-fixed acceleration on the recent learning windows: with enough
+        heading diversity to tell them apart, an NED-fixed model that explains the residuals far
+        better than any body-fixed bias is a spoofer-like trend."""
+        if len(self._learn) < min_windows:
+            return None
+        psis = [x[3] for x in self._learn]
+        if math.degrees(max(psis) - min(psis)) < min_heading_deg:
+            return None  # not separable yet
+        A = sum(J.T @ J for J, _, _, _ in self._learn) + np.eye(3) * 1e-6
+        b = np.linalg.solve(A, sum(J.T @ y for J, y, _, _ in self._learn))
+        rss_body = sum(float(np.sum((y - J @ b) ** 2)) for J, y, _, _ in self._learn)
+        hh = sum(h * h for _, _, h, _ in self._learn)
+        a = sum(h * y for _, y, h, _ in self._learn) / hh  # NED acceleration: y = h a
+        rss_ned = sum(float(np.sum((y - h * a) ** 2)) for _, y, h, _ in self._learn)
+        noise = rss_ned / (2 * len(self._learn))
+        if rss_ned < 0.5 * rss_body and float(np.linalg.norm(a)) > 3 * math.sqrt(noise / hh):
+            return {"ned_accel": [round(float(x), 4) for x in a], "rss_ratio": round(rss_ned / rss_body, 3)}
+        return None
 
     def observe(self, sample):
         p = sample.payload
         if isinstance(p, Status):
+            if p.armed and not self.armed:
+                self.t_armed = sample.t
             self.armed = p.armed
         elif isinstance(p, Attitude):
             self.att = (p.roll, p.pitch, p.yaw)
-            self.att_hist.append((sample.t, p.roll, p.pitch, p.yaw))
+            self.att_hist.append(sample.t, (p.roll, p.pitch, p.yaw))
         elif isinstance(p, Imu) and sample.msg_id == 27:
             self._rest.append((math.sqrt(p.ax**2 + p.ay**2 + p.az**2), math.sqrt(p.gx**2 + p.gy**2 + p.gz**2)))
         if isinstance(p, Imu) and sample.msg_id == 27 and self.att is not None:  # RAW_IMU = IMU1
@@ -287,6 +388,25 @@ class Residuals:
         elif isinstance(p, Gnss):
             return self.gnss_sample(sample.t, p)
         return []
+
+
+def anchored_offset(res: Residuals, anchor: tuple, t: float, gnss_ne) -> tuple[np.ndarray, float] | None:
+    """GNSS horizontal position minus the pure inertial prediction from a trusted anchor state
+    (t, n, e, vn, ve): never GNSS-corrected in between. (offset vector, anchor age) or None."""
+    start, now = res.imu.at(anchor[0] - res.lag), res.imu.at(t - res.lag)
+    R0 = res.attitude_at(anchor[0] - res.lag)
+    if start is None or now is None or R0 is None:
+        return None
+    _, dP, _, h = window(start, now, R0, res.bias)
+    pred = np.array([anchor[1], anchor[2]]) + np.array([anchor[3], anchor[4]]) * h + dP[:2]
+    return np.asarray(gnss_ne) - pred, h
+
+
+def gate_at(gate: dict | None, age: float) -> float:
+    """Learned anchored-offset gate (clean-flight upper band per anchor-age bin)."""
+    if not gate:
+        return float("inf")  # uncalibrated: never claim spoofing, advisories only
+    return gate["upper"][min(int(age // gate["bin_s"]), len(gate["upper"]) - 1)]
 
 
 # -- detection layer (CUSUM, trusted anchor, GNSS templates) ---------------------------------
@@ -303,7 +423,10 @@ def nis(r: dict, sigma: dict) -> dict:
         return out  # accelerometer clipped inside the window: the prediction is not trustworthy
     for ch, dof in CHANNELS.items():
         if ch in r and (r["armed"] or ch in HEADING_FREE):
-            s = sigma[ch][str(r["H"])][r["reg"]][r.get("vbin", 0)]
+            cells = sigma[ch].get(str(r["H"]))
+            if cells is None:
+                continue  # horizon not in this calibration
+            s = cells[r["reg"]][r.get("vbin", 0)]
             out[(ch, r["H"])] = float(np.sum((np.atleast_1d(r[ch]) / s) ** 2)) / dof
     return out
 
@@ -311,7 +434,8 @@ def nis(r: dict, sigma: dict) -> dict:
 class Cpce:
     """IDS detector. ``calib`` = {"sigma": {ch: {H: σ}}, "cusum": {"k": k, "h": h}} learned from
     clean flights (``calibrate``). Evidence:
-    - ``gnss_inertial_inconsistency``  first CUSUM onset of a suspicion  [gnss_anomaly, LOW]
+    - ``gnss_inertial_inconsistency``  first CUSUM onset of a suspicion; an advisory episode, so a
+      short spoof that never becomes a confirmed one is not dropped  [gnss_integrity_advisory, LOW]
     - ``gps_spoofing``  offset vs the trusted anchor persistent, coherent in direction and above
       noise; subtype jump (first seen on the shortest horizon) or drift   [gps_spoofing, HIGH]
     """
@@ -323,7 +447,7 @@ class Cpce:
         persist_s: float = 5.0,
         coherence: float = 0.9,
         clear_n: int = 25,
-        anchor_max_s: float = 60.0,
+        anchor_max_s: float = ANCHOR_MAX_S,
         **res_kw,
     ):
         self.calib = calib
@@ -331,12 +455,14 @@ class Cpce:
         self.res = Residuals(**res_kw)
         self.res.vib_edges = tuple(calib.get("vib_edges", (float("inf"), float("inf"))))
         self.res.imu.max_s = anchor_max_s + max(self.res.horizons) + 5
+        self.res.att_hist.max_s = self.res.imu.max_s
         self.k, self.h = calib["cusum"]["k"], calib["cusum"]["h"]
         self.persist_s, self.coherence, self.clear_n, self.anchor_max_s = persist_s, coherence, clear_n, anchor_max_s
         self.S: dict[tuple[str, float], float] = {}
         self._t_prev: float | None = None
         self.states: deque = deque()  # (t, n, e, vn, ve) GNSS history for anchoring
         self.record = None  # list -> residual z values are appended (calibration)
+        self._trend_reported = False
         self._reset()
 
     def _reset(self):
@@ -348,16 +474,8 @@ class Cpce:
         return EvidenceEvent(t, self.uav_id, "cpce", kind, meta.pop("score", 1.0), sev, cls, meta)
 
     def _anchored_offset(self, t):
-        """GNSS position minus pure inertial prediction from the anchor (never GNSS-corrected)."""
         assert self.suspect is not None  # only called while a suspicion is open
-        a = self.suspect["anchor"]
-        start, now = self.res.imu.at(a[0] - self.res.lag), self.res.imu.at(t - self.res.lag)
-        R0 = self.res.attitude_at(a[0] - self.res.lag)
-        if start is None or now is None or R0 is None:
-            return None
-        dV, dP, _, h = window(start, now, R0, self.res.bias)
-        pred = np.array([a[1], a[2]]) + np.array([a[3], a[4]]) * h + dP[:2]
-        return np.array(self.states[-1][1:3]) - pred, h
+        return anchored_offset(self.res, self.suspect["anchor"], t, self.states[-1][1:3])
 
     def observe(self, msg, samples, direction, t):
         if direction != "D":
@@ -381,10 +499,19 @@ class Cpce:
         while self.states and t - self.states[0][0] > self.anchor_max_s + 30:
             self.states.popleft()
         z = nis(r, self.calib["sigma"])
+        if r.get("trend") and not self._trend_reported:
+            self._trend_reported = True
+            trend_ev = self._ev(t, "inertial_trend", Severity.LOW, "gnss_integrity_advisory", **r["trend"])
+        else:
+            trend_ev = None
         if self.record is not None:
             self.record.append((t, z))
             return []
         onset = []
+        if trend_ev is not None:
+            onset_out = [trend_ev]
+        else:
+            onset_out = []
         dt = t - self._t_prev if self._t_prev is not None else 0.2
         self._t_prev = t
         for key, v in z.items():
@@ -394,7 +521,7 @@ class Cpce:
             if s > self.h and self.S.get(key, 0.0) <= self.h:
                 onset.append(key)
             self.S[key] = s
-        out = []
+        out = onset_out
         if onset and self.suspect is None:
             ch, H = onset[0]
             back = t - H - 3.0  # the state before the inconsistent window began
@@ -406,7 +533,7 @@ class Cpce:
                     t,
                     "gnss_inertial_inconsistency",
                     Severity.LOW,
-                    "gnss_anomaly",
+                    "gnss_integrity_advisory",
                     channel=ch,
                     horizon=H,
                     score=self.S[(ch, H)] / self.h,
@@ -418,17 +545,14 @@ class Cpce:
         if off is None:
             return out
         o, age = off
-        sig = (
-            max(max(v) for v in self.calib["sigma"]["r2"][str(max(self.res.horizons))])
-            * max(1.0, age / max(self.res.horizons)) ** 1.5
-        )
+        gate = gate_at(self.calib.get("anchor_gate"), age)
         mag = float(np.linalg.norm(o))
         if mag > 1e-6:
             self.suspect["units"].append(o / mag)
         u = self.suspect["units"]
         coherent = len(u) >= 3 and float(np.linalg.norm(np.mean(u, axis=0))) >= self.coherence
         persistent = t - self.suspect["t"] >= self.persist_s
-        if not self.suspect["reported"] and persistent and coherent and mag > 3 * sig:
+        if not self.suspect["reported"] and persistent and coherent and mag > gate:
             self.suspect["reported"] = True
             sub = "jump" if self.suspect["first"][1] == min(self.res.horizons) else "drift"
             out.append(
@@ -441,46 +565,85 @@ class Cpce:
                     offset_m=round(mag, 1),
                     anchor_age_s=round(age, 1),
                     first=list(self.suspect["first"]),
-                    score=mag / (3 * sig),
+                    gate_m=round(gate, 1),
+                    score=mag / gate,
                 )
             )
-        quiet = all(v == 0.0 for v in self.S.values()) and mag <= 3 * sig
+        # an ongoing spoof must not end its own episode: the suspicion clears only after clear_n
+        # quiet fixes with the offset back inside the clean-flight gate (no age-based reset)
+        quiet = all(v == 0.0 for v in self.S.values()) and mag <= gate
         self._quiet = self._quiet + 1 if quiet else 0
-        if self._quiet >= self.clear_n or age > self.anchor_max_s:
+        if self._quiet >= self.clear_n:
             self._reset()
         return out
 
 
-def calibrate(runs: list[Path], budget_per_hour: float, k: float = 3.0, imu_keep: int = 1) -> dict:
+def learn_gate(offsets: list[tuple[float, float]], bin_s: float = 10.0, q: float = 0.999, floor: float = 2.0) -> dict:
+    """Anchored-offset gate per anchor-age bin: the q-quantile of the offsets clean flights reach
+    at that age (pure inertial prediction from a trusted anchor), non-decreasing with age."""
+    n = int(ANCHOR_MAX_S // bin_s) + 1
+    upper, prev = [], floor
+    for b in range(n):
+        xs = [m for age, m in offsets if b * bin_s <= age < (b + 1) * bin_s]
+        if len(xs) >= 20:
+            prev = max(prev, float(np.quantile(xs, q)))
+        upper.append(round(prev, 2))
+    return {"bin_s": bin_s, "q": q, "upper": upper, "samples": len(offsets)}
+
+
+def _extract(run: Path, imu_keep: int = 1) -> tuple[list[dict], list[tuple[float, float]]]:
+    """One clean flight: residual windows (unclipped) and anchored offsets vs anchor age."""
+    from .adapter import ArduPilotAdapter
+    from .ids import replay_tlogs
+
+    offsets: list[tuple[float, float]] = []
+    res = Residuals()
+    res.imu.max_s = res.att_hist.max_s = ANCHOR_MAX_S + max(HORIZONS) + 5
+    anchors: list[tuple] = []
+    t_eval = -1.0
+    raw: list[dict] = []
+    ad = ArduPilotAdapter()
+    n_imu = 0
+    for t, d, m in replay_tlogs(run / "onboard"):
+        if d != "D":
+            continue
+        if m.get_type() == "RAW_IMU":
+            n_imu += 1
+            if n_imu % imu_keep:
+                continue
+        if m.get_type() == "VIBRATION":
+            res.vibration(
+                t,
+                math.sqrt(m.vibration_x**2 + m.vibration_y**2 + m.vibration_z**2),
+                m.clipping_0 + m.clipping_1 + m.clipping_2,
+            )
+        for smp in ad.convert(m, t):
+            rows = res.observe(smp)
+            raw += [r for r in rows if not r["clipped"]]
+            if rows and rows[0]["armed"] and t >= t_eval:  # same code path as the detector
+                t_eval = t + 1.0
+                g = res.gnss[-1]
+                if not anchors or t - anchors[-1][0] >= 20.0:
+                    anchors.append((g[0], g[1], g[2], g[4], g[5]))
+                anchors = [a for a in anchors if t - a[0] <= ANCHOR_MAX_S]
+                for a in anchors:
+                    off = anchored_offset(res, a, t, (g[1], g[2]))
+                    if off is not None:
+                        offsets.append((off[1], float(np.linalg.norm(off[0]))))
+    return raw, offsets
+
+
+def calibrate(runs: list[Path], budget_per_hour: float, k: float = 3.0, imu_keep: int = 1, workers: int = 16) -> dict:
     """From clean flights: vibration bin edges (tertiles of window vibration), σ per (channel,
     horizon, acceleration regime, vibration bin) (robust: 1.4826·MAD; RMS for the rest channel),
     then the smallest CUSUM threshold h meeting the false-alarm budget on the same flights.
     ``imu_keep`` = n keeps every n-th RAW_IMU sample (to compare IMU rates on the same flights)."""
-    from .adapter import ArduPilotAdapter
-    from .ids import replay_tlogs
+    from concurrent.futures import ProcessPoolExecutor
 
-    per_run = []
-    for run in runs:
-        res = Residuals()
-        raw = []
-        ad = ArduPilotAdapter()
-        n_imu = 0
-        for t, d, m in replay_tlogs(run / "onboard"):
-            if d != "D":
-                continue
-            if m.get_type() == "RAW_IMU":
-                n_imu += 1
-                if n_imu % imu_keep:
-                    continue
-            if m.get_type() == "VIBRATION":
-                res.vibration(
-                    t,
-                    math.sqrt(m.vibration_x**2 + m.vibration_y**2 + m.vibration_z**2),
-                    m.clipping_0 + m.clipping_1 + m.clipping_2,
-                )
-            for smp in ad.convert(m, t):
-                raw += [r for r in res.observe(smp) if not r["clipped"]]
-        per_run.append(raw)
+    with ProcessPoolExecutor(workers) as ex:
+        results = list(ex.map(_extract, runs, [imu_keep] * len(runs)))
+    per_run = [raw for raw, _ in results]
+    offsets = [o for _, off in results for o in off]
     vibs = np.array([r["vib"] for rr in per_run for r in rr]) if any(per_run) else np.zeros(1)
     edges = (float(np.percentile(vibs, 100 / 3)), float(np.percentile(vibs, 200 / 3)))
     for rr in per_run:
@@ -489,7 +652,7 @@ def calibrate(runs: list[Path], budget_per_hour: float, k: float = 3.0, imu_keep
     sigma: dict = {}
     for ch in CHANNELS:
         sigma[ch] = {}
-        for H in (2.0, 5.0, 15.0):
+        for H in HORIZONS:
             cells: list = [[None] * 3 for _ in range(3)]
             for reg in range(3):
                 for vb in range(3):
@@ -537,6 +700,7 @@ def calibrate(runs: list[Path], budget_per_hour: float, k: float = 3.0, imu_keep
         "sigma": sigma,
         "cusum": {"k": k, "h": h},
         "vib_edges": edges,
+        "anchor_gate": learn_gate(offsets),
         "meta": {
             "false_onsets": int(onsets),
             "calibration_hours": round(hours, 3),
