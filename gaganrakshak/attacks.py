@@ -266,11 +266,15 @@ class GpsDriftNaive(GnssAttack):
 class GpsDriftCoherent(GpsDriftNaive):
     """A2: the position drifts at rate_ms AND the reported GNSS velocity carries the matching
     offset (the drift-rate vector), as a real spoofer's fake trajectory would. Needs the
-    simulator's GPS velocity glitch (SIM_GPS1_GLTV, our ArduPilot fork)."""
+    simulator's GPS velocity glitch (SIM_GPS1_GLTV, our ArduPilot fork), which the simulator also
+    integrates into the reported position at every GPS update: continuous and coherent."""
 
     def __init__(self, run):
         super().__init__(run)
         run.gnss_attack_velocity = self.velocity
+
+    def offset(self, t: float):
+        return 0.0, 0.0  # the simulator integrates the velocity offset into the position
 
     def velocity(self, t: float):
         if not self.start <= t < self.end:
@@ -288,8 +292,8 @@ class GpsDriftAccel(GpsDriftNaive):
         super().__init__(run)
         run.gnss_attack_velocity = self.velocity
 
-    def magnitude(self, dt):
-        return 0.5 * self.p.get("accel_ms2", 0.01) * dt * dt
+    def offset(self, t: float):
+        return 0.0, 0.0  # the simulator integrates the velocity offset into the position
 
     def velocity(self, t: float):
         if not self.start <= t < self.end:

@@ -6,10 +6,10 @@ ArduPilot is GPL-3.0. It is not part of GaganRakshak and is not linked into it: 
 separate program (the simulated flight controller) that GaganRakshak talks to over the
 MAVLink protocol. We use our fork https://github.com/Yashash4/ardupilot, branch
 `gaganrakshak/copter-4.7.1-gnss-velocity-offset`, pinned to commit
-[6aac7ad](https://github.com/Yashash4/ardupilot/commit/6aac7ad92508b6fda4a08e1ef57893d7d825102c)
-"SITL: add GPS velocity glitch offset": Copter-4.7.1 plus one simulator-only change
-(libraries/SITL) adding SIM_GPS1_GLTV, a simulated GPS velocity offset used to simulate a
-coherent GNSS spoofer. Flight code (vehicle, GPS driver, EKF) is unmodified. With the new
+[6ab7680](https://github.com/Yashash4/ardupilot/commit/6ab7680498fe0c8a34b4c94a786b9e0b9af93142)
+: Copter-4.7.1 plus two simulator-only commits (libraries/SITL) adding SIM_GPS1_GLTV, a
+simulated GPS velocity offset that is also integrated into the reported position at every GPS
+update, used to simulate a continuous, coherent GNSS spoofer. Flight code (vehicle, GPS driver, EKF) is unmodified. With the new
 parameter at 0 the simulated GPS output is identical to stock (tests/test_sitl_fork.py).
 The fork stays under GPL-3.0.
 

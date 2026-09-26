@@ -45,6 +45,7 @@ MAV = mavutil.mavlink
 M_PER_DEG = 111320.0
 HOME_LAT = float(sitl.HOME.split(",")[0])
 IMU_RATE_HZ = 200  # RAW_IMU requested from the FC for the onboard IDS (less vibration aliasing)
+GNSS_UPDATE_HZ = 5  # harness GNSS error/attack updates: the simulated receiver's fix rate
 
 
 # -- plan -------------------------------------------------------------------------------
@@ -194,7 +195,8 @@ class Run:
         noise = self.plan["gnss_noise"]
         rng = random.Random(self.plan["seed"] + 1_000_003)
         sig, tau = noise["sigma_m"], noise["tau_s"]
-        phi = math.exp(-1.0 / tau)
+        dt = 1.0 / GNSS_UPDATE_HZ
+        phi = math.exp(-dt / tau)
         gm = [rng.gauss(0, sig), rng.gauss(0, sig)]
         next_t = time.monotonic()
         while not self._stop.is_set():
@@ -208,7 +210,7 @@ class Run:
             if time.monotonic() < next_t:
                 time.sleep(0.01)
                 continue
-            next_t += 1.0
+            next_t += dt
             gm = [x * phi + sig * math.sqrt(1 - phi * phi) * rng.gauss(0, 1) for x in gm]
             an, ae = self.gnss_attack_offset(self.t()) if self.t0 is not None else (0.0, 0.0)
             gn, ge = self._benign_glitch(rng) if self.t0 is not None else (0.0, 0.0)

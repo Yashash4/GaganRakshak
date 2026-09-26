@@ -106,8 +106,8 @@ def test_accelerating_spoof_offset_and_velocity_are_consistent():
     run = Run()
     ATTACKS["gps_drift_accel"](run)
     assert run.gnss_attack_offset(5.0) == (0.0, 0.0) and run.gnss_attack_velocity(5.0) == (0.0, 0.0)
-    n, e = run.gnss_attack_offset(60.0)
+    # the position offset (a t^2/2) is integrated by the simulator from the velocity offset
+    assert run.gnss_attack_offset(60.0) == (0.0, 0.0)
     vn, ve = run.gnss_attack_velocity(60.0)
-    assert abs(n) < 1e-9 and abs(e - 0.5 * 0.02 * 50**2) < 1e-9  # due east
-    assert abs(vn) < 1e-9 and abs(ve - 0.02 * 50) < 1e-9
-    assert run.gnss_attack_offset(120.0) == (0.0, 0.0)
+    assert abs(vn) < 1e-9 and abs(ve - 0.02 * 50) < 1e-9  # due east
+    assert run.gnss_attack_velocity(120.0) == (0.0, 0.0)

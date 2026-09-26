@@ -12,7 +12,7 @@ set -euo pipefail
 ARDUPILOT_DIR="${ARDUPILOT_DIR:-$HOME/ardupilot-fork}"
 ARDUPILOT_REPO="https://github.com/Yashash4/ardupilot.git"
 ARDUPILOT_BRANCH="gaganrakshak/copter-4.7.1-gnss-velocity-offset"
-ARDUPILOT_SHA="6aac7ad92508b6fda4a08e1ef57893d7d825102c"  # pinned: SITL: add GPS velocity glitch offset
+ARDUPILOT_SHA="6ab7680498fe0c8a34b4c94a786b9e0b9af93142"  # pinned: SITL GPS velocity glitch, integrated into position
 CODE_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 
 APT_PKGS="git build-essential python3-dev python3-venv python3-pip libxml2-dev libxslt1-dev zlib1g-dev pkg-config"
