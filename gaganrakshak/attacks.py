@@ -42,7 +42,7 @@ class LinkAttack(Attacker):
         self.run = run
         a = run.plan["attack"]
         self.start, self.end, self.p = a["start_s"], a["end_s"], a["params"]
-        self.link_attacker = self
+        self.link_attacker: LinkAttack | None = self
         self.gcs = mav2.MAVLink(None, srcSystem=255, srcComponent=190)  # spoofed GCS identity
         self.gcs_seq = None  # last genuine GCS seq seen: a careful attacker continues from it
         self.done = False

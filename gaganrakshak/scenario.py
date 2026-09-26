@@ -33,6 +33,7 @@ import time
 from concurrent.futures import ProcessPoolExecutor
 from multiprocessing import Manager
 from pathlib import Path
+from typing import cast
 
 import yaml
 from pymavlink import mavutil
@@ -103,7 +104,8 @@ def _benign(b, rng, duration):
     """Benign disturbances (labelled, not attacks): B4 GNSS glitch windows."""
     if not b:
         return None
-    wins, t = [], _draw(rng, b.get("first_s", [20, 40]))
+    wins: list[list[float]] = []
+    t = _draw(rng, b.get("first_s", [20, 40]))
     while t < duration - 10 and len(wins) < b.get("count", 3):
         d = _draw(rng, b.get("duration_s", [2, 5]))
         wins.append([round(t, 2), round(t + d, 2)])
@@ -175,7 +177,7 @@ class Run:
         self.plan, self.instance, self.out = plan, instance, out
         self.p = run_ports(instance)
         self.events: list[dict] = []
-        self.t0 = None  # monotonic time of the takeoff command = scenario t = 0
+        self.t0: float | None = None  # monotonic time of the takeoff command = scenario t = 0
         self.gnss_attack_offset = lambda t: (0.0, 0.0)  # metres N/E, set by GNSS attacks
         self.gnss_attack_velocity = None  # m/s N/E, set only by coherent GNSS attacks
         self.link = None
@@ -250,7 +252,7 @@ class Run:
                 self._next_hb += 1.0
             m = g.recv_match(blocking=True, timeout=0.1)
             if m is not None and m.get_type() == "LOCAL_POSITION_NED":
-                self.pos = (m.x, m.y, -m.z)
+                self.pos: tuple[float, float, float] | None = (m.x, m.y, -m.z)
             if m is not None and until and until(m):
                 return True
         return False
@@ -315,7 +317,8 @@ class Run:
 
         # Touchdown = the vehicle stopped descending: |vz| < 0.2 m/s for 5 s, after 10 s in LAND.
         # (Relative altitude on the ground drifts with the barometer on long flights.)
-        land_t, still = time.monotonic(), [None]
+        land_t = time.monotonic()
+        still: list[float | None] = [None]
 
         def landed(m):
             if m.get_type() != "GLOBAL_POSITION_INT" or time.monotonic() - land_t < 10:
@@ -324,7 +327,7 @@ class Run:
                 still[0] = None
                 return False
             still[0] = still[0] or time.monotonic()
-            return time.monotonic() - still[0] >= 5
+            return time.monotonic() - cast(float, still[0]) >= 5
 
         if not self._pump(g, 180, landed):
             self.event("touchdown_not_seen")  # never disarm a vehicle not seen on the ground

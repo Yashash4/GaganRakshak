@@ -93,7 +93,7 @@ class LinkSim:
         self.gnd.setblocking(False)
         self.gnd_peer = (host, ground_port)
         self.dirs = {UP: _Dir(UP), DOWN: _Dir(DOWN)}
-        self.home = None
+        self.home: tuple[float, float] | None = None
         self.distance_m = 0.0
         self._parser = mav2.MAVLink(None)
         self._parser.robust_parsing = True
