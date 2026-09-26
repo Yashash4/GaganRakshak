@@ -26,7 +26,7 @@ jobs:
       - name: Format
         run: ruff format --check .
       - name: Type check
-        run: mypy gaganrakshak/sample.py gaganrakshak/evidence.py gaganrakshak/crypto.py gaganrakshak/evidence_log.py gaganrakshak/commit.py gaganrakshak/cmd_sign.py gaganrakshak/protocol.py gaganrakshak/link_monitor.py gaganrakshak/cpce.py gaganrakshak/integrity.py gaganrakshak/baseline.py gaganrakshak/ml.py gaganrakshak/stress.py gaganrakshak/estimator.py gaganrakshak/bench.py gaganrakshak/scenario.py gaganrakshak/attacks.py gaganrakshak/link_sim.py
+        run: mypy gaganrakshak/sample.py gaganrakshak/evidence.py gaganrakshak/crypto.py gaganrakshak/evidence_log.py gaganrakshak/commit.py gaganrakshak/cmd_sign.py gaganrakshak/protocol.py gaganrakshak/link_monitor.py gaganrakshak/cpce.py gaganrakshak/integrity.py gaganrakshak/baseline.py gaganrakshak/ml.py gaganrakshak/stress.py gaganrakshak/estimator.py gaganrakshak/bench.py gaganrakshak/scenario.py gaganrakshak/attacks.py gaganrakshak/link_sim.py gaganrakshak/figures.py
       - name: Tests (without SITL)
         run: pytest -m "not sitl" --cov=gaganrakshak --cov-report=term --cov-report=xml
       - name: Coverage summary
