@@ -159,3 +159,24 @@ def test_timeout_allows_for_long_commitments_losing_more():
     clean = CommitRx(PUB, commit_loss_exponent=3.6)
     clean._history.extend([[False, 30, 0]] * 10)
     assert clean.required_silence() == 5.0  # clean link: the 5 s floor
+
+
+def test_frame_whose_listing_chunk_was_lost_is_unverified_not_altered():
+    """A busy window needs two chunks, and the seq wraps inside it: two different frames share
+    (seq, msgid), one listed per chunk. If the second chunk is lost, the second frame's key is still
+    listed (by the first) with another hash; that is lost verification, not an altered frame."""
+    fc = mav.MAVLink(None, srcSystem=1, srcComponent=1)
+    tx = CommitTx(SEED)
+    tx.flush(0.0)
+    stream = [(1.0, c, True) for c in tx.flush(1.0)]
+    for i in range(31):  # 31 entries: chunk 0 lists 30, chunk 1 the last
+        fc.seq = 5 if i in (0, 30) else 100 + i
+        buf = mav.MAVLink_attitude_message(i, 0.01 * i, 0, 0, 0, 0, 0).pack(fc)
+        tx.add(buf, parse(buf))
+        stream.append((1.0 + i / 40, buf, False))
+    chunks = tx.flush(2.0)
+    assert len(chunks) == 2
+    stream.append((2.0, chunks[0], True))  # chunk 1 lost on the radio
+    stream += [(3.0, c, True) for c in tx.flush(3.0)]
+    kinds, rx = ground(stream)
+    assert "tag_altered" not in kinds and rx.stats["altered"] == 0

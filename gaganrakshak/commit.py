@@ -230,7 +230,9 @@ class CommitRx:
                 listed[k].remove(h)
                 self.stats["match"] += 1
                 self._verdicts.append((ft, seq, msgid, "match"))
-            elif k in listed and contiguous:
+            elif k in listed and contiguous and complete:
+                # only a complete window proves this frame's own listing arrived: with a chunk lost,
+                # the key may be listed for another frame sharing it (the 8-bit seq wraps in a window)
                 self.stats["altered"] += 1
                 self._verdicts.append((ft, seq, msgid, "altered"))
                 out.append(self._ev(t, "tag_altered", Severity.HIGH, msg=name, seq=seq, window=w))
