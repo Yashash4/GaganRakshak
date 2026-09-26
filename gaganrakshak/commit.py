@@ -180,6 +180,11 @@ class CommitRx:
         self._history.append((False, n_listed, missing))
         return out
 
+    def recent_loss(self, windows: int = 10) -> tuple[int, int, int]:
+        """(frames listed, listed frames missing, windows lost) over the last ``windows`` windows."""
+        h = list(self._history)[-windows:]
+        return sum(n for _, n, _ in h), sum(m for _, _, m in h), sum(1 for lost, _, _ in h if lost)
+
     def _selective_check(self, t):
         lost_w = sum(1 for lost, _, _ in self._history if lost)
         listed = sum(n for _, n, _ in self._history)

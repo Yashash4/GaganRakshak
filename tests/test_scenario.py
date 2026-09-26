@@ -9,6 +9,7 @@ from gaganrakshak.cmd_sign import CmdVerifier
 from gaganrakshak.commit import CommitRx
 from gaganrakshak.ids import Ids, run_replay
 from gaganrakshak.integrity import IntegrityMonitor, load_baseline
+from gaganrakshak.link_monitor import LinkMonitor
 from gaganrakshak.protocol import for_agent
 from gaganrakshak.scenario import resolve, run_many, run_ports
 
@@ -53,7 +54,7 @@ def test_eight_parallel_runs(tmp_path):
         for side in ("onboard", "ground"):  # recorded traffic replays cleanly through the IDS
             baseline = load_baseline(BASE.with_suffix(".json"), bytes.fromhex(BASE.with_suffix(".pub").read_text()))
             dets = ([for_agent(side), verifier, IntegrityMonitor(baseline, verifier)] if side == "onboard"
-                    else [for_agent(side), commit_rx])
+                    else [for_agent(side), commit_rx, LinkMonitor(commit_rx)])
             ids = run_replay(Ids(dets), tmp_path / p["run_id"] / side)
             assert ids.alerts == [], (p["run_id"], side, ids.alerts[:3])  # clean runs: no alarms
             assert not ids.adapter.stats["unknown"], (p["run_id"], side, ids.adapter.stats["unknown"])
