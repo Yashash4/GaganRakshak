@@ -20,7 +20,7 @@ I = 5  # SITL instance: link tcp 5810, harness tcp 5812
 RADIO_AIR, RADIO_GND, GCS, IDS_ON, IDS_GND = 16300, 16302, 16301, 16310, 16311
 RADIO_BYTES_PER_S = 57600 / 10  # 57.6 kbps serial, 8N1 = 10 bits on the wire per byte
 
-pytestmark = pytest.mark.skipif(not sitl.BINARY.exists(), reason="ArduPilot SITL not built")
+pytestmark = pytest.mark.sitl
 
 
 def proc(module, *args):

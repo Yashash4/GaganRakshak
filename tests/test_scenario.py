@@ -37,7 +37,7 @@ def test_instance_ports_disjoint():
     assert len(used) == len(set(used))
 
 
-@pytest.mark.skipif(not sitl.BINARY.exists(), reason="ArduPilot SITL not built")
+@pytest.mark.sitl
 def test_eight_parallel_runs(tmp_path):
     spec = yaml.safe_load((SCEN / "smoke.yaml").read_text())
     plans = [resolve(spec, s) for s in range(1, 9)]

@@ -22,7 +22,7 @@ EXPECTED = {  # scenario -> (agent, class)
 }
 
 
-@pytest.mark.skipif(not sitl.BINARY.exists(), reason="ArduPilot SITL not built")
+@pytest.mark.sitl
 def test_link_attacks_detected_in_window(tmp_path):
     plans = [resolve(yaml.safe_load((SCEN / f"{n}.yaml").read_text()), 11) for n in EXPECTED]
     assert [s for _, s in run_many(plans, tmp_path, workers=len(plans))] == ["ok"] * len(plans)

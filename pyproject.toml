@@ -32,3 +32,4 @@ include = ["gaganrakshak*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = ["sitl: flies ArduPilot SITL; skipped automatically when no SITL build is present"]
