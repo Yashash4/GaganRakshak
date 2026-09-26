@@ -65,13 +65,15 @@ def sim_only(msg) -> bool:
 
 class Router:
     def __init__(self, a: str, b: str, ids_port: int = 15600, onboard: bool = False,
-                 fc_rate_hz: int = 50, sign_key: bytes | None = None, commit_key: bytes | None = None):
+                 fc_rate_hz: int = 50, sign_key: bytes | None = None, commit_key: bytes | None = None,
+                 imu_rate_hz: int = 0):
         self.a = mavutil.mavlink_connection(a, source_system=ROUTER_SYSID, source_component=ROUTER_COMPID)
         self.b = mavutil.mavlink_connection(b, source_system=ROUTER_SYSID, source_component=ROUTER_COMPID)
         self.ids = ("127.0.0.1", ids_port)
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.onboard = onboard
         self.fc_rate_hz = fc_rate_hz
+        self.imu_rate_hz = imu_rate_hz
         self.signer = Signer(sign_key) if sign_key else None  # ground agent only
         self.commit = CommitTx(commit_key) if commit_key else None  # onboard agent only
         self.radio_hz: dict[str, float] = {}  # per message type, set by GCS requests
@@ -117,8 +119,11 @@ class Router:
         return False
 
     def request_fc_streams(self):
-        self.a.mav.request_data_stream_send(self.a.target_system or 1, self.a.target_component or 1,
-                                            MAV.MAV_DATA_STREAM_ALL, self.fc_rate_hz, 1)
+        ts, tc = self.a.target_system or 1, self.a.target_component or 1
+        self.a.mav.request_data_stream_send(ts, tc, MAV.MAV_DATA_STREAM_ALL, self.fc_rate_hz, 1)
+        if self.imu_rate_hz:  # the IDS integrates IMU: as fast as the FC link sustains (less aliasing)
+            self.a.mav.command_long_send(ts, tc, MAV.MAV_CMD_SET_MESSAGE_INTERVAL, 0,
+                                         MAV.MAVLINK_MSG_ID_RAW_IMU, 1e6 / self.imu_rate_hz, 0, 0, 0, 0, 0)
 
     # -- forwarding --------------------------------------------------------------------
     def _mirror(self, direction: bytes, buf: bytes):
@@ -182,12 +187,13 @@ def main():
     ap.add_argument("--ids-port", type=int, default=15600)
     ap.add_argument("--onboard", action="store_true")
     ap.add_argument("--fc-rate", type=int, default=50)
+    ap.add_argument("--imu-rate", type=int, default=0, help="onboard: RAW_IMU rate to request from the FC, Hz")
     ap.add_argument("--sign-key", type=Path, help="ground agent: file with the hex Ed25519 private seed")
     ap.add_argument("--commit-key", type=Path, help="onboard agent: file with the hex Ed25519 private seed")
     args = ap.parse_args()
     load = lambda p: bytes.fromhex(p.read_text().strip()) if p else None
     r = Router(args.a, args.b, args.ids_port, args.onboard, args.fc_rate,
-               load(args.sign_key), load(args.commit_key)).start()
+               load(args.sign_key), load(args.commit_key), args.imu_rate).start()
     while True:
         time.sleep(10)
         if r.onboard:

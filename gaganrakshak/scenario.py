@@ -44,6 +44,7 @@ from .link_sim import LinkConfig, LinkSim
 MAV = mavutil.mavlink
 M_PER_DEG = 111320.0
 HOME_LAT = float(sitl.HOME.split(",")[0])
+IMU_RATE_HZ = 200  # RAW_IMU requested from the FC for the onboard IDS (less vibration aliasing)
 
 
 
@@ -305,7 +306,8 @@ class Run:
             procs.append(subprocess.Popen(py + ["--onboard", "--a", f"tcp:127.0.0.1:{p['link']}",
                                                 "--b", f"udpout:127.0.0.1:{p['radio_air']}",
                                                 "--ids-port", str(p["ids_on"]),
-                                                "--commit-key", keys["onboard_commit"]]))
+                                                "--commit-key", keys["onboard_commit"],
+                                                "--imu-rate", str(IMU_RATE_HZ)]))
             attacker = ATTACKS[plan["attack"]["type"]](self) if plan["attack"] else None
             cfg = LinkConfig(seed=plan["seed"], **plan["link"])
             self.link = LinkSim(p["radio_air"], p["radio_gnd"], cfg,
@@ -369,11 +371,12 @@ def _worker(plan, out_root, free):
         free.put(inst)
 
 
-def run_many(plans: list[dict], out_root: Path, workers: int = 8) -> list[tuple[str, str]]:
-    """Real-time runs in parallel; each worker holds a distinct SITL instance (ports)."""
+def run_many(plans: list[dict], out_root: Path, workers: int = 8, first_instance: int = 0) -> list[tuple[str, str]]:
+    """Real-time runs in parallel; each worker holds a distinct SITL instance (ports).
+    Batches running at the same time need disjoint instance ranges (``first_instance``)."""
     with Manager() as mgr:
         free = mgr.Queue()
-        for i in range(workers):
+        for i in range(first_instance, first_instance + workers):
             free.put(i)
         with ProcessPoolExecutor(workers) as ex:
             return list(ex.map(_worker, plans, [str(out_root)] * len(plans), [free] * len(plans)))
