@@ -1,25 +1,32 @@
-"""Stock-ArduPilot baseline: the alarms an unmodified ArduPilot + ground station would give,
+"""Stock-ArduPilot baseline: what an unmodified ArduPilot + ground station would indicate,
 taken from the autopilot's own indicators in a recorded run, for comparison with the IDS.
 
     python -m gaganrakshak.baseline results/raw/<batch>/<run> [...]
 
 Source: the autopilot's messages in the onboard downlink tlog (``onboard_D.tlog``, before the
-radio, so link loss cannot hide them). Indicator -> (class, severity):
+radio, so link loss cannot hide them). ArduPilot's indicators serve a different purpose, fault
+handling (keeping the vehicle safe when a sensor or link misbehaves); this module reads them as
+if they were intrusion alarms, to show what they already cover. Indicator -> class, severity:
 
-    EKF_STATUS_REPORT flag GPS_GLITCHING                         gps_spoofing          MEDIUM
-    EKF_STATUS_REPORT velocity / pos_horiz / pos_vert ratio > 1   gps_spoofing          MEDIUM
-    EKF_STATUS_REPORT compass ratio > 1                          compass_anomaly       MEDIUM
-    STATUSTEXT "GPS Glitch" / "EKF variance" / "EKF lane switch"   gps_spoofing          MEDIUM
-    STATUSTEXT "EKF failsafe" / "GPS failsafe"                   gps_spoofing          HIGH
-    STATUSTEXT "Radio failsafe" / "GCS failsafe" / "failsafe"    dos                   HIGH
-    mode change into LAND / RTL / SMART_RTL / BRAKE within
-      FAILSAFE_MODE_S of a failsafe STATUSTEXT                   class of that text    HIGH
+    | ArduPilot indicator                                   | class             | severity |
+    |-------------------------------------------------------|-------------------|----------|
+    | EKF_STATUS_REPORT flag GPS_GLITCHING                  | gps_spoofing      | MEDIUM   |
+    | EKF_STATUS_REPORT velocity, pos_horiz or pos_vert     | gps_spoofing      | MEDIUM   |
+    |   test ratio > 1 (innovation outside the EKF gate)    |                   |          |
+    | EKF_STATUS_REPORT compass test ratio > 1              | compass_anomaly   | MEDIUM   |
+    | STATUSTEXT "GPS Glitch", "EKF variance",              | gps_spoofing      | MEDIUM   |
+    |   "lane switch"                                       |                   |          |
+    | STATUSTEXT "EKF failsafe", "GPS failsafe"             | gps_spoofing      | HIGH     |
+    | STATUSTEXT "Radio failsafe", "GCS failsafe",          | dos               | HIGH     |
+    |   other "failsafe"                                    |                   |          |
+    | mode change into LAND, RTL, SMART_RTL or BRAKE within | class of the text | HIGH     |
+    |   FAILSAFE_MODE_S of a HIGH failsafe STATUSTEXT       |                   |          |
 
-A test ratio > 1 means the EKF innovation consistency test is failing (ArduPilot's gate).
-ArduPilot reports GPS glitches and spoofing alike, so gps_spoofing here means "the autopilot
-flagged its GNSS"; it has no indicator for command injection or telemetry manipulation (it
-accepts a well-formed command), so the baseline never produces those classes. A mode change
-without a failsafe message is ordinary operation and is not an indicator.
+Reading of the classes: ArduPilot handles a GPS glitch and a spoofed position the same way, so
+gps_spoofing here means "the autopilot flagged its GNSS". Command injection and telemetry
+manipulation are outside the scope of these indicators (a well-formed command is a normal input
+to the autopilot), so the baseline has no episodes of those classes. A mode change without a
+failsafe message is normal operation and is not an indicator.
 
 Indicators become alerts, grouped into episodes exactly as the IDS does (``EpisodeTracker``,
 same clear time), in scenario time (t = 0 at the takeoff event of labels.json).

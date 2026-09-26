@@ -18,7 +18,7 @@ def hb(custom_mode):  # ArduCopter: 4 GUIDED, 6 RTL, 9 LAND
     return M.heartbeat_encode(2, 3, 217, custom_mode, 4)
 
 
-def test_glitch_and_innovation_failures_are_one_gps_episode_in_scenario_time():
+def test_glitch_flag_and_innovation_ratios_are_one_gps_episode_in_scenario_time():
     msgs = [(T0 + t, ekf()) for t in range(0, 10)]
     msgs += [(T0 + 10.0, ekf(flags=0x033F | EKF_GPS_GLITCHING)), (T0 + 10.1, text("GPS Glitch or Compass error"))]
     msgs += [(T0 + 12.0, ekf(pos=1.7)), (T0 + 14.0, text("EKF3 lane switch 1"))]
