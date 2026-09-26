@@ -1,7 +1,7 @@
 # A7 — replay of a captured, validly signed GCS command.
 name: a7_replay
-duration_s: 100
+duration_s: 195
 mission: {legs: 4, radius_m: [30, 60], alt_m: [15, 25], speed_ms: [3, 6]}
 wind: {spd: [0, 2], dir: [0, 360], turb: 0}
 gnss_noise: {sigma_m: 2.1, tau_s: 60}
-attack: {type: replay, start_s: [30, 50], duration_s: [15, 25]}
+attack: {type: replay, start_s: [30, 150], duration_s: [15, 25]}

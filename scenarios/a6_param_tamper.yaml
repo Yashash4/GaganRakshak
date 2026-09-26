@@ -1,7 +1,7 @@
 # A6 — forged PARAM_SET disabling the RC failsafe.
 name: a6_param_tamper
-duration_s: 100
+duration_s: 195
 mission: {legs: 4, radius_m: [30, 60], alt_m: [15, 25], speed_ms: [3, 6]}
 wind: {spd: [0, 2], dir: [0, 360], turb: 0}
 gnss_noise: {sigma_m: 2.1, tau_s: 60}
-attack: {type: param_tamper, start_s: [30, 50], duration_s: [15, 25], params: {variant: param, param: FS_THR_ENABLE, value: 0}}
+attack: {type: param_tamper, start_s: [30, 150], duration_s: [15, 25], params: {variant: param, param: FS_THR_ENABLE, value: 0}}

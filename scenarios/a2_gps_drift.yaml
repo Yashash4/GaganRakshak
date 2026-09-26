@@ -1,8 +1,8 @@
 # A2 — GNSS spoofing, slow drift (coherent): the position drifts at a constant rate and the
 # reported GNSS velocity carries the matching offset. Needs the ArduPilot fork (SIM_GPS1_GLTV).
 name: a2_gps_drift
-duration_s: 120
+duration_s: 220
 mission: {legs: 4, radius_m: [30, 60], alt_m: [15, 25], speed_ms: [3, 6]}
 wind: {spd: [0, 2], dir: [0, 360], turb: 0}
 gnss_noise: {sigma_m: 2.1, tau_s: 60}
-attack: {type: gps_drift, start_s: [30, 50], duration_s: [40, 50], params: {rate_ms: [0.5, 2.0], bearing_deg: [0, 360]}}
+attack: {type: gps_drift, start_s: [30, 150], duration_s: [40, 50], params: {rate_ms: [0.5, 2.0], bearing_deg: [0, 360]}}
