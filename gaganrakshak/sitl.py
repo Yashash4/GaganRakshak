@@ -7,7 +7,8 @@ import subprocess
 import time
 from pathlib import Path
 
-ARDUPILOT_DIR = Path(os.environ.get("ARDUPILOT_DIR", Path.home() / "ardupilot"))
+# our ArduPilot fork (Copter-4.7.1 + simulator-only GPS velocity glitch), see scripts/setup_dgx.sh
+ARDUPILOT_DIR = Path(os.environ.get("ARDUPILOT_DIR", Path.home() / "ardupilot-fork"))
 BINARY = ARDUPILOT_DIR / "build/sitl/bin/arducopter"
 COPTER_PARM = ARDUPILOT_DIR / "Tools/autotest/default_params/copter.parm"
 NOISE_PARM = Path(__file__).resolve().parent.parent / "configs/sitl_noise.parm"
@@ -19,11 +20,22 @@ def ports(instance: int) -> dict:
     return {"link": 5760 + 10 * instance, "harness": 5762 + 10 * instance}
 
 
-def start(instance: int, workdir: Path, home: str = HOME, extra_parm: list[Path] = ()) -> subprocess.Popen:
+def start(
+    instance: int,
+    workdir: Path,
+    home: str = HOME,
+    extra_parm: tuple[Path, ...] = (),
+    ardupilot_dir: Path | None = None,
+    noise: bool = True,
+) -> subprocess.Popen:
+    """Start SITL instance ``instance``. ``ardupilot_dir`` selects another ArduPilot build;
+    ``noise=False`` leaves out the sensor-noise configuration (deterministic sensors)."""
+    root = ardupilot_dir or ARDUPILOT_DIR
     workdir.mkdir(parents=True, exist_ok=True)
-    defaults = ",".join(str(p) for p in (COPTER_PARM, NOISE_PARM, *extra_parm))
+    parms = (root / "Tools/autotest/default_params/copter.parm", *((NOISE_PARM,) if noise else ()), *extra_parm)
+    defaults = ",".join(str(p) for p in parms)
     cmd = [
-        str(BINARY),
+        str(root / "build/sitl/bin/arducopter"),
         "--model",
         "+",
         "--speedup",

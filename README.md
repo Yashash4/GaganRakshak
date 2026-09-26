@@ -22,6 +22,13 @@ per-attack templates; every decision goes to a signed, tamper-evident evidence l
 
 All experiments run in ArduPilot SITL. No real RF or flight attacks were performed.
 
+**ArduPilot fork.** SITL is built from our fork
+([Yashash4/ardupilot@6aac7ad](https://github.com/Yashash4/ardupilot/commit/6aac7ad92508b6fda4a08e1ef57893d7d825102c)):
+Copter-4.7.1 plus one simulator-only commit adding `SIM_GPS1_GLTV`, a simulated GPS velocity
+offset used to simulate a coherent GNSS spoofer. Flight code is unmodified; with the parameter
+at 0 the simulated GPS is identical to stock. GPL-3.0, a separate program reached over MAVLink
+(see THIRD_PARTY.md).
+
 ## Install
 Full setup, including the ArduPilot SITL used by the flight tests:
 ```bash
