@@ -78,6 +78,7 @@ def evaluate(run: Path, link_curves: Path = LINK_CURVES) -> dict:
                     "t_start": round(ep.t_start - t0, 2),
                     "t_end": None if ep.t_end is None else round(ep.t_end - t0, 2),
                     "alerts": len(ep.alerts),
+                    "severity": max(int(a.severity) for a in ep.alerts),
                 }
             )
     return out
