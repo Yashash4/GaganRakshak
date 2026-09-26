@@ -10,7 +10,9 @@ model of its own.
 
 Evidence (class ``dos``):
 - ``excess_loss``       loss over the last ``window`` commitment windows above the learned band
-- ``telemetry_gap``     FC heartbeat silence above the band learned for this distance
+- ``telemetry_gap``     FC heartbeat silence longer than random loss explains at this distance:
+                        with per-frame loss p (learned band), s seconds of silence has probability
+                        ~p^s; the limit is where that falls below the false-alarm budget
                         (outage, jamming burst)
 - ``radio_congestion``  air-side radio buffer below ``txbuf_min`` % for ``congestion_s`` (flood)
 Metadata carries distance, expected and observed loss so fusion can weigh benign fades.
@@ -85,11 +87,12 @@ def load_curves(path: Path) -> dict:
 class LinkMonitor:
     def __init__(self, commit_rx, uav_id: int = 1, curves: dict | None = None, window: int = 10,
                  min_frames: int = 100, gap_s: float = 3.0, txbuf_min: int = 20, congestion_s: float = 3.0,
-                 vmax: float = 30.0, distrust_s: float = 60.0):
+                 vmax: float = 30.0, distrust_s: float = 60.0, budget_per_hour: float = 1.0):
         self.rx = commit_rx
         self.uav_id = uav_id
         curves = curves or {}  # none: record samples only (calibration); no loss/gap evidence
-        self.curve, self.gap_curve = curves.get("loss"), curves.get("gap")
+        self.curve = curves.get("loss")
+        self.budget_per_hour = budget_per_hour
         self.window, self.min_frames = window, min_frames
         self.gap_s, self.txbuf_min, self.congestion_s = gap_s, txbuf_min, congestion_s
         self.home = None
@@ -111,6 +114,15 @@ class LinkMonitor:
         doubt = ((self._t_implausible is not None and t - self._t_implausible < self.distrust_s)
                  or (m is not None and t - m < self.distrust_s))
         return (0.0, False) if doubt else (self.distance_m, True)
+
+    def silence_limit(self, distance_m: float, floor_s: float = 3.0) -> float:
+        """Heartbeat (1 Hz) silence that random loss explains less often than the budget:
+        P(silence >= s) ~ p^(s-1) with p the learned per-frame loss band at this distance."""
+        p = min(self.curve.upper_at(distance_m), 0.999)
+        if p <= 0:
+            return floor_s
+        alpha = self.budget_per_hour / 3600.0
+        return max(floor_s, 1.0 + math.log(alpha) / math.log(p))
 
     def _ev(self, t, kind, **meta):
         d, trusted = self.trusted_distance(t)
@@ -173,9 +185,9 @@ class LinkMonitor:
                                              Severity.INFO, None, {"distance_m": round(self.distance_m, 1),
                                                                    "calibrated_max_m": limit}))
                 self._in["far"] = far
-        if self._t_hb is not None and self.gap_curve is not None:
+        if self._t_hb is not None and self.curve is not None:
             silent = t - self._t_hb
-            limit = self.gap_curve.upper_at(self.trusted_distance(t)[0])
+            limit = self.silence_limit(self.trusted_distance(t)[0])
             out += self._onset("gap", silent > limit, t,
                                lambda: self._ev(t, "telemetry_gap", silent_s=round(silent, 1),
                                                 expected_silence_upper=round(limit, 1)))
@@ -248,9 +260,12 @@ def calibrate(runs: list[Path], budget_per_hour: float, bin_m: float = 50.0) -> 
     runs = select(runs)
     per_run = [run_samples(r) for r in runs]
     hours = sum(s[-1][0] - s[0][0] for s, _, _ in per_run if s) / 3600
-    curves = {"loss": _fit_to_budget([s for s, _, _ in per_run], hours, budget_per_hour, bin_m=bin_m, floor=0.05),
-              "gap": _fit_to_budget([g for _, g, _ in per_run], hours, budget_per_hour, bin_m=bin_m, floor=3.0,
-                                    cap=1e9)}
+    curves = {"loss": _fit_to_budget([s for s, _, _ in per_run], hours, budget_per_hour, bin_m=bin_m, floor=0.05)}
+    # heartbeat-silence limits follow from the loss band (LinkMonitor.silence_limit); report how
+    # the calibration flights' longest silences compare
+    lm = LinkMonitor(None, curves=curves)
+    curves["loss"].meta["silence_exceedances"] = sum(
+        1 for _, g, _ in per_run for _, d, x in g if x > lm.silence_limit(d))
     for c in curves.values():
         c.meta.update(calibration_hours=round(hours, 3), budget_per_hour=budget_per_hour,
                       runs=[r.name for r in runs])

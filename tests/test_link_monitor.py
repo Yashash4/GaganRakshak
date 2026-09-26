@@ -1,3 +1,4 @@
+import math
 import random
 from pathlib import Path
 
@@ -39,8 +40,7 @@ def downlink(seconds=40, per_s=20):
 
 
 # learned from calibration: little loss near home, heavy loss beyond 300 m
-CURVES = {"loss": LossCurve(50.0, [0.08, 0.08, 0.1, 0.15, 0.3, 0.6, 0.9, 1.0]),
-          "gap": LossCurve(50.0, [3.0, 3.0, 3.0, 3.0, 4.0, 8.0, 15.0, 30.0])}
+CURVES = {"loss": LossCurve(50.0, [0.08, 0.08, 0.1, 0.15, 0.3, 0.6, 0.9, 1.0])}
 
 
 def run(stream, distance_m=0.0, extra=(), curves=CURVES, **kw):
@@ -146,8 +146,14 @@ def test_implausible_position_jump_is_not_trusted():
 
 
 def test_outside_calibrated_range_is_marked_once():
-    curves = {"loss": LossCurve(50.0, [0.1, 0.2], {"max_distance_m": 100.0}), "gap": CURVES["gap"]}
+    curves = {"loss": LossCurve(50.0, [0.1, 0.2], {"max_distance_m": 100.0})}
     lm = LinkMonitor(CommitRx(PUB), curves=curves)
     lm.distance_m = 150
     ev = lm.tick(1.0) + lm.tick(1.1)
     assert [(e.evidence_type, e.severity) for e in ev] == [("outside_calibrated_range", 0)]
+
+
+def test_silence_limit_follows_loss_band():
+    lm = LinkMonitor(CommitRx(PUB), curves=CURVES)
+    assert lm.silence_limit(0) == 1 + math.log(1 / 3600) / math.log(0.08)  # ~4.2 s near home
+    assert lm.silence_limit(320) > 15  # 90 % loss: long silences are normal
