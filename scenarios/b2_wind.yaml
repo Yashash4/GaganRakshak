@@ -1,0 +1,6 @@
+# B2 — wind and turbulence (benign): strong gusty wind, same mission as B1.
+name: b2_wind
+duration_s: 180
+mission: {legs: 4, radius_m: [30, 60], alt_m: [15, 25], speed_ms: [3, 6]}
+wind: {spd: [6, 10], dir: [0, 360], turb: [2, 4]}
+gnss_noise: {sigma_m: 2.1, tau_s: 60}

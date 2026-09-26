@@ -1,0 +1,13 @@
+# B6 — legitimate operator commands (benign): mode changes and speed changes mid-flight.
+name: b6_operator
+duration_s: 180
+mission: {legs: 4, radius_m: [30, 60], alt_m: [15, 25], speed_ms: [3, 6]}
+wind: {spd: [0, 2], dir: [0, 360], turb: 0}
+gnss_noise: {sigma_m: 2.1, tau_s: 60}
+operator:
+  - {at_s: 40, action: speed, value: 8}
+  - {at_s: 60, action: mode, mode: LOITER}
+  - {at_s: 75, action: mode, mode: GUIDED}
+  - {at_s: 100, action: speed, value: 3}
+  - {at_s: 130, action: mode, mode: BRAKE}
+  - {at_s: 140, action: mode, mode: GUIDED}
