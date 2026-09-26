@@ -124,3 +124,14 @@ def test_unsafe_command_waits_for_a_slow_signature_verdict():
         ev += verifier.observe(mav.MAVLink(None).parse_char(sig), [], "U", 2.5)
     ev += det.tick(2.6)
     assert [e.evidence_type for e in ev if e.source == "protocol"] == ["operator_unsafe_command"]
+
+
+def test_landed_far_from_home_on_other_terrain_is_not_airborne():
+    """Height above home stays 30 m where the landing site lies lower than home; the autopilot's
+    throttle (0 on the ground) says it is not flying, so a disarm there is not an unsafe command."""
+    fc, det = Sender(1), ProtocolDetector()
+    det.observe(fc(mav.MAVLink_global_position_int_message(0, 0, 0, 0, 30000, 0, 0, 0, 0)), [], "D", 0)
+    det.observe(fc(mav.MAVLink_vfr_hud_message(0, 0, 0, 0, 0, 0)), [], "D", 0.1)
+    assert not det.airborne
+    det.observe(fc(mav.MAVLink_vfr_hud_message(5, 5, 0, 45, 30, 0)), [], "D", 0.2)
+    assert det.airborne

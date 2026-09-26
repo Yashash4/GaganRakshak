@@ -38,6 +38,9 @@ UNSAFE_IN_FLIGHT = {
 FC_SYSID, GCS_SYSID, RADIO_SYSID = 1, 255, 51
 
 
+AIRBORNE_THROTTLE_PCT = 10  # below this a multicopter is not flying (clean flights: >= 19 % airborne, 0 landed)
+
+
 class ProtocolDetector:
     def __init__(
         self,
@@ -73,6 +76,8 @@ class ProtocolDetector:
         self._uplink: deque[float] = deque()  # timestamps of uplink messages in the last second
         self._flooding = False
         self.airborne = False
+        self._above_home = False
+        self._lift = True  # until the first VFR_HUD: height alone decides, as before
         self._t_alt = -1e9  # airborne state older than 2 s is unknown (e.g. lossy ground downlink)
 
     def _ev(self, t, kind, score, sev, cls, **meta):
@@ -94,9 +99,16 @@ class ProtocolDetector:
             ]
         out = []
         sysid, compid, seq = msg.get_srcSystem(), msg.get_srcComponent(), msg.get_seq()
+        # Airborne = above home AND the autopilot is producing lift. Height above home alone fails
+        # where the landing site's terrain differs from home's; on clean flights airborne throttle
+        # never fell below 19 % and was 0 on the ground.
         if name == "GLOBAL_POSITION_INT" and sysid == FC_SYSID:
-            self.airborne = msg.relative_alt / 1000.0 > self.airborne_m
+            self._above_home = msg.relative_alt / 1000.0 > self.airborne_m
+            self.airborne = self._above_home and self._lift
             self._t_alt = t
+        elif name == "VFR_HUD" and sysid == FC_SYSID:
+            self._lift = msg.throttle > AIRBORNE_THROTTLE_PCT
+            self.airborne = self._above_home and self._lift
 
         if sysid not in self.allowed.get(direction, ()):
             out.append(
