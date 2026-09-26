@@ -12,6 +12,7 @@ from pathlib import Path
 
 from .cmd_sign import CmdVerifier
 from .commit import CommitRx
+from .cpce import Cpce
 from .ids import Ids, run_replay
 from .integrity import IntegrityMonitor, load_baseline
 from .link_monitor import LinkMonitor, load_curves
@@ -20,6 +21,7 @@ from .protocol import for_agent
 ROOT = Path(__file__).resolve().parent.parent
 BASELINE = ROOT / "configs" / "baseline" / "ardupilot_copter_sitl"
 LINK_CURVES = ROOT / "results" / "calibration" / "link_curves.json"  # learned from clean flights
+CPCE_CALIB = ROOT / "results" / "calibration" / "cpce.json"  # physics noise levels and CUSUM threshold
 
 
 def _pub(run: Path, name: str) -> bytes:
@@ -31,7 +33,10 @@ def detectors(side: str, run: Path, link_curves: Path = LINK_CURVES) -> list:
     if side == "onboard":
         verifier = CmdVerifier(_pub(run, "ground_sign"))
         baseline = load_baseline(BASELINE.with_suffix(".json"), bytes.fromhex(BASELINE.with_suffix(".pub").read_text()))
-        return [for_agent("onboard", verifier=verifier), verifier, IntegrityMonitor(baseline, verifier)]
+        onboard = [for_agent("onboard", verifier=verifier), verifier, IntegrityMonitor(baseline, verifier)]
+        if CPCE_CALIB.exists():
+            onboard.append(Cpce(json.loads(CPCE_CALIB.read_text())))
+        return onboard
     curves = load_curves(link_curves) if link_curves.exists() else {}
     rx = CommitRx(_pub(run, "onboard_commit"), **curves.pop("commit", {}))
     return [for_agent("ground"), rx, LinkMonitor(rx, curves=curves or None)]

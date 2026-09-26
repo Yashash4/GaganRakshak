@@ -21,6 +21,7 @@ import socket
 import time
 from collections.abc import Iterable
 from pathlib import Path
+from typing import Any
 
 from pymavlink import mavutil
 from pymavlink.dialects.v20 import ardupilotmega as mav2
@@ -107,7 +108,7 @@ class Ids:
         return alerts
 
 
-def replay_tlogs(prefix: Path) -> Iterable[tuple[float, str, object]]:
+def replay_tlogs(prefix: Path) -> Iterable[tuple[float, str, Any]]:  # Any: pymavlink messages are untyped
     """(time, direction, msg) from <prefix>_D.tlog and <prefix>_U.tlog, merged in time order."""
 
     def read(direction):
