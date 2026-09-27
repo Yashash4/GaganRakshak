@@ -53,103 +53,103 @@
  "guard_ignored_unsigned_command": [
   {
    "run": "phys1/b5_link_fade-s2001",
-   "note": "ok; ignored unsigned_command x1"
+   "note": "ok; ignored lost-signature evidence x2"
   },
   {
    "run": "phys1/b5_link_fade-s2002",
-   "note": "ok; ignored unsigned_command x1"
+   "note": "ok; ignored lost-signature evidence x1"
   },
   {
    "run": "phys1/b5_link_fade-s2003",
-   "note": "ok; ignored unsigned_command x1"
+   "note": "ok; ignored lost-signature evidence x1"
   },
   {
    "run": "calib3/b5_link_fade-s1002",
-   "note": "ok; ignored unsigned_command x1"
+   "note": "ok; ignored lost-signature evidence x1"
   },
   {
    "run": "calib3/b5_link_fade-s1003",
-   "note": "ok; ignored unsigned_command x2"
+   "note": "ok; ignored lost-signature evidence x2"
   },
   {
    "run": "calib3/b5_link_fade-s1004",
-   "note": "ok; ignored unsigned_command x1"
+   "note": "ok; ignored lost-signature evidence x1"
   },
   {
    "run": "calib3/b5_link_fade-s1005",
-   "note": "ok; ignored unsigned_command x1"
+   "note": "ok; ignored lost-signature evidence x1"
   },
   {
    "run": "calib3/b5_link_fade-s1006",
-   "note": "ok; ignored unsigned_command x1"
+   "note": "ok; ignored lost-signature evidence x2"
   },
   {
    "run": "calib3/b5_link_fade-s1008",
-   "note": "ok; ignored unsigned_command x1"
+   "note": "ok; ignored lost-signature evidence x1"
   },
   {
    "run": "calib3/b5_link_fade-s1009",
-   "note": "ok; ignored unsigned_command x1"
+   "note": "ok; ignored lost-signature evidence x1"
   },
   {
    "run": "calib3/b5_link_fade-s1010",
-   "note": "ok; ignored unsigned_command x1"
+   "note": "ok; ignored lost-signature evidence x1"
   },
   {
    "run": "calib3/b5_link_fade-s1013",
-   "note": "ok; ignored unsigned_command x1"
+   "note": "ok; ignored lost-signature evidence x1"
   },
   {
    "run": "calib3/b5_link_fade-s1014",
-   "note": "ok; ignored unsigned_command x1"
+   "note": "ok; ignored lost-signature evidence x1"
   },
   {
    "run": "calib3/b5_link_fade-s1015",
-   "note": "ok; ignored unsigned_command x1"
+   "note": "ok; ignored lost-signature evidence x1"
   },
   {
    "run": "calib3/b5_link_fade-s1016",
-   "note": "ok; ignored unsigned_command x2"
+   "note": "ok; ignored lost-signature evidence x3"
   },
   {
    "run": "calib4/b5_link_fade-s1017",
-   "note": "ok; ignored unsigned_command x2"
+   "note": "ok; ignored lost-signature evidence x2"
   },
   {
    "run": "calib4/b5_link_fade-s1018",
-   "note": "ok; ignored unsigned_command x1"
+   "note": "ok; ignored lost-signature evidence x1"
   },
   {
    "run": "calib4/b5_link_fade-s1019",
-   "note": "ok; ignored unsigned_command x1"
+   "note": "ok; ignored lost-signature evidence x1"
   },
   {
    "run": "calib4/b5_link_fade-s1023",
-   "note": "ok; ignored unsigned_command x1"
+   "note": "ok; ignored lost-signature evidence x2"
   },
   {
    "run": "calib4/b5_link_fade-s1024",
-   "note": "ok; ignored unsigned_command x3"
+   "note": "ok; ignored lost-signature evidence x3"
   },
   {
    "run": "calib4/b5_link_fade-s1028",
-   "note": "ok; ignored unsigned_command x1"
+   "note": "ok; ignored lost-signature evidence x1"
   },
   {
    "run": "calib4/b5_link_fade-s1030",
-   "note": "ok; ignored unsigned_command x1"
+   "note": "ok; ignored lost-signature evidence x1"
   },
   {
    "run": "calib4/b5_link_fade-s1034",
-   "note": "ok; ignored unsigned_command x2"
+   "note": "ok; ignored lost-signature evidence x2"
   },
   {
    "run": "calib4/b5_link_fade-s1035",
-   "note": "ok; ignored unsigned_command x1"
+   "note": "ok; ignored lost-signature evidence x1"
   },
   {
    "run": "calib4/b5_link_fade-s1040",
-   "note": "ok; ignored unsigned_command x1"
+   "note": "ok; ignored lost-signature evidence x1"
   }
  ]
 }

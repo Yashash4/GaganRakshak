@@ -40,28 +40,35 @@ def usable(run: Path, check_ids: bool = True) -> tuple[bool, str]:
         from .evaluate import evaluate
 
         # judged without any earlier calibration: a stale artefact must not decide what is clean
+        result = evaluate(run, uncalibrated=True)
         ev = [
             e
-            for e in evaluate(run, uncalibrated=True)["evidence"]
+            for e in result["evidence"]
             if e["type"] not in CALIBRATED_EVIDENCE and e["class"] not in CALIBRATED_CLASSES
         ]
         # A genuine command whose signature copies were all lost in a fade: the radio behaviour is
         # clean, and these flights are the deepest fades the link bands must learn. The evidence is
         # not a sign of an unclean flight, so it is ignored here (and listed by calibrate_all).
-        unsigned = [e for e in ev if e["type"] == "unsigned_command"]
-        # an unsafe command (e.g. the operator's disarm) judged so only because its own signatures
-        # were lost the same way (unsigned within the second before) is the same fade loss
-        lost = [e["t"] for e in unsigned]
-        ev = [
-            e
-            for e in ev
-            if e["type"] != "unsigned_command"
-            and not (e["type"] == "unsafe_command" and any(0.0 <= e["t"] - t <= 1.0 for t in lost))
-        ]
+        # Evidence inside an episode the old-sizing rule marks (the same function the exports and
+        # the benchmark use: flown before the signature-sizing fix, genuine GCS frames only, no
+        # replayed copies) is a lost signature, not a sign of an unclean flight.
+        from .export import flown_at, old_sizing_marks
+
+        episodes = result["episodes"]
+        marked = [episodes[i] for i in old_sizing_marks(run, episodes, flown_at(labels))]
+
+        def in_marked(e) -> bool:  # evidence of a marked episode: its class, within it (open: to the end)
+            return any(
+                e["class"] == m["class"] and m["t_start"] <= e["t"] <= (m["t_end"] if m["t_end"] is not None else 1e18)
+                for m in marked
+            )
+
+        unsigned = [e for e in ev if in_marked(e)]
+        ev = [e for e in ev if not in_marked(e)]
         if ev:
             return False, f"IDS evidence: {sorted({(e['agent'], e['type']) for e in ev})}"
         if unsigned:
-            return True, f"ok; ignored unsigned_command x{len(unsigned)}"
+            return True, f"ok; ignored lost-signature evidence x{len(unsigned)}"
     return True, "ok"
 
 
@@ -113,13 +120,15 @@ def _count(args) -> tuple[dict, dict]:
     by_type: dict = {}
     for e in r["evidence"]:
         by_type[e["type"]] = by_type.get(e["type"], 0) + 1
+    # signature copies all lost in a fade with the earlier sizing: counted apart, by the same rule
+    # the exports and the benchmark use (flight date, genuine GCS frames, no replayed copies)
+    from .export import flown_at, old_sizing_marks
+
+    marks = old_sizing_marks(run, r["episodes"], flown_at(json.loads((run / "labels.json").read_text())))
     alarms: dict = {}
-    for ep in r["episodes"]:
+    for i, ep in enumerate(r["episodes"]):
         if ep["severity"] >= 2:
-            # signature copies all lost in a fade, recorded with the earlier sizing: counted apart
-            types = set(ep.get("evidence_types") or [])
-            lost = "unsigned_command" in types and types <= {"unsigned_command", "unsafe_command"}
-            key = "unsigned_command_old_sizing" if lost else ep["class"]
+            key = "unsigned_command_old_sizing" if i in marks else ep["class"]
             alarms[key] = alarms.get(key, 0) + 1
     return by_type, alarms
 
