@@ -53,8 +53,12 @@ EXPECTED = {
 # Agent that must raise the expected class (the design claim): GNSS onboard; link-content
 # attacks on the ground; others either agent.
 EXPECTED_AGENT = {
-    "gps_jump": "onboard", "gps_drift": "onboard", "gps_drift_naive": "onboard", "gps_drift_accel": "onboard",
-    "telemetry_manipulation": "ground", "fc_impersonation": "ground",
+    "gps_jump": "onboard",
+    "gps_drift": "onboard",
+    "gps_drift_naive": "onboard",
+    "gps_drift_accel": "onboard",
+    "telemetry_manipulation": "ground",
+    "fc_impersonation": "ground",
 }
 
 
@@ -62,6 +66,7 @@ def poisson_upper(k: int, t_hours: float, conf: float = 0.95) -> float:
     """Exact one-sided upper confidence bound on a Poisson rate (events per hour)."""
     if t_hours <= 0:
         return math.inf
+
     # find lambda with P(X <= k; lambda) = 1 - conf by bisection (no scipy needed)
     def cdf(lam: float) -> float:
         term = total = math.exp(-lam)
@@ -123,7 +128,7 @@ def verify(runs: list[dict]) -> dict:
     clean_s = 0.0
     secondary: dict = defaultdict(int)
     ground_fa = 0
-    clean_adv = 0  # LOW advisories outside any attack's influence (same rule as false alarms)  # false alarms before takeoff / after touchdown (counted — the operator sees them)  # airborne time with no attack active: benign runs + attack runs before attack_start
+    clean_adv = 0  # LOW advisories outside any attack's influence (same rule as false alarms)  # false alarms before takeoff / after touchdown (counted — the operator sees them)  # airborne time with no attack active: benign runs + attack runs before attack_start  # noqa: E501
     no_flight = []
     for r in runs:
         if r.get("status") != "ok":
@@ -132,17 +137,24 @@ def verify(runs: list[dict]) -> dict:
             no_flight.append(r["run_id"])
         flight_s += float(r.get("flight_s") or 0.0)
         raw_eps = r.get("episodes", [])
+
         # Episodes the export marks as a documented artefact (e.g. old signature sizing on
         # recordings provably flown before the fix) are listed apart, never silently dropped.
         # A mark is honoured only if the rule holds independently: run provably flown before the
         # sizing fix and the episode's only evidence is unsigned commands. Any other mark is
         # reported as bad and the episode counts normally.
         def _ok(e):
-            return (e.get("artefact") == "old_sizing" and r.get("flown_at") == "before-b747b3e"
-                    and "unsigned_command" in (e.get("evidence_types") or [])
-                    and set(e["evidence_types"]) <= {"unsigned_command", "unsafe_command"}
-                    and bool(e.get("matched_uplink")))  # every received command frame matched a GCS-sent frame
-        artefacts += [(r["run_id"], e["artefact"], e["class"], e["t_start"]) for e in raw_eps if e.get("artefact") and _ok(e)]
+            return (
+                e.get("artefact") == "old_sizing"
+                and r.get("flown_at") == "before-b747b3e"  # noqa: B023
+                and "unsigned_command" in (e.get("evidence_types") or [])
+                and set(e["evidence_types"]) <= {"unsigned_command", "unsafe_command"}
+                and bool(e.get("matched_uplink"))
+            )  # every received command frame matched a GCS-sent frame
+
+        artefacts += [
+            (r["run_id"], e["artefact"], e["class"], e["t_start"]) for e in raw_eps if e.get("artefact") and _ok(e)
+        ]
         bad_marks += [(r["run_id"], e["class"], e["t_start"]) for e in raw_eps if e.get("artefact") and not _ok(e)]
         all_eps = [e for e in raw_eps if not _ok(e)]
         eps = [e for e in all_eps if e.get("severity", ALARM_MIN_SEVERITY) >= ALARM_MIN_SEVERITY]
@@ -172,10 +184,20 @@ def verify(runs: list[dict]) -> dict:
         clean_adv += sum(1 for e in lows if e["t_start"] < start or e["t_start"] > end + SETTLE_S)
         clean_s += max(0.0, min(start, flight)) + max(0.0, flight - (end + SETTLE_S))  # t=0 at takeoff
         agent = EXPECTED_AGENT.get(typ)
-        hits = [e for e in eps if e["class"] in exp and (agent is None or e.get("agent") == agent)
-                and start <= e["t_start"] <= end + GRACE_S]
-        adv_hit = [e for e in all_eps if e.get("severity", 2) < ALARM_MIN_SEVERITY and "gnss" in e["class"]
-                   and start <= e["t_start"] <= end + GRACE_S]
+        hits = [
+            e
+            for e in eps
+            if e["class"] in exp
+            and (agent is None or e.get("agent") == agent)
+            and start <= e["t_start"] <= end + GRACE_S
+        ]
+        adv_hit = [
+            e
+            for e in all_eps
+            if e.get("severity", 2) < ALARM_MIN_SEVERITY
+            and "gnss" in e["class"]
+            and start <= e["t_start"] <= end + GRACE_S
+        ]
         # per attack type, and per scenario (far / held-out apart) with the drift rate when set
         prm = (r.get("attack") or {}).get("params") or {}
         rate = next((f"@{k}={prm[k]:g}" for k in ("rate_ms", "accel_ms2") if isinstance(prm.get(k), (int, float))), "")
@@ -240,9 +262,14 @@ def verify(runs: list[dict]) -> dict:
             for t, v in sorted(per_type.items())
         },
         "per_scenario": {
-            g: {"runs": v["runs"], "detected": v["detected"], "detected_during_attack": v["during"],
-                "advisory_only": v["advisory_only"], "latency_p50_s": pct(v["latencies"], 0.5),
-                "latency_p95_s": pct(v["latencies"], 0.95)}
+            g: {
+                "runs": v["runs"],
+                "detected": v["detected"],
+                "detected_during_attack": v["during"],
+                "advisory_only": v["advisory_only"],
+                "latency_p50_s": pct(v["latencies"], 0.5),
+                "latency_p95_s": pct(v["latencies"], 0.95),
+            }
             for g, v in sorted(per_group.items())
         },
     }
