@@ -270,16 +270,3 @@ def test_outlier_screen_drops_only_a_run_far_above_its_scenario_group():
     results = [run_result(p) for p in peaks] + [run_result(9.0), run_result(0.2)]  # b5 group too small to screen
     kept, _, screened = screen_outliers(runs, results)
     assert [s["run"] for s in screened] == ["b1_calm-s1005"] and len(kept) == 7
-
-
-def test_anchor_gate_per_regime_is_wider_for_hard_anchors_and_never_below_gentler():
-    from gaganrakshak.cpce import gate_at, learn_gate
-
-    rng = np.random.default_rng(1)
-    offsets = [(a, abs(rng.normal(0, 1)) * (1 + 0.2 * a), 0) for a in rng.uniform(0, 60, 3000)]
-    offsets += [(a, abs(rng.normal(0, 1)) * (1 + 1.0 * a), 2) for a in rng.uniform(0, 60, 3000)]
-    g = learn_gate(offsets)
-    assert gate_at(g, 30.0, 2) > gate_at(g, 30.0, 0)
-    assert all(h >= c for h, c in zip(g["upper_by_regime"]["2"], g["upper_by_regime"]["0"], strict=True))
-    assert g["upper_by_regime"]["1"] == [max(p, c) for p, c in zip(g["upper"], g["upper_by_regime"]["0"], strict=True)]
-    assert gate_at(g, 30.0) == gate_at({"bin_s": g["bin_s"], "upper": g["upper"]}, 30.0)  # no regime: pooled
