@@ -283,3 +283,13 @@ def test_anchor_gate_per_regime_is_wider_for_hard_anchors_and_never_below_gentle
     assert all(h >= c for h, c in zip(g["upper_by_regime"]["2"], g["upper_by_regime"]["0"], strict=True))
     assert g["upper_by_regime"]["1"] == [max(p, c) for p, c in zip(g["upper"], g["upper_by_regime"]["0"], strict=True)]
     assert gate_at(g, 30.0) == gate_at({"bin_s": g["bin_s"], "upper": g["upper"]}, 30.0)  # no regime: pooled
+
+
+def test_a_regime_seen_on_too_few_flights_uses_the_pooled_band():
+    from gaganrakshak.cpce import learn_gate
+
+    rng = np.random.default_rng(2)
+    offsets = [(a, abs(rng.normal(0, 1)) * (1 + 0.2 * a), 0) for a in rng.uniform(0, 60, 3000)]
+    offsets += [(a, abs(rng.normal(0, 1)) * (1 + 1.0 * a), 2) for a in rng.uniform(0, 60, 3000)]
+    g = learn_gate(offsets, flights_by_regime={"0": 200, "1": 0, "2": 5})  # many samples, few flights
+    assert g["upper_by_regime"]["2"] == [max(p, c) for p, c in zip(g["upper"], g["upper_by_regime"]["0"], strict=True)]
