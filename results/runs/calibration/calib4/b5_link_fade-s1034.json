@@ -1,10 +1,11 @@
 {
  "run_id": "b5_link_fade-s1034",
  "source": "calib4/b5_link_fade-s1034",
+ "flown_at": "before-b747b3e",
  "calibration": {
-  "cpce.json": "7d15e9ab37f2b42166f620e49094d1f4e7ca04fe",
-  "link_curves.json": "9ed0034d81e6c74f47234e488efe0311bf126d6d",
-  "estimator.json": "4c7e89c6686e24a1dd7f69f7d137fd5abfbaa206"
+  "cpce.json": "2ff346d6d2ae1a3a699cb71fc17bbd05f81abe49",
+  "link_curves.json": "6ea582539d3b29774b431332e3bcaa50c1b6e7f3",
+  "estimator.json": "7185f8b3e9baa07a6a8f87e75ecadd6f4d69af3f"
  },
  "scenario": "b5_link_fade",
  "seed": 1034,
@@ -972,6 +973,14 @@
    "t_end": 93.78,
    "evidence_types": [
     "unsigned_command"
+   ],
+   "artefact": "old_sizing",
+   "matched_uplink": [
+    {
+     "frame_sha256_8": "90ebcf87",
+     "onboard_t": 93.19,
+     "ground_t": 93.14
+    }
    ]
   },
   {
@@ -982,6 +991,14 @@
    "t_end": 240.98,
    "evidence_types": [
     "unsigned_command"
+   ],
+   "artefact": "old_sizing",
+   "matched_uplink": [
+    {
+     "frame_sha256_8": "b8ec2e6d",
+     "onboard_t": 240.42,
+     "ground_t": 240.39
+    }
    ]
   }
  ],

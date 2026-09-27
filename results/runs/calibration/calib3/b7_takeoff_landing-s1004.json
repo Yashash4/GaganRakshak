@@ -1,10 +1,11 @@
 {
  "run_id": "b7_takeoff_landing-s1004",
  "source": "calib3/b7_takeoff_landing-s1004",
+ "flown_at": "before-b747b3e",
  "calibration": {
-  "cpce.json": "7d15e9ab37f2b42166f620e49094d1f4e7ca04fe",
-  "link_curves.json": "9ed0034d81e6c74f47234e488efe0311bf126d6d",
-  "estimator.json": "4c7e89c6686e24a1dd7f69f7d137fd5abfbaa206"
+  "cpce.json": "2ff346d6d2ae1a3a699cb71fc17bbd05f81abe49",
+  "link_curves.json": "6ea582539d3b29774b431332e3bcaa50c1b6e7f3",
+  "estimator.json": "7185f8b3e9baa07a6a8f87e75ecadd6f4d69af3f"
  },
  "scenario": "b7_takeoff_landing",
  "seed": 1004,
@@ -268,8 +269,8 @@
    "agent": "onboard",
    "class": "gnss_integrity_advisory",
    "severity": 1,
-   "t_start": 37.4,
-   "t_end": 37.4,
+   "t_start": 37.8,
+   "t_end": 37.8,
    "evidence_types": [
     "gnss_inertial_inconsistency"
    ]
@@ -278,8 +279,8 @@
    "agent": "onboard",
    "class": "gps_spoofing",
    "severity": 3,
-   "t_start": 42.6,
-   "t_end": 42.6,
+   "t_start": 42.8,
+   "t_end": 42.8,
    "evidence_types": [
     "gps_spoofing"
    ]
