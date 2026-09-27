@@ -163,3 +163,21 @@ def test_old_sizing_marks_applies_the_whole_rule_to_a_recorded_run(tmp_path):
     marks = old_sizing_marks(tmp_path, eps, "before-b747b3e")
     assert list(marks) == [0] and marks[0][0]["onboard_t"] == 49.6
     assert old_sizing_marks(tmp_path, eps, "unknown") == {}  # flown after the fix: every alarm counts
+
+
+def test_exports_record_the_evaluating_commit_and_refuse_dirty_code_under_results(tmp_path):
+    from gaganrakshak.export import ROOT, check_output
+
+    run = tmp_path / "r"
+    run.mkdir()
+    (run / "labels.json").write_text(
+        json.dumps({"run_id": "x", "scenario": "b1", "seed": 1, "status": "failed: x", "events": []})
+    )
+    doc = json.loads(export_run(run, "validation", tmp_path / "out", evaluated_with="abc1234").read_text())
+    assert doc["evaluated_with"] == "abc1234"
+
+    check_output(ROOT / "results" / "runs", "abc1234")  # committed code: anywhere
+    for out, allow in ((ROOT / "results" / "runs", False), (ROOT / "results" / "runs", True), (tmp_path, False)):
+        with pytest.raises(SystemExit):  # dirty: never under results/, elsewhere only with --allow-dirty
+            check_output(out, "abc1234+dirty", allow)
+    check_output(tmp_path, "abc1234+dirty", allow_dirty=True)

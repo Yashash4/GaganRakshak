@@ -5,9 +5,10 @@ ground truth and the IDS's final output, and no computed metrics.
     python -m gaganrakshak.export --split calibration --guard --raw-root results/raw results/raw/calib3/*
 writes results/runs/<split>/<source>.json (source = the run's path under --raw-root, so runs of
 the same scenario and seed from different batches stay apart; else the run id) with: run_id,
-source, flown_at (the code version the run was flown with, see flown_at), calibration (the
-calibration files the IDS used, with their git blob hashes), scenario,
-seed, split, variant
+source, flown_at (the code version the run was flown with, see flown_at), evaluated_with (the
+commit of the code that evaluated it; exports under results/ are refused from uncommitted code),
+calibration (the calibration files the IDS used, with their git blob hashes), scenario, seed,
+split, variant
 ("dev" | "held_out" | null for runs without an attack), status, attack {type, params},
 events (labels, scenario time t), flight_s (takeoff to touchdown), physics {observable_s,
 armed_s} (when the physics engine's heading became observable and its longest horizon armed),
@@ -39,6 +40,13 @@ SPLITS = ("calibration", "validation", "test")
 # uplink loss; flights recorded before it sent 2 copies, so a lossy uplink could leave a genuine
 # command without a verifiable signature ("unsigned_command").
 SIGNATURE_SIZING_FIX_T = 1790462354
+
+
+def _code_version() -> str:
+    """The commit of the evaluating code ("<sha>+dirty" with uncommitted changes)."""
+    from .scenario import code_version
+
+    return code_version()
 
 
 def flown_at(labels: dict) -> str:
@@ -175,7 +183,26 @@ def distance_track(run: Path, t0: float, every_s: float = 1.0) -> list[list[floa
     return out
 
 
-def export_run(run: Path, split: str, out_root: Path = ROOT / "results" / "runs", source: str | None = None) -> Path:
+def check_output(out: Path, evaluated_with: str, allow_dirty: bool = False) -> None:
+    """Exports under results/ must come from committed code: refuse a dirty evaluating tree there.
+    ``allow_dirty`` is accepted only for scratch output outside results/."""
+    if not evaluated_with.endswith("+dirty"):
+        return
+    inside = out.resolve().is_relative_to((ROOT / "results").resolve())
+    if inside or not allow_dirty:
+        raise SystemExit(
+            f"the evaluating code has uncommitted changes ({evaluated_with}); commit it before exporting"
+            + (" under results/" if inside else ", or pass --allow-dirty for a scratch output outside results/")
+        )
+
+
+def export_run(
+    run: Path,
+    split: str,
+    out_root: Path = ROOT / "results" / "runs",
+    source: str | None = None,
+    evaluated_with: str | None = None,
+) -> Path:
     if split not in SPLITS:
         raise ValueError(f"split must be one of {SPLITS}")
     labels = json.loads((run / "labels.json").read_text())
@@ -189,6 +216,7 @@ def export_run(run: Path, split: str, out_root: Path = ROOT / "results" / "runs"
         "run_id": labels["run_id"],
         "source": source,
         "flown_at": flown_at(labels),
+        "evaluated_with": evaluated_with or _code_version(),
         "calibration": calibration_used(),
         "scenario": labels["scenario"],
         "seed": labels["seed"],
@@ -239,7 +267,10 @@ def main() -> None:
     ap.add_argument("--raw-root", type=Path, help="name each export by the run's path under this directory")
     ap.add_argument("--guard", action="store_true", help="only runs the calibration guard accepts")
     ap.add_argument("--workers", type=int, default=4)
+    ap.add_argument("--allow-dirty", action="store_true", help="scratch output outside results/ from uncommitted code")
     a = ap.parse_args()
+    version = _code_version()
+    check_output(a.out, version, a.allow_dirty)
     runs = []
     for r in a.runs:  # only flights that ran as planned; any other status is listed, not exported
         status = json.loads((r / "labels.json").read_text())["status"] if (r / "labels.json").exists() else None
@@ -255,7 +286,8 @@ def main() -> None:
     if len({s or r.name for s, r in zip(sources, runs, strict=True)}) != len(runs):
         raise SystemExit("two runs would be written to the same file; pass --raw-root")
     with ProcessPoolExecutor(a.workers) as ex:
-        for out in ex.map(export_run, runs, [a.split] * len(runs), [a.out] * len(runs), sources):
+        n = len(runs)
+        for out in ex.map(export_run, runs, [a.split] * n, [a.out] * n, sources, [version] * n):
             print(out)
 
 
