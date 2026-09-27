@@ -545,11 +545,14 @@ class Cpce:
         self.res.imu.max_s = anchor_max_s + max(self.res.horizons) + 5
         self.res.att_hist.max_s = self.res.imu.max_s
         self.k, self.h = calib["cusum"]["k"], calib["cusum"]["h"]
+        # the largest calibrated per-axis sigma of the shortest-horizon position residual
+        cells = calib["sigma"].get("r2", {}).get(str(min(self.res.horizons)), [])
+        self._sigma_step = max((x for row in cells for x in row if x is not None), default=1.0)
         self.res.trend_f_crit = calib["trend"]["f_crit"]
         self.persist_s, self.coherence, self.clear_n, self.anchor_max_s = persist_s, coherence, clear_n, anchor_max_s
-        self.S: dict[tuple[str, float], float] = {}
         self._t_prev: float | None = None
         self.states: deque = deque()  # (t, n, e, vn, ve) GNSS history for anchoring
+        self.steps: deque = deque()  # (t, r2) shortest-horizon position residuals: jump steps
         self.record = None  # list -> residual z values are appended (calibration)
         self._trend_reported = False
         # [confirmed at, cleared at or None]: a confirmed spoof stays open until the physics clears
@@ -562,6 +565,9 @@ class Cpce:
             self.spoof_intervals[-1][1] = t
         self.suspect: dict | None = None  # while a suspicion is open
         self._quiet = 0
+        # the closed episode's evidence is spent: restart the statistics so a later attack in the
+        # same flight crosses the threshold again instead of hiding under the drained remainder
+        self.S: dict[tuple[str, float], float] = {}
         self.res.freeze_bias = False
 
     def _ev(self, t, kind, sev, cls, **meta):
@@ -606,12 +612,19 @@ class Cpce:
             onset_out = [trend_ev]
         else:
             onset_out = []
+        is_step = r["H"] == min(self.res.horizons) and "r2" in r and not r.get("clipped")
+        if is_step:
+            self.steps.append((t, r["r2"]))
+            while t - self.steps[0][0] > 30.0:
+                self.steps.popleft()
         dt = t - self._t_prev if self._t_prev is not None else 0.2
         self._t_prev = t
+        rising = False
         for key, v in z.items():
             # consecutive windows of one horizon overlap almost entirely: weight each by dt/H so a
             # horizon contributes about one independent sample per H seconds
             s = max(0.0, self.S.get(key, 0.0) + (v - self.k) * min(1.0, dt / key[1]))
+            rising |= s > self.S.get(key, 0.0)
             if s > self.h and self.S.get(key, 0.0) <= self.h:
                 onset.append(key)
             self.S[key] = s
@@ -620,7 +633,14 @@ class Cpce:
             ch, H = onset[0]
             back = t - H - 3.0  # the state before the inconsistent window began
             anchor = next((x for x in reversed(self.states) if x[0] <= back), self.states[0])
-            self.suspect = {"t": t, "first": (ch, H), "anchor": anchor, "units": [], "reported": False}
+            self.suspect = {
+                "t": t,
+                "first": (ch, H),
+                "anchor": anchor,
+                "units": [],
+                "reported": False,
+                "released": False,
+            }
             self.res.freeze_bias = True
             out.append(
                 self._ev(
@@ -650,6 +670,13 @@ class Cpce:
             self.suspect["reported"] = True
             self.spoof_intervals.append([t, None])
             sub = "jump" if self.suspect["first"][1] == min(self.res.horizons) else "drift"
+            if sub == "jump":
+                # the onset step along the confirmed direction: its release must step back as far
+                ou = o / mag
+                self.suspect["onset_step"] = max(
+                    (float(np.dot(v, ou)) for ts, v in self.steps if ts >= self.suspect["anchor"][0]), default=0.0
+                )
+                self.suspect["direction"] = ou
             out.append(
                 self._ev(
                     t,
@@ -665,8 +692,21 @@ class Cpce:
                 )
             )
         # an ongoing spoof must not end its own episode: the suspicion clears only after clear_n
-        # quiet fixes with the offset back inside the clean-flight gate (no age-based reset)
-        quiet = all(v == 0.0 for v in self.S.values()) and mag <= gate
+        # quiet fixes with the offset back inside the clean-flight gate (no age-based reset).
+        # A confirmed jump clears only once it has been seen RELEASED: the short-horizon position
+        # residual steps back along the confirmed direction by the onset step, within noise. The
+        # gate grows with anchor age, so a held jump eventually sits inside it; it never steps
+        # back, and a partial step back leaves the rest held. After the release, quiet = no
+        # statistic still accumulating (the jump wound a CUSUM up to thousands, which would take
+        # hours to drain to zero).
+        s_on = self.suspect.get("onset_step")
+        if s_on is None:
+            quiet = all(v == 0.0 for v in self.S.values()) and mag <= gate
+        else:
+            if is_step:
+                tol = max(3.0 * self._sigma_step, 0.1 * s_on)
+                self.suspect["released"] |= float(np.dot(r["r2"], self.suspect["direction"])) <= -(s_on - tol)
+            quiet = self.suspect["released"] and not rising and mag <= gate
         self._quiet = self._quiet + 1 if quiet else 0
         if self._quiet >= self.clear_n:
             self._reset(t)

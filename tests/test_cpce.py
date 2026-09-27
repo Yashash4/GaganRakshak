@@ -270,3 +270,38 @@ def test_outlier_screen_drops_only_a_run_far_above_its_scenario_group():
     results = [run_result(p) for p in peaks] + [run_result(9.0), run_result(0.2)]  # b5 group too small to screen
     kept, _, screened = screen_outliers(runs, results)
     assert [s["run"] for s in screened] == ["b1_calm-s1005"] and len(kept) == 7
+
+
+def test_confirmed_spoof_clears_only_after_its_release_and_a_second_attack_is_seen(monkeypatch):
+    """A held jump never clears, even once the age-growing gate contains its offset, nor after a
+    partial step back; the release (the short-horizon residual stepping back by the onset step)
+    clears it although the jump's wound-up statistic
+    has not drained, and a later attack in the same flight onsets again."""
+    import gaganrakshak.cpce as cpce
+
+    z = {"v": 0.0}
+    off = {"m": 0.0}
+    monkeypatch.setattr(cpce, "nis", lambda r, sigma: {("r2", 2.0): z["v"]})
+    monkeypatch.setattr(cpce.Cpce, "_anchored_offset", lambda self, t: (np.array([off["m"], 0.0]), 10.0))
+    det = cpce.Cpce({"sigma": {}, "cusum": {"k": 3.0, "h": 264.0}, "trend": {"f_crit": 1.0}, "anchor_gate": None})
+    det.calib["anchor_gate"] = {"bin_s": 10.0, "upper": [20.0]}
+    det.res.gnss = [(0.0, 0.0, 0.0, 0.0, 0.0, 0.0)]
+
+    def fly(t0, t1, zv, m, step=0.0):
+        z["v"], off["m"] = zv, m
+        ev = []
+        for i in range(int((t1 - t0) * 5)):
+            r2 = np.array([step if i == 0 else 0.0, 0.0])
+            ev += det._step({"t": t0 + i / 5, "H": 2.0, "r2": r2})
+        return ev
+
+    first = fly(0, 3, 2000.0, 100.0, step=100.0) + fly(3, 20, 0.0, 100.0)  # jump, then held
+    assert [e.evidence_type for e in first] == ["gnss_inertial_inconsistency", "gps_spoofing"]
+    fly(20, 200, 0.0, 1.0)  # still held; the offset now inside the gate, nothing accumulating
+    assert det.suspect is not None and det.spoof_intervals[0][1] is None
+    fly(200, 210, 0.0, 1.0, step=-51.0)  # partial release: the rest of the jump is still held
+    assert det.suspect is not None and det.spoof_intervals[0][1] is None
+    fly(210, 220, 0.0, 1.0, step=-100.0)  # a step back by the whole onset step: released
+    assert det.spoof_intervals[0][1] is not None and det.suspect is None
+    second = fly(220, 223, 2000.0, 100.0)
+    assert [e.evidence_type for e in second] == ["gnss_inertial_inconsistency"]
