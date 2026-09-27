@@ -40,27 +40,44 @@ def detectors(
     estimator_calib: Path = ESTIMATOR_CALIB,
     uncalibrated: bool = False,
     onboard_gnss: list[list] | None = None,
+    no_crypto: bool = False,
 ) -> list:
     """Each agent's detector set for a recorded run, with the learned link, physics and estimator
     settings. A missing artefact is an error: silently falling back to defaults would produce
     numbers from an uncalibrated IDS. Only calibration itself passes ``uncalibrated=True`` (it
-    judges runs before any artefact exists): then the learned detectors are left out."""
+    judges runs before any artefact exists): then the learned detectors are left out.
+    ``no_crypto`` replays the same recording as if command signatures and downlink commitments were
+    unavailable (a compromised key, or signing switched off): no signature verification, no
+    commitment checks; every other detector unchanged. An evaluation-only ablation."""
     if not uncalibrated:
         missing = [str(f) for f in (link_curves, cpce_calib, estimator_calib) if not f.exists()]
         if missing:
             raise FileNotFoundError(f"calibration artefact(s) missing: {missing}; run the calibration first")
     if side == "onboard":
-        verifier = CmdVerifier(_pub(run, "ground_sign"))
         baseline = load_baseline(BASELINE.with_suffix(".json"), bytes.fromhex(BASELINE.with_suffix(".pub").read_text()))
-        onboard = [for_agent("onboard", verifier=verifier), verifier, IntegrityMonitor(baseline, verifier)]
+        if no_crypto:  # nothing is verified: every write is unauthenticated, unsafe commands have no signer
+            onboard = [for_agent("onboard", verifier=None), IntegrityMonitor(baseline, _NoSignatures())]
+        else:
+            verifier = CmdVerifier(_pub(run, "ground_sign"))
+            onboard = [for_agent("onboard", verifier=verifier), verifier, IntegrityMonitor(baseline, verifier)]
         if not uncalibrated:
             onboard.append(Cpce(json.loads(cpce_calib.read_text())))
             onboard.append(EstimatorMonitor(json.loads(estimator_calib.read_text())))
         return onboard
     curves = {} if uncalibrated else load_curves(link_curves)
-    rx = CommitRx(_pub(run, "onboard_commit"), **curves.pop("commit", {}))
+    commit = curves.pop("commit", {})
+    if no_crypto:  # no commitments: no frame verification and no commitment-based loss measurement
+        lm = LinkMonitor(None, curves=curves or None, onboard_gnss=onboard_gnss)
+        return [for_agent("ground"), lm, ResponseMonitor(rx=None)]
+    rx = CommitRx(_pub(run, "onboard_commit"), **commit)
     lm = LinkMonitor(rx, curves=curves or None, onboard_gnss=onboard_gnss)
     return [for_agent("ground"), rx, lm, ResponseMonitor(rx=rx)]
+
+
+class _NoSignatures:
+    """Stands for the signature verifier when crypto is off: no command is ever verified."""
+
+    outcome: dict = {}
 
 
 def evaluate(
@@ -69,6 +86,7 @@ def evaluate(
     cpce_calib: Path = CPCE_CALIB,
     estimator_calib: Path = ESTIMATOR_CALIB,
     uncalibrated: bool = False,
+    no_crypto: bool = False,
 ) -> dict:
     labels = json.loads((run / "labels.json").read_text())
     t0 = labels["t0_wall"]
@@ -84,7 +102,7 @@ def evaluate(
     }
     onboard_gnss: list[list] = []  # onboard confirmed-spoof intervals, forwarded to the ground agent
     for side in ("onboard", "ground"):
-        ids = Ids(detectors(side, run, link_curves, cpce_calib, estimator_calib, uncalibrated, onboard_gnss))
+        ids = Ids(detectors(side, run, link_curves, cpce_calib, estimator_calib, uncalibrated, onboard_gnss, no_crypto))
         run_replay(ids, run / side)
         if side == "onboard":  # confirmed GNSS spoofing, open until cleared, for the ground agent's distance trust
             onboard_gnss += [iv for d in ids.detectors if isinstance(d, Cpce) for iv in d.spoof_intervals]

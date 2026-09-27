@@ -23,6 +23,7 @@ import json
 import math
 import time
 from pathlib import Path
+from typing import Protocol
 
 from pymavlink import mavutil
 
@@ -141,8 +142,14 @@ def capture_baseline(connect: str, timeout: float = 60.0) -> dict:
 # -- detector -------------------------------------------------------------------------------
 
 
+class Verdicts(Protocol):
+    """What this monitor needs from the command-signature verifier: its verdict per command."""
+
+    outcome: dict
+
+
 class IntegrityMonitor:
-    def __init__(self, baseline: dict, verifier: CmdVerifier, uav_id: int = 1, settle_s: float = 1.0):
+    def __init__(self, baseline: dict, verifier: Verdicts, uav_id: int = 1, settle_s: float = 1.0):
         self.base = baseline
         self.verifier = verifier
         self.uav_id = uav_id

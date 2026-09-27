@@ -202,6 +202,7 @@ def export_run(
     out_root: Path = ROOT / "results" / "runs",
     source: str | None = None,
     evaluated_with: str | None = None,
+    no_crypto: bool = False,
 ) -> Path:
     if split not in SPLITS:
         raise ValueError(f"split must be one of {SPLITS}")
@@ -214,6 +215,7 @@ def export_run(
     attack = labels.get("attack")
     doc = {
         "run_id": labels["run_id"],
+        "crypto": not no_crypto,  # False: the crypto-off ablation replay (evaluation only)
         "source": source,
         "flown_at": flown_at(labels),
         "evaluated_with": evaluated_with or _code_version(),
@@ -242,7 +244,7 @@ def export_run(
         "baseline_episodes": [],
     }
     if labels["status"] == "ok":
-        ev = evaluate(run)
+        ev = evaluate(run, no_crypto=no_crypto)
         doc["physics"] = ev["physics"]
         doc["episodes"] = [
             {k: ep[k] for k in ("agent", "class", "severity", "t_start", "t_end", "evidence_types")}
@@ -268,6 +270,7 @@ def main() -> None:
     ap.add_argument("--guard", action="store_true", help="only runs the calibration guard accepts")
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--allow-dirty", action="store_true", help="scratch output outside results/ from uncommitted code")
+    ap.add_argument("--no-crypto", action="store_true", help="ablation: replay without signature/commitment checks")
     a = ap.parse_args()
     version = _code_version()
     check_output(a.out, version, a.allow_dirty)
@@ -287,7 +290,8 @@ def main() -> None:
         raise SystemExit("two runs would be written to the same file; pass --raw-root")
     with ProcessPoolExecutor(a.workers) as ex:
         n = len(runs)
-        for out in ex.map(export_run, runs, [a.split] * n, [a.out] * n, sources, [version] * n):
+        nc = [a.no_crypto] * n
+        for out in ex.map(export_run, runs, [a.split] * n, [a.out] * n, sources, [version] * n, nc):
             print(out)
 
 

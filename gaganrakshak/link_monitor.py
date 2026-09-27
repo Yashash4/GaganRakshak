@@ -198,7 +198,7 @@ class LinkMonitor:
                 self._t_congested = self._t_congested if self._t_congested is not None else t
             else:
                 self._t_congested = None
-        elif name == "GR_COMMIT":
+        elif name == "GR_COMMIT" and self.rx is not None:
             listed, missing, lost = self.rx.recent_loss(self.window)
             if listed >= self.min_frames:
                 observed = missing / listed

@@ -28,3 +28,17 @@ def test_uncalibrated_leaves_out_the_learned_detectors(tmp_path):
         (tmp_path / f"{name}.pub").write_text(generate_keypair()[1].hex())
     kinds = {type(d).__name__ for d in ev.detectors("onboard", tmp_path, uncalibrated=True, cpce_calib=Path("/x"))}
     assert "Cpce" not in kinds and "EstimatorMonitor" not in kinds
+
+
+def test_no_crypto_replay_leaves_out_signature_and_commitment_checks(tmp_path):
+    from gaganrakshak.cmd_sign import CmdVerifier
+    from gaganrakshak.commit import CommitRx
+    from gaganrakshak.crypto import generate_keypair
+
+    for name in ("ground_sign", "onboard_commit"):
+        (tmp_path / f"{name}.pub").write_text(generate_keypair()[1].hex())
+    for side in ("onboard", "ground"):
+        normal = {type(d) for d in ev.detectors(side, tmp_path)}
+        off = {type(d) for d in ev.detectors(side, tmp_path, no_crypto=True)}
+        assert not off & {CmdVerifier, CommitRx}
+        assert normal - off <= {CmdVerifier, CommitRx}  # nothing else is switched off
