@@ -1,0 +1,77 @@
+{
+ "radio_rate_bps_each_way": 57600,
+ "runs": [
+  {
+   "run": "b1_calm-s5001",
+   "downlink": {
+    "seconds": 257.5,
+    "total_bps": 34375.3,
+    "ids_bps": 2963.4,
+    "ids_messages": [
+     "GR_COMMIT",
+     "GR_LINK_SIGNED"
+    ],
+    "total_pct_of_rate": 59.68,
+    "ids_pct_of_rate": 5.14
+   },
+   "uplink": {
+    "seconds": 257.0,
+    "total_bps": 472.1,
+    "ids_bps": 260.3,
+    "ids_messages": [
+     "GR_CMD_SIG"
+    ],
+    "total_pct_of_rate": 0.82,
+    "ids_pct_of_rate": 0.45
+   }
+  },
+  {
+   "run": "b3_aggressive-s5001",
+   "downlink": {
+    "seconds": 259.6,
+    "total_bps": 34368.9,
+    "ids_bps": 2975.2,
+    "ids_messages": [
+     "GR_COMMIT",
+     "GR_LINK_SIGNED"
+    ],
+    "total_pct_of_rate": 59.67,
+    "ids_pct_of_rate": 5.17
+   },
+   "uplink": {
+    "seconds": 258.9,
+    "total_bps": 443.7,
+    "ids_bps": 236.1,
+    "ids_messages": [
+     "GR_CMD_SIG"
+    ],
+    "total_pct_of_rate": 0.77,
+    "ids_pct_of_rate": 0.41
+   }
+  },
+  {
+   "run": "b6_operator-s5001",
+   "downlink": {
+    "seconds": 238.5,
+    "total_bps": 33416.4,
+    "ids_bps": 2961.0,
+    "ids_messages": [
+     "GR_COMMIT",
+     "GR_LINK_SIGNED"
+    ],
+    "total_pct_of_rate": 58.01,
+    "ids_pct_of_rate": 5.14
+   },
+   "uplink": {
+    "seconds": 237.9,
+    "total_bps": 420.5,
+    "ids_bps": 220.2,
+    "ids_messages": [
+     "GR_CMD_SIG"
+    ],
+    "total_pct_of_rate": 0.73,
+    "ids_pct_of_rate": 0.38
+   }
+  }
+ ]
+}
