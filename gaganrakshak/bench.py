@@ -246,6 +246,8 @@ def score(docs: list[dict], key: str, agent_check: bool) -> dict:
     hours = 0.0
     band_s: dict[str, float] = defaultdict(float)
     fa_band: dict[str, int] = defaultdict(int)
+    scen_s: dict[str, float] = defaultdict(float)  # clean seconds per scenario (benign flight or pre/post-attack)
+    fa_scen: dict[str, int] = defaultdict(int)
     false_alarms, ground, artefacts = [], [], []
     for doc in docs:
         eps = [ep for ep in doc[key] if "artefact" not in ep]  # marked recording artefacts: reported apart
@@ -262,6 +264,7 @@ def score(docs: list[dict], key: str, agent_check: bool) -> dict:
             ].append(r)
         track = doc.get("distance_track", [])
         clean = clean_intervals(doc)
+        scen_s[group_of(doc)] += sum(c1 - c0 for c0, c1 in clean)
         for c0, c1 in clean:
             hours += (c1 - c0) / 3600
             for b, sec in band_time(track, c0, c1).items():
@@ -274,6 +277,7 @@ def score(docs: list[dict], key: str, agent_check: bool) -> dict:
                 adv += 1
                 continue
             fa += 1
+            fa_scen[group_of(doc)] += 1
             item = {"run": doc["run_id"], **{k: ep.get(k) for k in ("agent", "class", "t_start", "evidence_types")}}
             false_alarms.append(item)
             if where == "on_ground":
@@ -293,6 +297,7 @@ def score(docs: list[dict], key: str, agent_check: bool) -> dict:
                 **{b: _rate(fa_band.get(b, 0), sec / 3600) for b, sec in sorted(band_s.items())},
                 "on_ground": _rate(fa_band.get("on_ground", 0), 0.0),
             },
+            "by_scenario": {g: _rate(fa_scen.get(g, 0), sec / 3600) for g, sec in sorted(scen_s.items())},
             "ground_phase_false_alarms": {"count": len(ground), "list": ground},
             "list": false_alarms,
         },
@@ -367,6 +372,16 @@ def markdown(m: dict) -> str:
     ]
     for b, f in m["ids"]["false_alarms"]["by_distance"].items():
         out.append(f"| {b} | {f['clean_hours']} | {f['count']} | {f['per_hour']} | {f['upper95_per_hour']} |")
+    out += [
+        "\n### False alarms per scenario (benign flights; attack flights outside the attack window)\n",
+        "| scenario | clean hours | IDS false alarms | per hour | 95 % upper bound | ArduPilot false alarms |",
+        "|---|---|---|---|---|---|",
+    ]
+    for g, f in m["ids"]["false_alarms"]["by_scenario"].items():
+        b = m["baseline"]["false_alarms"]["by_scenario"][g]
+        out.append(
+            f"| {g} | {f['clean_hours']} | {f['count']} | {f['per_hour']} | {f['upper95_per_hour']} | {b['count']} |"
+        )
     n = m["ids"]["recording_artefacts"]["count"]
     out.append(f"\nRecording artefacts reported apart (not alarms, not detections): {n}.")
     return "\n".join(out) + "\n"

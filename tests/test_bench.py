@@ -155,3 +155,14 @@ def test_old_sizing_artefacts_are_reported_apart_not_as_alarms_or_detections():
     assert m["recording_artefacts"]["count"] == 2
     assert {a["run"] for a in m["recording_artefacts"]["list"]} == {"b1_calm-s1", "a3_cmd_injection-s1"}
     assert m["detection"]["a3_cmd_injection"]["detected_during"] == 0
+
+
+def test_false_alarms_per_scenario_use_that_scenario_s_clean_time(tmp_path):
+    by = bench.score(RUNS, "episodes", agent_check=True)["false_alarms"]["by_scenario"]
+    assert set(by) == {"a2_gps_drift", "b1_calm"}
+    assert by["a2_gps_drift"]["count"] == 2 and by["a2_gps_drift"]["clean_hours"] == round(150 / 3600, 3)
+    assert by["b1_calm"]["count"] == 3 and by["b1_calm"]["clean_hours"] == round(100 / 3600, 3)  # incl. ground phase
+    for d in RUNS:
+        (tmp_path / f"{d['run_id']}.json").write_text(json.dumps(d))
+    md = bench.markdown(bench.metrics(tmp_path))
+    assert "### False alarms per scenario" in md and "| b1_calm | 0.028 | 3 |" in md
