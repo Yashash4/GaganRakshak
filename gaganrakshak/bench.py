@@ -412,12 +412,15 @@ def manifest(plans: list[dict]) -> dict:
     return {"split": "test", "runs": len(runs), "seeds": [min(seeds), max(seeds)], "plan": runs}
 
 
-def check_unflown(plans: list[dict], exports: Path = ROOT / "results" / "runs") -> None:
-    """Refuse if any planned test run already has an export: test runs are flown and scored once."""
+def check_unflown(plans: list[dict], exports: Path = ROOT / "results" / "runs", raw: Path | None = None) -> None:
+    """Refuse if any planned test run already has an export, or a recording in ``raw`` (a finished
+    or an interrupted flight): test runs are flown and scored once."""
     ids = {p["run_id"] for p in plans}
     seen = [f for f in exports.rglob("*.json") if f.stem in ids]
+    if raw is not None and raw.is_dir():
+        seen += [d for d in raw.iterdir() if d.name in ids]
     if seen:
-        raise SystemExit(f"test runs already exported: {[str(f) for f in seen[:5]]}")
+        raise SystemExit(f"test runs already flown or exported: {[str(f) for f in seen[:5]]}")
 
 
 def main() -> None:
@@ -452,10 +455,11 @@ def main() -> None:
         return
     if not MANIFEST.exists() or json.loads(MANIFEST.read_text()) != json.loads(json.dumps(m)):
         raise SystemExit(f"the plan differs from the committed manifest {MANIFEST}; regenerate and commit it first")
-    check_unflown(plans)
+    raw = a.out or ROOT / "results" / "raw" / "test"
+    check_unflown(plans, raw=raw)
     from .scenario import run_many
 
-    for run_id, status in run_many(plans, a.out or ROOT / "results" / "raw" / "test", a.workers, a.first_instance):
+    for run_id, status in run_many(plans, raw, a.workers, a.first_instance):
         print(run_id, status)
 
 

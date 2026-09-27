@@ -181,3 +181,6 @@ def test_manifest_is_deterministic_and_refuses_already_exported_test_runs(tmp_pa
     (tmp_path / "test" / f"{plans[0]['run_id']}.json").write_text("{}")
     with pytest.raises(SystemExit):
         check_unflown(plans, tmp_path)
+    (tmp_path / "raw" / plans[1]["run_id"]).mkdir(parents=True)  # an interrupted flight's recording
+    with pytest.raises(SystemExit):
+        check_unflown(plans[1:], tmp_path / "none", raw=tmp_path / "raw")
