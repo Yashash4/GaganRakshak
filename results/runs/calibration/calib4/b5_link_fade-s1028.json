@@ -2,6 +2,7 @@
  "run_id": "b5_link_fade-s1028",
  "source": "calib4/b5_link_fade-s1028",
  "flown_at": "before-b747b3e",
+ "evaluated_with": "cf15b7c",
  "calibration": {
   "cpce.json": "2ff346d6d2ae1a3a699cb71fc17bbd05f81abe49",
   "link_curves.json": "6ea582539d3b29774b431332e3bcaa50c1b6e7f3",

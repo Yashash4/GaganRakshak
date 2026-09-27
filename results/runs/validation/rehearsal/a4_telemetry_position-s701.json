@@ -2,6 +2,7 @@
  "run_id": "a4_telemetry_position-s701",
  "source": "rehearsal/a4_telemetry_position-s701",
  "flown_at": "unknown",
+ "evaluated_with": "cf15b7c",
  "calibration": {
   "cpce.json": "2ff346d6d2ae1a3a699cb71fc17bbd05f81abe49",
   "link_curves.json": "6ea582539d3b29774b431332e3bcaa50c1b6e7f3",
