@@ -19,13 +19,18 @@ The fork stays under GPL-3.0.
 |---|---|---|
 | ArduPilot (Copter SITL) | Simulated flight controller for all experiments; runs as a separate process, talks MAVLink | GPL-3.0 |
 | pymavlink | MAVLink encoding/decoding; its `mavgen` generator produced `gaganrakshak/mavlink/gr_dialect.py` from our own message definitions (`gaganrakshak.xml`) | LGPL-3.0 |
-| MAVProxy | Ground control station in the test setup | GPL-3.0 |
+| MAVProxy | Development dependency only; not run in the test setup (the scripted ground station sends MAVProxy-style stream requests) | GPL-3.0 |
 | NumPy, SciPy | Numerics | BSD-3-Clause |
 | scikit-learn | Isolation Forest (supporting anomaly score) | BSD-3-Clause |
 | cryptography (pyca) | Ed25519, SHA-256 | Apache-2.0 / BSD |
 | PyYAML | Scenario files | MIT |
 | rich | Terminal dashboard | MIT |
 | pytest | Tests | MIT |
+| pytest-cov | Test coverage (development) | MIT |
+| Ruff | Lint and formatting (development) | MIT |
+| mypy, types-PyYAML | Static type checks (development) | MIT; Apache-2.0 |
+| PyTorch | Optional `ml` extra: autoencoder baseline models (`gaganrakshak.ml`) | BSD-3-Clause |
+| Matplotlib | Optional `figures` extra: result figures (`gaganrakshak.figures`) | Matplotlib licence (PSF-based) |
 | Ubuntu 24.04 (Docker base image `ubuntu:24.04`) | Container base for the optional Docker image | Various (Canonical; see the image's /usr/share/doc) |
 
 ## Background IP (team's own prior work)
