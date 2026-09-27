@@ -29,6 +29,8 @@ every decision goes to a signed, tamper-evident evidence log.
 (SITL flight tests excluded), measured when this badge was last updated; CI prints the current
 figure in each run's summary.</sub>
 
+**Contents:** [Results](#results-at-a-glance) · [Quick links](#quick-links) · [How it works](#how-it-works) · [Limitations](#limitations-measured-not-hidden) · [Roadmap](#roadmap) · [Install](#install) · [Docker](#run-with-docker) · [Benchmark](#benchmark) · [Cite](#citation)
+
 ## Results at a glance
 
 460 pre-registered test flights, flown once on frozen code (tag `bench-freeze`), ArduPilot
@@ -100,6 +102,33 @@ coherent GNSS spoofer). Flight code is unmodified; with the parameter
 at 0 the simulated GPS is identical to stock. The simulator change is proposed upstream as
 [ArduPilot PR #34510](https://github.com/ArduPilot/ardupilot/pull/34510). GPL-3.0, a separate program reached over MAVLink
 (see THIRD_PARTY.md).
+
+## Limitations (measured, not hidden)
+- **Slow GNSS spoofing:** with inertial physics alone, a coherent drift up to 2 m/s is caught only
+  when it is released; an independent second GNSS reference (extension) catches 0.5–2 m/s during
+  the attack in 60/60 flights. The floor is the autopilot's own tilt error (0.1–0.37°).
+- **Long range:** beyond ~200 m on a fading 57.6 kbps link, short jams look like range loss, and
+  2.9 % of genuine commands lost every signature copy (all beyond 200 m), each a false alarm.
+- **Two receivers spoofed together**, or the reference jammed, defeats the extension check.
+- Everything is ArduPilot SITL; overhead is measured on a DGX Spark (also capped to 25 % of one
+  core), not yet on a companion computer. Full list: [technical report](docs/technical-report.md).
+
+## Roadmap
+Hardware test bed (Pixhawk-class FC, Raspberry Pi 5 / Jetson, SiK radios) · PX4 adapter ·
+an independent navigation reference (NavIC / second constellation, receiver C/N0 and spoofing flags) ·
+full-rate IMU access · burst-aware signature sizing and RSSI-driven fade handling · fail-open
+hardware bypass, secure boot, optional prevention mode · authorised field tests.
+
+## Citation
+```bibtex
+@software{gaganrakshak2026,
+  title  = {GaganRakshak: onboard and ground intrusion detection for drones},
+  author = {Sheshagiri, Yashash and Batageri, Mayur and Karnalkar, Swati and Sunar, Suma},
+  year   = {2026},
+  url    = {https://github.com/Yashash4/GaganRakshak},
+  note   = {Team Eagle Vision; version v0.1.0-stage1}
+}
+```
 
 ## Install
 Full setup, including the ArduPilot SITL used by the flight tests:
