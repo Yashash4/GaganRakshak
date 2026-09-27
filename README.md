@@ -51,7 +51,7 @@ attack was active**, 10 flights per attack type. Full tables: [`results/bench/su
 | **+ independent second GNSS reference** (extension, own 150 test flights) | — | slow drift 11/80 → **74/80** | 9–35 s |
 
 **False alarms, measured honestly:** 29 in 22.1 clean flight-hours = **1.31 per hour** (95 %
-upper bound 1.79), **above our 1/h design budget**. None within 200 m of the ground station
+upper bound 1.79), **above our 1/h design budget** (26 in flight, 3 after landing). None within 200 m of the ground station
 (19.4 h); all on the long-range fading-link flights. Stock ArduPilot: 60 (2.71/h), all on benign
 GNSS glitches. The limits are measured and stated below and in the technical report.
 

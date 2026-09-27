@@ -80,7 +80,7 @@ airborne hours), flown once on the frozen code.
   held-out (0.2 s), jamming within 100 m (4.0 s). For these attack families stock ArduPilot
   flagged only the GNSS jump.
 - False alarms: 29 in 22.1 clean airborne hours = 1.31/h (95 % upper bound 1.79/h), above our
-  1/h design budget. None within 200 m of the ground station (19.4 h); all 29 on the fading-link
+  1/h design budget (26 in flight = 1.17/h, plus 3 after landing, conservatively included). None within 200 m of the ground station (19.4 h); all 29 on the fading-link
   and far-range flights: 26 airborne beyond 200 m, 3 after landing (see limitations). Stock ArduPilot: 60 (2.71/h), all on
   benign GNSS glitches.
 - Slow coherent GNSS drift (0.1–2 m/s, or accelerating) is not caught while active; it is
@@ -144,7 +144,7 @@ calibrated and reported honestly — observed from both ends of the link.
 | T4 | Telemetry | Telemetry manipulation (position, attitude, battery) | Man-in-the-middle on the link | Operator deceived | Ground-side signed commitments |
 | T5 | Communication | MAVLink anomalies: impersonation of the FC, unknown sources, malformed frames | Rogue transmitter | Confusion, masking | Protocol checks, per-sender sequence analysis |
 | T6 | Communication | Denial of service: link flood, jamming | Transmitter, possibly spoofing the GCS id | Loss of control/telemetry | Learned loss-vs-distance bands, congestion, telemetry gaps |
-| T7 | Firmware/system | Parameter, mission or file tampering; reported firmware identity change | Link access, or compromised GCS | Failsafes disabled, geofence removed | Signed configuration baseline + write detection |
+| T7 | Firmware/system | Parameter, mission or file tampering; reported firmware-identity mismatch (not binary firmware integrity) | Link access, or compromised GCS | Failsafes disabled, geofence removed | Signed configuration baseline + write detection |
 | T8 | Command/control | Replay of a captured valid command | Passive capture | Repeated/untimely actions | Monotonic signed counters |
 
 ### 3.2 Architecture
@@ -180,7 +180,7 @@ heading has become observable (first acceleration). At each GNSS fix (fix time u
 The accelerometer bias is learned with a physical prior (σ = 0.5 m/s², consumer MEMS class),
 only along observable directions, only while the heading is changing, and with a bounded rate
 afterwards; a change-point test separates a body-fixed bias from an NED-fixed (spoof-like)
-acceleration, so the learner cannot quietly absorb a spoof. Noise levels are conditioned on
+acceleration, limiting but not eliminating bias absorption (the remaining failure mode is measured in the limitations). Noise levels are conditioned on
 acceleration regime and measured vibration, from inertial data only.
 
 **(b) Evidence accumulation.** Each normalised residual feeds a CUSUM accumulator weighted so
@@ -196,7 +196,7 @@ becomes a **GNSS integrity advisory**, so a short spoof is never silently droppe
   reports in a signed link report (forged or stale reports → maximum copies). Onboard, unsigned,
   badly signed or replayed commands are evidence, judged frame by frame. A signed in-flight
   disarm or termination is the operator's (logged, no alarm).
-- *Downlink:* every security-relevant frame is listed as (sequence, message id, 4-byte hash);
+- *Downlink:* every security-relevant frame is listed as (sequence, message id, 4-byte hash; a bandwidth-constrained Stage 1 tag, widened in Stage 2 for collision resistance);
   once per second the list is signed. The ground agent classifies every received frame as
   matched, altered, injected or unverified; ordinary loss is link statistics, never an alarm;
   selective loss of commitments and commitment timeouts are judged against learned limits.
@@ -281,7 +281,7 @@ own indicators on the same flights: ArduPilot flagged every GNSS jump (0.2 s) an
 - **Flight controllers:** any MAVLink autopilot. Detectors consume a platform-independent
   sample schema; ArduPilot adapter now, PX4 adapter in Stage 2 (same interface).
 - **Deployment:** companion computer (e.g. Raspberry Pi / Jetson) wired inline between FC
-  and radio; ground agent on the GCS host. **No flight-controller firmware change.**
+  and radio; ground agent on the GCS host. **No flight-control logic changed** (only a simulator-only GNSS fault-injection hook in our SITL fork).
 - **Protocols:** MAVLink 2; four small custom messages (command signature, signed
   commitment, link report, signed link report) in our own dialect; standard GCS traffic
   (MAVProxy-style stream requests) unaffected.
@@ -353,7 +353,7 @@ rejected automatically, including cross-run outliers.
 - The mission-jump (DO_JUMP) rule is unit-tested, not flight-tested (the harness flies GUIDED).
 - IMU reaches the companion as a MAVLink stream; full-rate IMU access is Stage 2.
 - Overhead is measured on the DGX Spark (including a 25 %/50 % single-core cap), not on a companion computer (Stage 2).
-- Firmware coverage = configuration integrity + reported-version change; secure boot = Stage 2.
+- Firmware-related coverage is limited to a reported firmware-identity mismatch; binary firmware integrity and secure boot are Stage 2.
 - All attacks were run in simulation only; no RF transmission or real flight attack was performed.
 
 ---
