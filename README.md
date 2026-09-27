@@ -74,6 +74,8 @@ docker run --rm -v "$PWD/results/raw:/app/results/raw" gaganrakshak bench b1_cal
 docker run --rm gaganrakshak pytest -q -m "not sitl"
 ```
 Tested on ARM64 Linux (DGX Spark); x86-64 builds from the same source, untested.
+While SITL starts you may see `[Errno 111] Connection refused ... sleeping`: this is the
+harness waiting for the simulator's port to open, and is expected.
 
 `scenarios/` holds the attack scenarios (`a*`; `a3h_*` and `a5h_*` are held-out variants) and
 the benign ones (`b*`: calm, wind, aggressive flying, GNSS glitches, link fade, operator
