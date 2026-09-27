@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="docs/img/cover.png" width="100%" alt="GaganRakshak: onboard + ground intrusion detection for drones" />
+
 # GaganRakshak
 
 **Onboard + ground intrusion detection for drones: checks GPS against physics, and every command and telemetry frame against signatures.**
