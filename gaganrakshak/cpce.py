@@ -682,19 +682,11 @@ class Cpce:
         return out
 
 
-def learn_gate(
-    offsets: list[tuple],
-    bin_s: float = 10.0,
-    q: float = 0.999,
-    floor: float = 2.0,
-    flights_by_regime: dict[str, int] | None = None,
-    min_flights: int = 20,
-) -> dict:
+def learn_gate(offsets: list[tuple], bin_s: float = 10.0, q: float = 0.999, floor: float = 2.0) -> dict:
     """Anchored-offset gate per anchor-age bin: the q-quantile of the offsets clean flights reach
     at that age (pure inertial prediction from a trusted anchor), non-decreasing with age; pooled,
     and per acceleration regime at the anchor (offsets are (age, magnitude, regime)). A regime bin
-    with too few samples, or seen on fewer than ``min_flights`` flights (2 s anchors within one flight
-    are correlated), uses the pooled value, never less than the gentler regime's."""
+    with too few samples uses the pooled value, never less than the gentler regime's."""
     n = int(ANCHOR_MAX_S // bin_s) + 1
 
     def band(sel) -> list[float]:
@@ -710,8 +702,7 @@ def learn_gate(
     by_reg: dict[str, list[float]] = {}
     for reg in range(3):
         sel = [o for o in offsets if len(o) > 2 and o[2] == reg]
-        enough_flights = flights_by_regime is None or flights_by_regime.get(str(reg), 0) >= min_flights
-        own = band(sel) if len(sel) >= 20 * n // 3 and enough_flights else pooled
+        own = band(sel) if len(sel) >= 20 * n // 3 else pooled
         lower = by_reg.get(str(reg - 1), [floor] * n)
         by_reg[str(reg)] = [round(max(a, b), 2) for a, b in zip(own, lower, strict=True)]
     return {
@@ -901,7 +892,7 @@ def calibrate(
         "cusum": {"k": k, "h": h},
         "vib_edges": edges,
         "anchor_gate": {
-            **learn_gate(offsets, flights_by_regime=flights_by_regime),
+            **learn_gate(offsets),
             "flights_by_regime": flights_by_regime,
             # a regime seen on too few flights cannot support the 0.999 quantile on its own
             "regimes_below_20_flights": [g for g, n in flights_by_regime.items() if n < 20],
