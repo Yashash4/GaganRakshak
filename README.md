@@ -1,26 +1,94 @@
+<div align="center">
+
 # GaganRakshak
+
+**Onboard + ground intrusion detection for drones: checks GPS against physics, and every command and telemetry frame against signatures.**
 
 [![CI](https://github.com/Yashash4/GaganRakshak/actions/workflows/ci.yml/badge.svg)](https://github.com/Yashash4/GaganRakshak/actions/workflows/ci.yml)
 [![Licence: Apache-2.0](https://img.shields.io/badge/licence-Apache--2.0-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](pyproject.toml)
 [![Coverage 62%](https://img.shields.io/badge/coverage-62%25-yellow.svg)](.github/workflows/ci.yml)
+[![PUSHPAK GC3 · Objective 2](https://img.shields.io/badge/PUSHPAK%202026-GC3%20%C2%B7%20Objective%202-orange.svg)](#)
+[![ArduPilot SITL · simulated](https://img.shields.io/badge/ArduPilot%20SITL-simulated%20attacks%20only-lightgrey.svg)](#)
+
+Team **Eagle Vision** · Stage 1 · PUSHPAK Grand Challenge 2026, GC3 "Security of Drones", Objective 2 (Drone IDS)
+
+</div>
+
+Most drone defences sit in one place and trust the data they are given. GaganRakshak watches a
+drone from **both ends of the radio link**: an **onboard agent** checks whether the GPS agrees
+with what the drone's own inertial sensors say (a spoofer controls the GPS, not the laws of
+motion), and whether every command is signed and does what it should; a **ground agent** checks
+that the telemetry it receives is exactly what the drone sent, using signed commitments. Every
+threshold is learned from clean flights under **one false-alarm budget for the whole system**, and
+every decision goes to a signed, tamper-evident evidence log.
 
 <sub>Coverage: line coverage of `gaganrakshak` from `pytest -m "not sitl" --cov=gaganrakshak`
 (SITL flight tests excluded), measured when this badge was last updated; CI prints the current
 figure in each run's summary.</sub>
 
-A two-point, cyber-physical intrusion detection system for drones. PUSHPAK Grand
-Challenge 2026, GC3 "Security of Drones", Objective 2 (Drone IDS). Team: Eagle Vision.
+## Results at a glance
 
-An **onboard agent** (companion computer, inline between flight controller and radio)
-checks whether navigation data is physically consistent with independent inertial
-prediction, whether commands are authentic and produce the expected response, and
-whether firmware/parameters are tampered with. A **ground agent** (inline between radio
-and ground station) verifies signed per-window commitments of what the aircraft actually
-sent and watches the link. Evidence is accumulated over time and matched to explicit
-per-attack templates; every decision goes to a signed, tamper-evident evidence log.
+460 pre-registered test flights, flown once on frozen code (tag `bench-freeze`), ArduPilot
+Copter 4.7.1 SITL, all attacks simulated. Detected = the expected attack class raised **while the
+attack was active**, 10 flights per attack type. Full tables: [`results/bench/summary.md`](results/bench/summary.md).
 
-All experiments run in ArduPilot SITL. No real RF or flight attacks were performed.
+| Attack | Stock ArduPilot | GaganRakshak | Median latency |
+|---|---|---|---|
+| GNSS position jump (near + far) | 20/20 (0.2 s) | 20/20 | 5.4 s |
+| Command injection (LAND + 3 held-out variants) | 0/40 | 40/40 | 0.1–0.6 s |
+| Telemetry manipulation | 0/10 | 10/10 | 0.9 s |
+| Link flood (near, far, held-out) | 0/30 | 30/30 | 0.2 s |
+| Parameter tampering | 0/10 | 10/10 | 1.1 s |
+| Replay | 0/10 | 10/10 | 0.1 s |
+| Flight-controller impersonation | 0/10 | 10/10 | 0.6 s |
+| Jamming within 100 m / far legs | 0/20 | 10/10 / 1/10 | 4.0 s |
+| Slow coherent GNSS drift 0.1–2 m/s | 0/60 | 0/60 (caught at release from 0.5 m/s) | — |
+| **+ independent second GNSS reference** (extension, own 150 test flights) | — | slow drift 11/80 → **74/80** | 9–35 s |
+
+**False alarms, measured honestly:** 29 in 22.1 clean flight-hours = **1.31 per hour** (95 %
+upper bound 1.79), **above our 1/h design budget**. None within 200 m of the ground station
+(19.4 h); all on the long-range fading-link flights. Stock ArduPilot: 60 (2.71/h), all on benign
+GNSS glitches. The limits are measured and stated below and in the technical report.
+
+Re-run the numbers yourself from the per-run exports:
+```bash
+python -m gaganrakshak.bench metrics results/runs/test     # -> results/bench/summary.{json,md}
+```
+
+<p align="center">
+  <img src="results/figures/vs_ardupilot.png" width="95%" alt="Detection during the attack and latency, GaganRakshak vs stock ArduPilot" /><br/>
+  <img src="results/figures/false_alarms.png" width="95%" alt="False alarms per clean flight-hour by distance" />
+</p>
+
+## Quick links
+
+| | |
+|---|---|
+| Technical report (full version) | [`docs/technical-report.md`](docs/technical-report.md) |
+| Raw flight recordings (all 460 test + 262 extension flights) | release [`data-stage1`](https://github.com/Yashash4/GaganRakshak/releases/tag/data-stage1) |
+| Benchmark summary | [`results/bench/summary.md`](results/bench/summary.md) |
+| One-command demo | [Run with Docker](#run-with-docker) |
+| Upstream contribution | [ArduPilot PR #34510](https://github.com/ArduPilot/ardupilot/pull/34510) (SITL GPS velocity glitch) |
+
+## How it works
+
+```
+FC (ArduPilot) ⇄ [ONBOARD AGENT: router ‖ IDS] ⇄ radio (attacker) ⇄ [GROUND AGENT: router ‖ IDS] ⇄ GCS
+```
+- **Physics engine:** GPS is compared with an inertial-only prediction over 2–60 s windows that
+  GPS never corrects, so a slow spoofer cannot drag the prediction along.
+- **Signed commands:** Ed25519 signature per command with a monotonic counter; copies adapt to
+  measured uplink loss. Unsigned, forged or replayed commands are evidence.
+- **Signed telemetry commitments:** the aircraft signs a list of what it sent each second; the
+  ground agent classifies every frame as matched, altered, injected or unverified.
+- **Command–response consistency:** a mode, target or output change nobody commanded is
+  injection, even without signatures.
+- **Learned, not modelled:** link bands, noise levels and every threshold come from clean
+  calibration flights; evaluation refuses to run without them.
+
+Router and IDS are separate processes on each side: if the IDS stops, the link keeps working.
+Alert-only; all experiments run in ArduPilot SITL, and no real RF or flight attacks were performed.
 
 **ArduPilot fork.** SITL is built from our fork
 ([Yashash4/ardupilot@6ab7680](https://github.com/Yashash4/ardupilot/commit/6ab7680498fe0c8a34b4c94a786b9e0b9af93142)):
