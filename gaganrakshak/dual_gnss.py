@@ -5,8 +5,9 @@ simulated receiver with its own error process, a stand-in e.g. for NavIC) is not
 navigation; the autopilot navigates on GPS1 only (configs/dual_gnss.parm). A spoofer of the
 navigation receiver's signals moves GPS1 but not the reference, so their horizontal separation
 grows beyond what two independent receivers disagree by on clean flights. An attacker who spoofs
-both references coherently defeats this statistic; detection then falls back to the single-GPS
-physics.
+both references coherently, or jams the reference while spoofing the navigation receiver (fixes
+without a 3D fix are not compared), silences this statistic; detection then falls back to the
+single-GPS physics.
 
 Evidence ``gnss_reference_disagreement`` [gps_spoofing, MEDIUM]: the separation stays above the
 learned threshold for ``persist_s`` (one report per excursion). The threshold is learned on clean
@@ -128,17 +129,25 @@ def extract(run: Path) -> tuple[np.ndarray, np.ndarray]:
 
 
 def learn(
-    series: list[tuple[np.ndarray, np.ndarray]], hours: float, budget_per_hour: float, persist_s: float = PERSIST_S
+    series: list[tuple[np.ndarray, np.ndarray]],
+    hours: float,
+    budget_per_hour: float,
+    persist_s: float = PERSIST_S,
+    names: list[str] | None = None,
 ) -> dict:
     """The smallest grid threshold from which on every larger one the clean flights give at most
-    ``budget_per_hour`` onsets per airborne hour."""
+    ``budget_per_hour`` onsets per airborne hour. ``names`` (one per series) identify, in the
+    metadata, the flights with the largest separation and with onsets at the threshold."""
     counts = np.array([sum(onsets(t, d, thr, persist_s) for t, d in series if len(t)) for thr in GRID])
     bad = np.flatnonzero(counts / hours > budget_per_hour)
     i = 0 if not len(bad) else bad[-1] + 1
     if i >= len(GRID):
         raise ValueError("no threshold on the grid meets the budget")
     n = int(counts[i])
-    peak = max((float(d.max()) for _, d in series if len(d)), default=0.0)
+    names = names or [str(k) for k in range(len(series))]
+    peaks = [(float(d.max()), nm) for (_, d), nm in zip(series, names, strict=True) if len(d)]
+    peak, peak_run = max(peaks, default=(0.0, None))
+    at_t = [nm for (t, d), nm in zip(series, names, strict=True) if len(t) and onsets(t, d, float(GRID[i]), persist_s)]
     return {
         "threshold_m": float(GRID[i]),
         "persist_s": persist_s,
@@ -148,6 +157,8 @@ def learn(
             "false_onsets": n,
             "upper95_per_hour": round(poisson_upper(n, hours), 3),
             "peak_clean_separation_m": round(peak, 2),
+            "peak_clean_separation_run": peak_run,
+            "onset_runs": at_t,
         },
     }
 
@@ -172,7 +183,7 @@ def main() -> None:
     ]
     with ProcessPoolExecutor(a.workers) as ex:
         series = list(ex.map(extract, runs))
-    calib = learn(series, airborne_hours(runs), a.budget, a.persist)
+    calib = learn(series, airborne_hours(runs), a.budget, a.persist, [r.name for r in runs])
     calib["meta"]["runs"] = [r.name for r in runs]
     calib["meta"]["source"] = "clean SITL calibration flights with the reference receiver on"
     a.out.parent.mkdir(parents=True, exist_ok=True)
