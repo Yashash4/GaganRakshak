@@ -305,3 +305,28 @@ def test_confirmed_spoof_clears_only_after_its_release_and_a_second_attack_is_se
     assert det.spoof_intervals[0][1] is not None and det.suspect is None
     second = fly(220, 223, 2000.0, 100.0)
     assert [e.evidence_type for e in second] == ["gnss_inertial_inconsistency"]
+
+
+def test_confirmed_jump_without_a_measured_onset_step_does_not_clear_while_held(monkeypatch):
+    """The jump fell in windows that could not be used (clipped): with no onset step to match, the
+    episode waits for the statistics to drain instead of clearing inside the growing gate."""
+    import gaganrakshak.cpce as cpce
+
+    z = {"v": 0.0}
+    off = {"m": 0.0}
+    monkeypatch.setattr(cpce, "nis", lambda r, sigma: {("r2", 2.0): z["v"]})
+    monkeypatch.setattr(cpce.Cpce, "_anchored_offset", lambda self, t: (np.array([off["m"], 0.0]), 10.0))
+    det = cpce.Cpce({"sigma": {}, "cusum": {"k": 3.0, "h": 264.0}, "trend": {"f_crit": 1.0}, "anchor_gate": None})
+    det.calib["anchor_gate"] = {"bin_s": 10.0, "upper": [20.0]}
+    det.res.gnss = [(0.0, 0.0, 0.0, 0.0, 0.0, 0.0)]
+
+    def fly(t0, t1, zv, m, clipped=False):
+        z["v"], off["m"] = zv, m
+        for i in range(int((t1 - t0) * 5)):
+            det._step({"t": t0 + i / 5, "H": 2.0, "r2": np.zeros(2), "clipped": clipped})
+
+    fly(0, 3, 2000.0, 100.0, clipped=True)  # the jump: no usable step recorded
+    fly(3, 20, 0.0, 100.0)
+    assert det.spoof_intervals and det.suspect.get("onset_step") == 0.0
+    fly(20, 200, 0.0, 1.0)  # held inside the gate; residuals quiet
+    assert det.suspect is not None and det.spoof_intervals[0][1] is None

@@ -700,7 +700,9 @@ class Cpce:
         # statistic still accumulating (the jump wound a CUSUM up to thousands, which would take
         # hours to drain to zero).
         s_on = self.suspect.get("onset_step")
-        if s_on is None:
+        if s_on is None or s_on < 6.0 * self._sigma_step:
+            # a drift, or a jump whose onset step was not measured (e.g. in clipped windows): no
+            # step to match, so the statistics must drain (never clears while wound up)
             quiet = all(v == 0.0 for v in self.S.values()) and mag <= gate
         else:
             if is_step:
