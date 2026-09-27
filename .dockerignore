@@ -1,0 +1,10 @@
+# the image needs the package, scenarios, configs and the calibration artefacts, not recordings
+.venv/
+**/__pycache__/
+*.egg-info/
+.git
+results/raw/
+results/runs/
+results/runs_nocrypto/
+results/ml/
+results/figures/

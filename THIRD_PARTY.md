@@ -26,6 +26,7 @@ The fork stays under GPL-3.0.
 | PyYAML | Scenario files | MIT |
 | rich | Terminal dashboard | MIT |
 | pytest | Tests | MIT |
+| Ubuntu 24.04 (Docker base image `ubuntu:24.04`) | Container base for the optional Docker image | Various (Canonical; see the image's /usr/share/doc) |
 
 ## Background IP (team's own prior work)
 

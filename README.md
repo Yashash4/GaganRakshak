@@ -64,6 +64,17 @@ python -m gaganrakshak.scenario scenarios/a3_cmd_injection.yaml --seeds 1 --out 
 python -m gaganrakshak.evaluate results/raw/demo/a3_cmd_injection-s1 --events
 python -m gaganrakshak.baseline results/raw/demo/a3_cmd_injection-s1
 ```
+## Run with Docker
+One image holds ArduPilot Copter SITL (the pinned fork, built from source) and GaganRakshak:
+```bash
+docker build -t gaganrakshak .                    # builds ArduPilot too: 10-15 min
+docker run --rm gaganrakshak demo                 # the quick demo above, inside the container
+docker run --rm gaganrakshak bench a1_gps_jump 1  # any scenario in scenarios/, any seed
+docker run --rm -v "$PWD/results/raw:/app/results/raw" gaganrakshak bench b1_calm 3   # keep the recording
+docker run --rm gaganrakshak pytest -q -m "not sitl"
+```
+Tested on ARM64 Linux (DGX Spark); x86-64 builds from the same source, untested.
+
 `scenarios/` holds the attack scenarios (`a*`; `a3h_*` and `a5h_*` are held-out variants) and
 the benign ones (`b*`: calm, wind, aggressive flying, GNSS glitches, link fade, operator
 commands, takeoff and landing). Every recorded run has `labels.json` with its ground truth.
