@@ -137,7 +137,7 @@ def test_test_plan_covers_every_group_with_test_split_and_unique_ids():
     assert early["attack"]["start_s"] == 20.0 and early["attack"]["params"]["accel_ms2"] == 0.05
     assert next(p for p in plans if p["run_id"].startswith("a3h_set_mode"))["variant"] == "held_out"
     assert next(p for p in plans if p["run_id"] == "a2_gps_drift-r0.1-s5002")["attack"]["params"]["rate_ms"] == 0.1
-    assert len(plans) == 2 * (10 + 4 + 10 + 5) + 7
+    assert len(plans) == 2 * (len(bench.ATTACKS) + 4 + 10 + 5) + 7
 
 
 def test_old_sizing_artefacts_are_reported_apart_not_as_alarms_or_detections():
@@ -166,3 +166,18 @@ def test_false_alarms_per_scenario_use_that_scenario_s_clean_time(tmp_path):
         (tmp_path / f"{d['run_id']}.json").write_text(json.dumps(d))
     md = bench.markdown(bench.metrics(tmp_path))
     assert "### False alarms per scenario" in md and "| b1_calm | 0.028 | 3 |" in md
+
+
+def test_manifest_is_deterministic_and_refuses_already_exported_test_runs(tmp_path):
+    import pytest
+
+    from gaganrakshak.bench import check_unflown, manifest, plan_test
+
+    a, b = manifest(plan_test(1, 1)), manifest(plan_test(1, 1))
+    assert a == b and a["split"] == "test" and a["seeds"][0] >= 5001
+    plans = plan_test(1, 1)
+    check_unflown(plans, tmp_path)  # nothing exported: fine
+    (tmp_path / "test").mkdir()
+    (tmp_path / "test" / f"{plans[0]['run_id']}.json").write_text("{}")
+    with pytest.raises(SystemExit):
+        check_unflown(plans, tmp_path)

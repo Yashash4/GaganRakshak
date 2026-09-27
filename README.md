@@ -87,7 +87,13 @@ The artefacts are required: evaluation refuses to run without them.
 
 ## Benchmark
 ```bash
-python -m gaganrakshak.bench plan --n 10 --m 20      # the test-split flight plan
+bash scripts/run_bench.sh     # fly, export, crypto-off replay, metrics, figures (venv active)
+```
+The test plan is pre-registered in `configs/bench_test.json` (460 runs, seeds 5001-5020, every
+drawn attack), committed before any test flight: `bench plan --n 10 --m 20` regenerates it
+deterministically, and `bench fly` refuses to fly a plan that differs from it or a run that was
+already exported. Steps one by one:
+```bash
 python -m gaganrakshak.bench fly --n 10 --m 20       # fly it in SITL -> results/raw/test
 python -m gaganrakshak.export --split test --raw-root results/raw results/raw/test/*/
 python -m gaganrakshak.bench metrics results/runs/test   # -> results/bench/summary.{json,md}

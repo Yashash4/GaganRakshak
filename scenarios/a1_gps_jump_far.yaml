@@ -1,0 +1,10 @@
+# a1_gps_jump at range: the same attack on long legs (200-450 m) where the radio fades with distance,
+# so detection and false alarms are measured in the far distance bands too. Development/test variant.
+name: a1_gps_jump_far
+duration_s: 240
+mission: {legs: 3, radius_m: [200, 450], alt_m: [25, 35], speed_ms: [8, 12]}
+wind: {spd: [0, 3], dir: [0, 360], turb: 0}
+gnss_noise: {sigma_m: 2.1, tau_s: 60}
+link: {loss_d50_m: 350, loss_scale_m: 60}
+attack: {duration_s: [20, 30], params: {bearing_deg: [0, 360], offset_m: [20, 60]}, start_s: [
+    30, 150], type: gps_jump}

@@ -76,6 +76,10 @@ ATTACKS = (
     "a7_replay",
     "a8_fc_impersonation",
     "a9_jamming",
+    # the same attacks at range (200-450 m, radio fading with distance): the far distance bands
+    "a1_gps_jump_far",
+    "a5_link_flood_far",
+    "a9_jamming_far",
 )
 RATES_MS = (0.1, 0.25, 0.5, 1.0, 2.0)
 ACCELS_MS2 = (0.005, 0.01, 0.02, 0.05, 0.1)
@@ -387,6 +391,35 @@ def markdown(m: dict) -> str:
     return "\n".join(out) + "\n"
 
 
+MANIFEST = ROOT / "configs" / "bench_test.json"
+
+
+def manifest(plans: list[dict]) -> dict:
+    """The pre-registered test plan: every run, its scenario, seed and drawn attack, fixed before any
+    test flight (the plan is deterministic in the seed, so anyone can regenerate and compare it)."""
+    runs = [
+        {
+            "run_id": p["run_id"],
+            "scenario": p["scenario"],
+            "seed": p["seed"],
+            "variant": p.get("variant"),
+            "attack": p["attack"],
+            "duration_s": p["duration_s"],
+        }
+        for p in plans
+    ]
+    seeds = [r["seed"] for r in runs]
+    return {"split": "test", "runs": len(runs), "seeds": [min(seeds), max(seeds)], "plan": runs}
+
+
+def check_unflown(plans: list[dict], exports: Path = ROOT / "results" / "runs") -> None:
+    """Refuse if any planned test run already has an export: test runs are flown and scored once."""
+    ids = {p["run_id"] for p in plans}
+    seen = [f for f in exports.rglob("*.json") if f.stem in ids]
+    if seen:
+        raise SystemExit(f"test runs already exported: {[str(f) for f in seen[:5]]}")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -409,12 +442,17 @@ def main() -> None:
         print(markdown(m))
         return
     plans = plan_test(a.n, a.m)
-    if a.cmd == "plan":
-        out = a.out or ROOT / "results" / "bench" / "test_plan.json"
+    m = manifest(plans)
+    if a.cmd == "plan":  # writes the pre-registered manifest (commit it before flying)
+        check_unflown(plans)
+        out = a.out or MANIFEST
         out.parent.mkdir(parents=True, exist_ok=True)
-        out.write_text(json.dumps(plans, indent=1))
+        out.write_text(json.dumps(m, indent=1) + "\n")
         print(f"{len(plans)} test runs -> {out}")
         return
+    if not MANIFEST.exists() or json.loads(MANIFEST.read_text()) != json.loads(json.dumps(m)):
+        raise SystemExit(f"the plan differs from the committed manifest {MANIFEST}; regenerate and commit it first")
+    check_unflown(plans)
     from .scenario import run_many
 
     for run_id, status in run_many(plans, a.out or ROOT / "results" / "raw" / "test", a.workers, a.first_instance):
