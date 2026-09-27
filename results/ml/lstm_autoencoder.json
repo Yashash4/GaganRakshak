@@ -1,0 +1,41 @@
+{
+ "name": "lstm_autoencoder",
+ "budget": 0.0002777777777777778,
+ "n_fit": 5000,
+ "n_threshold": 15381,
+ "fit_s": 1.02,
+ "device": "cuda",
+ "validation": {
+  "detection": 0.7906976744186046,
+  "window_recall": 0.03562753036437247,
+  "false_alarm_rate": 0.056454073848031736,
+  "attacks": 43,
+  "windows": 12784
+ },
+ "calibration_heldback_hours": 4.272,
+ "calibration_heldback_alarm_windows_per_hour": 1.17,
+ "features": {
+  "window_s": 1.0,
+  "horizons": [
+   2.0,
+   5.0,
+   15.0,
+   30.0,
+   60.0
+  ],
+  "channels": [
+   "r1",
+   "r2",
+   "rs",
+   "r3"
+  ],
+  "sources": [
+   "protocol",
+   "cmd_sign",
+   "integrity",
+   "commit_rx",
+   "link_monitor",
+   "response"
+  ]
+ }
+}

@@ -1,0 +1,40 @@
+{
+ "name": "lof",
+ "budget": 0.0002777777777777778,
+ "n_fit": 5000,
+ "n_threshold": 15381,
+ "fit_s": 0.12,
+ "validation": {
+  "detection": 0.9069767441860465,
+  "window_recall": 0.0354251012145749,
+  "false_alarm_rate": 0.04241684467500763,
+  "attacks": 43,
+  "windows": 12784
+ },
+ "calibration_heldback_hours": 4.272,
+ "calibration_heldback_alarm_windows_per_hour": 1.17,
+ "features": {
+  "window_s": 1.0,
+  "horizons": [
+   2.0,
+   5.0,
+   15.0,
+   30.0,
+   60.0
+  ],
+  "channels": [
+   "r1",
+   "r2",
+   "rs",
+   "r3"
+  ],
+  "sources": [
+   "protocol",
+   "cmd_sign",
+   "integrity",
+   "commit_rx",
+   "link_monitor",
+   "response"
+  ]
+ }
+}

@@ -1,0 +1,40 @@
+{
+ "name": "mahalanobis_mcd",
+ "budget": 0.0002777777777777778,
+ "n_fit": 5000,
+ "n_threshold": 15381,
+ "fit_s": 0.46,
+ "validation": {
+  "detection": 0.7441860465116279,
+  "window_recall": 0.01639676113360324,
+  "false_alarm_rate": 0.050961245041196215,
+  "attacks": 43,
+  "windows": 12784
+ },
+ "calibration_heldback_hours": 4.272,
+ "calibration_heldback_alarm_windows_per_hour": 1.17,
+ "features": {
+  "window_s": 1.0,
+  "horizons": [
+   2.0,
+   5.0,
+   15.0,
+   30.0,
+   60.0
+  ],
+  "channels": [
+   "r1",
+   "r2",
+   "rs",
+   "r3"
+  ],
+  "sources": [
+   "protocol",
+   "cmd_sign",
+   "integrity",
+   "commit_rx",
+   "link_monitor",
+   "response"
+  ]
+ }
+}
