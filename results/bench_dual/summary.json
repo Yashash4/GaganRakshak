@@ -1,0 +1,2171 @@
+{
+ "base single-receiver IDS": {
+  "recording_artefacts": {
+   "count": 0,
+   "list": []
+  },
+  "detection": {
+   "a2_gps_drift-r0.25-g2": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 2,
+    "at_release": 2,
+    "missed": 8,
+    "advisory_only": 8,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": {
+     "median": 56.17,
+     "p90": 56.69,
+     "min": 55.53,
+     "max": 56.82
+    }
+   },
+   "a2_gps_drift-r0.5-g2": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 10,
+    "at_release": 10,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": {
+     "median": 51.94,
+     "p90": 54.29,
+     "min": 46.94,
+     "max": 55.62
+    }
+   },
+   "a2_gps_drift-r1.0-g2": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 10,
+    "at_release": 10,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": {
+     "median": 51.72,
+     "p90": 53.63,
+     "min": 46.14,
+     "max": 55.0
+    }
+   },
+   "a2_gps_drift-r2.0-g2": {
+    "runs": 10,
+    "detected_during": 1,
+    "detection_rate_during": 0.1,
+    "detected_incl_release": 10,
+    "at_release": 9,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 6.03,
+     "p90": 6.03,
+     "min": 6.03,
+     "max": 6.03
+    },
+    "latency_incl_release_s": {
+     "median": 50.44,
+     "p90": 52.29,
+     "min": 6.03,
+     "max": 53.48
+    }
+   },
+   "a2n_gps_drift_naive-r0.25-g2": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 0,
+    "at_release": 0,
+    "missed": 10,
+    "advisory_only": 10,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": null
+   },
+   "a2n_gps_drift_naive-r0.5-g2": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 10,
+    "at_release": 10,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": {
+     "median": 52.12,
+     "p90": 53.9,
+     "min": 46.77,
+     "max": 55.38
+    }
+   },
+   "a2n_gps_drift_naive-r1.0-g2": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 10,
+    "at_release": 10,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": {
+     "median": 51.61,
+     "p90": 53.66,
+     "min": 46.0,
+     "max": 54.99
+    }
+   },
+   "a2n_gps_drift_naive-r2.0-g2": {
+    "runs": 10,
+    "detected_during": 10,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 10,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 28.14,
+     "p90": 30.34,
+     "min": 25.6,
+     "max": 30.88
+    },
+    "latency_incl_release_s": {
+     "median": 28.14,
+     "p90": 30.34,
+     "min": 25.6,
+     "max": 30.88
+    }
+   }
+  },
+  "detection_by_arming": {
+   "gps_drift, after arming": {
+    "runs": 24,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 19,
+    "at_release": 19,
+    "missed": 5,
+    "advisory_only": 5,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": {
+     "median": 51.76,
+     "p90": 53.61,
+     "min": 47.63,
+     "max": 55.53
+    }
+   },
+   "gps_drift, before arming": {
+    "runs": 16,
+    "detected_during": 1,
+    "detection_rate_during": 0.062,
+    "detected_incl_release": 13,
+    "at_release": 12,
+    "missed": 3,
+    "advisory_only": 3,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 6.03,
+     "p90": 6.03,
+     "min": 6.03,
+     "max": 6.03
+    },
+    "latency_incl_release_s": {
+     "median": 49.47,
+     "p90": 55.5,
+     "min": 6.03,
+     "max": 56.82
+    }
+   },
+   "gps_drift_naive, after arming": {
+    "runs": 24,
+    "detected_during": 6,
+    "detection_rate_during": 0.25,
+    "detected_incl_release": 18,
+    "at_release": 12,
+    "missed": 6,
+    "advisory_only": 6,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 28.81,
+     "p90": 30.31,
+     "min": 25.6,
+     "max": 30.88
+    },
+    "latency_incl_release_s": {
+     "median": 49.61,
+     "p90": 52.98,
+     "min": 25.6,
+     "max": 53.74
+    }
+   },
+   "gps_drift_naive, before arming": {
+    "runs": 16,
+    "detected_during": 4,
+    "detection_rate_during": 0.25,
+    "detected_incl_release": 12,
+    "at_release": 8,
+    "missed": 4,
+    "advisory_only": 4,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 27.58,
+     "p90": 29.59,
+     "min": 26.75,
+     "max": 30.28
+    },
+    "latency_incl_release_s": {
+     "median": 47.73,
+     "p90": 54.73,
+     "min": 26.75,
+     "max": 55.38
+    }
+   }
+  },
+  "detection_by_distance": {
+   "gps_drift, 0-100 m": {
+    "runs": 40,
+    "detected_during": 1,
+    "detection_rate_during": 0.025,
+    "detected_incl_release": 32,
+    "at_release": 31,
+    "missed": 8,
+    "advisory_only": 8,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 6.03,
+     "p90": 6.03,
+     "min": 6.03,
+     "max": 6.03
+    },
+    "latency_incl_release_s": {
+     "median": 51.75,
+     "p90": 54.91,
+     "min": 6.03,
+     "max": 56.82
+    }
+   },
+   "gps_drift_naive, 0-100 m": {
+    "runs": 40,
+    "detected_during": 10,
+    "detection_rate_during": 0.25,
+    "detected_incl_release": 30,
+    "at_release": 20,
+    "missed": 10,
+    "advisory_only": 10,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 28.14,
+     "p90": 30.34,
+     "min": 25.6,
+     "max": 30.88
+    },
+    "latency_incl_release_s": {
+     "median": 48.88,
+     "p90": 53.53,
+     "min": 25.6,
+     "max": 55.38
+    }
+   }
+  },
+  "false_alarms": {
+   "count": 4,
+   "clean_hours": 7.751,
+   "per_hour": 0.516,
+   "upper95_per_hour": 1.181,
+   "advisories": 31,
+   "by_distance": {
+    "0-100 m": {
+     "count": 1,
+     "clean_hours": 7.068,
+     "per_hour": 0.141,
+     "upper95_per_hour": 0.671
+    },
+    "100-200 m": {
+     "count": 0,
+     "clean_hours": 0.146,
+     "per_hour": 0.0,
+     "upper95_per_hour": 20.513
+    },
+    "200-400 m": {
+     "count": 2,
+     "clean_hours": 0.441,
+     "per_hour": 4.536,
+     "upper95_per_hour": 14.279
+    },
+    ">400 m": {
+     "count": 1,
+     "clean_hours": 0.093,
+     "per_hour": 10.733,
+     "upper95_per_hour": 50.915
+    },
+    "on_ground": {
+     "count": 0,
+     "clean_hours": 0.0,
+     "per_hour": null,
+     "upper95_per_hour": null
+    }
+   },
+   "by_scenario": {
+    "a2_gps_drift-r0.25-g2": {
+     "count": 0,
+     "clean_hours": 0.496,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.039
+    },
+    "a2_gps_drift-r0.5-g2": {
+     "count": 0,
+     "clean_hours": 0.496,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.042
+    },
+    "a2_gps_drift-r1.0-g2": {
+     "count": 0,
+     "clean_hours": 0.496,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.041
+    },
+    "a2_gps_drift-r2.0-g2": {
+     "count": 0,
+     "clean_hours": 0.496,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.041
+    },
+    "a2n_gps_drift_naive-r0.25-g2": {
+     "count": 0,
+     "clean_hours": 0.496,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.044
+    },
+    "a2n_gps_drift_naive-r0.5-g2": {
+     "count": 0,
+     "clean_hours": 0.496,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.043
+    },
+    "a2n_gps_drift_naive-r1.0-g2": {
+     "count": 0,
+     "clean_hours": 0.496,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.04
+    },
+    "a2n_gps_drift_naive-r2.0-g2": {
+     "count": 0,
+     "clean_hours": 0.496,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.044
+    },
+    "b1_calm-g2": {
+     "count": 0,
+     "clean_hours": 0.594,
+     "per_hour": 0.0,
+     "upper95_per_hour": 5.047
+    },
+    "b2_wind-g2": {
+     "count": 0,
+     "clean_hours": 0.594,
+     "per_hour": 0.0,
+     "upper95_per_hour": 5.041
+    },
+    "b3_aggressive-g2": {
+     "count": 0,
+     "clean_hours": 0.599,
+     "per_hour": 0.0,
+     "upper95_per_hour": 4.999
+    },
+    "b4_gnss_glitch-g2": {
+     "count": 0,
+     "clean_hours": 0.51,
+     "per_hour": 0.0,
+     "upper95_per_hour": 5.874
+    },
+    "b5_link_fade-g2": {
+     "count": 3,
+     "clean_hours": 0.76,
+     "per_hour": 3.947,
+     "upper95_per_hour": 10.202
+    },
+    "b6_operator-g2": {
+     "count": 0,
+     "clean_hours": 0.543,
+     "per_hour": 0.0,
+     "upper95_per_hour": 5.52
+    },
+    "b7_takeoff_landing-g2": {
+     "count": 1,
+     "clean_hours": 0.184,
+     "per_hour": 5.436,
+     "upper95_per_hour": 25.787
+    }
+   },
+   "ground_phase_false_alarms": {
+    "count": 0,
+    "list": []
+   },
+   "list": [
+    {
+     "run": "b5_link_fade-g2-s6001",
+     "agent": "onboard",
+     "class": "command_injection",
+     "t_start": 190.16,
+     "evidence_types": [
+      "unsigned_command"
+     ]
+    },
+    {
+     "run": "b5_link_fade-g2-s6001",
+     "agent": "ground",
+     "class": "telemetry_manipulation",
+     "t_start": 209.95,
+     "evidence_types": [
+      "selective_commit_loss"
+     ]
+    },
+    {
+     "run": "b5_link_fade-g2-s6003",
+     "agent": "onboard",
+     "class": "command_injection",
+     "t_start": 62.02,
+     "evidence_types": [
+      "unsigned_command"
+     ]
+    },
+    {
+     "run": "b7_takeoff_landing-g2-s6008",
+     "agent": "onboard",
+     "class": "gps_spoofing",
+     "t_start": 53.34,
+     "evidence_types": [
+      "gps_spoofing"
+     ]
+    }
+   ]
+  }
+ },
+ "second reference alone": {
+  "recording_artefacts": {
+   "count": 0,
+   "list": []
+  },
+  "detection": {
+   "a2_gps_drift-r0.25-g2": {
+    "runs": 10,
+    "detected_during": 7,
+    "detection_rate_during": 0.7,
+    "detected_incl_release": 7,
+    "at_release": 0,
+    "missed": 3,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 35.39,
+     "p90": 40.67,
+     "min": 23.72,
+     "max": 41.47
+    },
+    "latency_incl_release_s": {
+     "median": 35.39,
+     "p90": 40.67,
+     "min": 23.72,
+     "max": 41.47
+    }
+   },
+   "a2_gps_drift-r0.5-g2": {
+    "runs": 10,
+    "detected_during": 10,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 10,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 24.05,
+     "p90": 27.92,
+     "min": 13.49,
+     "max": 34.71
+    },
+    "latency_incl_release_s": {
+     "median": 24.05,
+     "p90": 27.92,
+     "min": 13.49,
+     "max": 34.71
+    }
+   },
+   "a2_gps_drift-r1.0-g2": {
+    "runs": 10,
+    "detected_during": 10,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 10,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 14.56,
+     "p90": 16.95,
+     "min": 8.3,
+     "max": 16.96
+    },
+    "latency_incl_release_s": {
+     "median": 14.56,
+     "p90": 16.95,
+     "min": 8.3,
+     "max": 16.96
+    }
+   },
+   "a2_gps_drift-r2.0-g2": {
+    "runs": 10,
+    "detected_during": 10,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 10,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 9.41,
+     "p90": 10.68,
+     "min": 7.28,
+     "max": 10.76
+    },
+    "latency_incl_release_s": {
+     "median": 9.41,
+     "p90": 10.68,
+     "min": 7.28,
+     "max": 10.76
+    }
+   },
+   "a2n_gps_drift_naive-r0.25-g2": {
+    "runs": 10,
+    "detected_during": 7,
+    "detection_rate_during": 0.7,
+    "detected_incl_release": 7,
+    "at_release": 0,
+    "missed": 3,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 35.13,
+     "p90": 41.47,
+     "min": 24.14,
+     "max": 42.8
+    },
+    "latency_incl_release_s": {
+     "median": 35.13,
+     "p90": 41.47,
+     "min": 24.14,
+     "max": 42.8
+    }
+   },
+   "a2n_gps_drift_naive-r0.5-g2": {
+    "runs": 10,
+    "detected_during": 10,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 10,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 24.28,
+     "p90": 27.77,
+     "min": 13.36,
+     "max": 35.11
+    },
+    "latency_incl_release_s": {
+     "median": 24.28,
+     "p90": 27.77,
+     "min": 13.36,
+     "max": 35.11
+    }
+   },
+   "a2n_gps_drift_naive-r1.0-g2": {
+    "runs": 10,
+    "detected_during": 10,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 10,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 14.71,
+     "p90": 16.44,
+     "min": 8.31,
+     "max": 17.35
+    },
+    "latency_incl_release_s": {
+     "median": 14.71,
+     "p90": 16.44,
+     "min": 8.31,
+     "max": 17.35
+    }
+   },
+   "a2n_gps_drift_naive-r2.0-g2": {
+    "runs": 10,
+    "detected_during": 10,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 10,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 9.47,
+     "p90": 10.37,
+     "min": 7.3,
+     "max": 10.75
+    },
+    "latency_incl_release_s": {
+     "median": 9.47,
+     "p90": 10.37,
+     "min": 7.3,
+     "max": 10.75
+    }
+   }
+  },
+  "detection_by_arming": {
+   "gps_drift, after arming": {
+    "runs": 24,
+    "detected_during": 22,
+    "detection_rate_during": 0.917,
+    "detected_incl_release": 22,
+    "at_release": 0,
+    "missed": 2,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 15.42,
+     "p90": 35.32,
+     "min": 7.28,
+     "max": 41.47
+    },
+    "latency_incl_release_s": {
+     "median": 15.42,
+     "p90": 35.32,
+     "min": 7.28,
+     "max": 41.47
+    }
+   },
+   "gps_drift, before arming": {
+    "runs": 16,
+    "detected_during": 15,
+    "detection_rate_during": 0.938,
+    "detected_incl_release": 15,
+    "at_release": 0,
+    "missed": 1,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 16.4,
+     "p90": 31.22,
+     "min": 7.3,
+     "max": 40.14
+    },
+    "latency_incl_release_s": {
+     "median": 16.4,
+     "p90": 31.22,
+     "min": 7.3,
+     "max": 40.14
+    }
+   },
+   "gps_drift_naive, after arming": {
+    "runs": 24,
+    "detected_during": 22,
+    "detection_rate_during": 0.917,
+    "detected_incl_release": 22,
+    "at_release": 0,
+    "missed": 2,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 15.73,
+     "p90": 35.13,
+     "min": 7.68,
+     "max": 42.8
+    },
+    "latency_incl_release_s": {
+     "median": 15.73,
+     "p90": 35.13,
+     "min": 7.68,
+     "max": 42.8
+    }
+   },
+   "gps_drift_naive, before arming": {
+    "runs": 16,
+    "detected_during": 15,
+    "detection_rate_during": 0.938,
+    "detected_incl_release": 15,
+    "at_release": 0,
+    "missed": 1,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 16.19,
+     "p90": 31.56,
+     "min": 7.3,
+     "max": 40.59
+    },
+    "latency_incl_release_s": {
+     "median": 16.19,
+     "p90": 31.56,
+     "min": 7.3,
+     "max": 40.59
+    }
+   }
+  },
+  "detection_by_distance": {
+   "gps_drift, 0-100 m": {
+    "runs": 40,
+    "detected_during": 37,
+    "detection_rate_during": 0.925,
+    "detected_incl_release": 37,
+    "at_release": 0,
+    "missed": 3,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 15.56,
+     "p90": 34.98,
+     "min": 7.28,
+     "max": 41.47
+    },
+    "latency_incl_release_s": {
+     "median": 15.56,
+     "p90": 34.98,
+     "min": 7.28,
+     "max": 41.47
+    }
+   },
+   "gps_drift_naive, 0-100 m": {
+    "runs": 40,
+    "detected_during": 37,
+    "detection_rate_during": 0.925,
+    "detected_incl_release": 37,
+    "at_release": 0,
+    "missed": 3,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 15.88,
+     "p90": 35.12,
+     "min": 7.3,
+     "max": 42.8
+    },
+    "latency_incl_release_s": {
+     "median": 15.88,
+     "p90": 35.12,
+     "min": 7.3,
+     "max": 42.8
+    }
+   }
+  },
+  "false_alarms": {
+   "count": 0,
+   "clean_hours": 7.751,
+   "per_hour": 0.0,
+   "upper95_per_hour": 0.387,
+   "advisories": 0,
+   "by_distance": {
+    "0-100 m": {
+     "count": 0,
+     "clean_hours": 7.068,
+     "per_hour": 0.0,
+     "upper95_per_hour": 0.424
+    },
+    "100-200 m": {
+     "count": 0,
+     "clean_hours": 0.146,
+     "per_hour": 0.0,
+     "upper95_per_hour": 20.513
+    },
+    "200-400 m": {
+     "count": 0,
+     "clean_hours": 0.441,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.794
+    },
+    ">400 m": {
+     "count": 0,
+     "clean_hours": 0.093,
+     "per_hour": 0.0,
+     "upper95_per_hour": 32.153
+    },
+    "on_ground": {
+     "count": 0,
+     "clean_hours": 0.0,
+     "per_hour": null,
+     "upper95_per_hour": null
+    }
+   },
+   "by_scenario": {
+    "a2_gps_drift-r0.25-g2": {
+     "count": 0,
+     "clean_hours": 0.496,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.039
+    },
+    "a2_gps_drift-r0.5-g2": {
+     "count": 0,
+     "clean_hours": 0.496,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.042
+    },
+    "a2_gps_drift-r1.0-g2": {
+     "count": 0,
+     "clean_hours": 0.496,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.041
+    },
+    "a2_gps_drift-r2.0-g2": {
+     "count": 0,
+     "clean_hours": 0.496,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.041
+    },
+    "a2n_gps_drift_naive-r0.25-g2": {
+     "count": 0,
+     "clean_hours": 0.496,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.044
+    },
+    "a2n_gps_drift_naive-r0.5-g2": {
+     "count": 0,
+     "clean_hours": 0.496,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.043
+    },
+    "a2n_gps_drift_naive-r1.0-g2": {
+     "count": 0,
+     "clean_hours": 0.496,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.04
+    },
+    "a2n_gps_drift_naive-r2.0-g2": {
+     "count": 0,
+     "clean_hours": 0.496,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.044
+    },
+    "b1_calm-g2": {
+     "count": 0,
+     "clean_hours": 0.594,
+     "per_hour": 0.0,
+     "upper95_per_hour": 5.047
+    },
+    "b2_wind-g2": {
+     "count": 0,
+     "clean_hours": 0.594,
+     "per_hour": 0.0,
+     "upper95_per_hour": 5.041
+    },
+    "b3_aggressive-g2": {
+     "count": 0,
+     "clean_hours": 0.599,
+     "per_hour": 0.0,
+     "upper95_per_hour": 4.999
+    },
+    "b4_gnss_glitch-g2": {
+     "count": 0,
+     "clean_hours": 0.51,
+     "per_hour": 0.0,
+     "upper95_per_hour": 5.874
+    },
+    "b5_link_fade-g2": {
+     "count": 0,
+     "clean_hours": 0.76,
+     "per_hour": 0.0,
+     "upper95_per_hour": 3.942
+    },
+    "b6_operator-g2": {
+     "count": 0,
+     "clean_hours": 0.543,
+     "per_hour": 0.0,
+     "upper95_per_hour": 5.52
+    },
+    "b7_takeoff_landing-g2": {
+     "count": 0,
+     "clean_hours": 0.184,
+     "per_hour": 0.0,
+     "upper95_per_hour": 16.284
+    }
+   },
+   "ground_phase_false_alarms": {
+    "count": 0,
+    "list": []
+   },
+   "list": []
+  }
+ },
+ "base + second reference": {
+  "recording_artefacts": {
+   "count": 0,
+   "list": []
+  },
+  "detection": {
+   "a2_gps_drift-r0.25-g2": {
+    "runs": 10,
+    "detected_during": 7,
+    "detection_rate_during": 0.7,
+    "detected_incl_release": 8,
+    "at_release": 1,
+    "missed": 2,
+    "advisory_only": 2,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 35.39,
+     "p90": 40.67,
+     "min": 23.72,
+     "max": 41.47
+    },
+    "latency_incl_release_s": {
+     "median": 35.67,
+     "p90": 46.07,
+     "min": 23.72,
+     "max": 56.82
+    }
+   },
+   "a2_gps_drift-r0.5-g2": {
+    "runs": 10,
+    "detected_during": 10,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 10,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 24.05,
+     "p90": 27.92,
+     "min": 13.49,
+     "max": 34.71
+    },
+    "latency_incl_release_s": {
+     "median": 24.05,
+     "p90": 27.92,
+     "min": 13.49,
+     "max": 34.71
+    }
+   },
+   "a2_gps_drift-r1.0-g2": {
+    "runs": 10,
+    "detected_during": 10,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 10,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 14.56,
+     "p90": 16.95,
+     "min": 8.3,
+     "max": 16.96
+    },
+    "latency_incl_release_s": {
+     "median": 14.56,
+     "p90": 16.95,
+     "min": 8.3,
+     "max": 16.96
+    }
+   },
+   "a2_gps_drift-r2.0-g2": {
+    "runs": 10,
+    "detected_during": 10,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 10,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 9.2,
+     "p90": 10.68,
+     "min": 6.03,
+     "max": 10.76
+    },
+    "latency_incl_release_s": {
+     "median": 9.2,
+     "p90": 10.68,
+     "min": 6.03,
+     "max": 10.76
+    }
+   },
+   "a2n_gps_drift_naive-r0.25-g2": {
+    "runs": 10,
+    "detected_during": 7,
+    "detection_rate_during": 0.7,
+    "detected_incl_release": 7,
+    "at_release": 0,
+    "missed": 3,
+    "advisory_only": 3,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 35.13,
+     "p90": 41.47,
+     "min": 24.14,
+     "max": 42.8
+    },
+    "latency_incl_release_s": {
+     "median": 35.13,
+     "p90": 41.47,
+     "min": 24.14,
+     "max": 42.8
+    }
+   },
+   "a2n_gps_drift_naive-r0.5-g2": {
+    "runs": 10,
+    "detected_during": 10,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 10,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 24.28,
+     "p90": 27.77,
+     "min": 13.36,
+     "max": 35.11
+    },
+    "latency_incl_release_s": {
+     "median": 24.28,
+     "p90": 27.77,
+     "min": 13.36,
+     "max": 35.11
+    }
+   },
+   "a2n_gps_drift_naive-r1.0-g2": {
+    "runs": 10,
+    "detected_during": 10,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 10,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 14.71,
+     "p90": 16.44,
+     "min": 8.31,
+     "max": 17.35
+    },
+    "latency_incl_release_s": {
+     "median": 14.71,
+     "p90": 16.44,
+     "min": 8.31,
+     "max": 17.35
+    }
+   },
+   "a2n_gps_drift_naive-r2.0-g2": {
+    "runs": 10,
+    "detected_during": 10,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 10,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 9.47,
+     "p90": 10.37,
+     "min": 7.3,
+     "max": 10.75
+    },
+    "latency_incl_release_s": {
+     "median": 9.47,
+     "p90": 10.37,
+     "min": 7.3,
+     "max": 10.75
+    }
+   }
+  },
+  "detection_by_arming": {
+   "gps_drift, after arming": {
+    "runs": 24,
+    "detected_during": 22,
+    "detection_rate_during": 0.917,
+    "detected_incl_release": 22,
+    "at_release": 0,
+    "missed": 2,
+    "advisory_only": 2,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 15.42,
+     "p90": 35.32,
+     "min": 7.28,
+     "max": 41.47
+    },
+    "latency_incl_release_s": {
+     "median": 15.42,
+     "p90": 35.32,
+     "min": 7.28,
+     "max": 41.47
+    }
+   },
+   "gps_drift, before arming": {
+    "runs": 16,
+    "detected_during": 15,
+    "detection_rate_during": 0.938,
+    "detected_incl_release": 16,
+    "at_release": 1,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 16.4,
+     "p90": 31.22,
+     "min": 6.03,
+     "max": 40.14
+    },
+    "latency_incl_release_s": {
+     "median": 16.67,
+     "p90": 37.24,
+     "min": 6.03,
+     "max": 56.82
+    }
+   },
+   "gps_drift_naive, after arming": {
+    "runs": 24,
+    "detected_during": 22,
+    "detection_rate_during": 0.917,
+    "detected_incl_release": 22,
+    "at_release": 0,
+    "missed": 2,
+    "advisory_only": 2,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 15.73,
+     "p90": 35.13,
+     "min": 7.68,
+     "max": 42.8
+    },
+    "latency_incl_release_s": {
+     "median": 15.73,
+     "p90": 35.13,
+     "min": 7.68,
+     "max": 42.8
+    }
+   },
+   "gps_drift_naive, before arming": {
+    "runs": 16,
+    "detected_during": 15,
+    "detection_rate_during": 0.938,
+    "detected_incl_release": 15,
+    "at_release": 0,
+    "missed": 1,
+    "advisory_only": 1,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 16.19,
+     "p90": 31.56,
+     "min": 7.3,
+     "max": 40.59
+    },
+    "latency_incl_release_s": {
+     "median": 16.19,
+     "p90": 31.56,
+     "min": 7.3,
+     "max": 40.59
+    }
+   }
+  },
+  "detection_by_distance": {
+   "gps_drift, 0-100 m": {
+    "runs": 40,
+    "detected_during": 37,
+    "detection_rate_during": 0.925,
+    "detected_incl_release": 38,
+    "at_release": 1,
+    "missed": 2,
+    "advisory_only": 2,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 15.56,
+     "p90": 34.98,
+     "min": 6.03,
+     "max": 41.47
+    },
+    "latency_incl_release_s": {
+     "median": 15.98,
+     "p90": 35.56,
+     "min": 6.03,
+     "max": 56.82
+    }
+   },
+   "gps_drift_naive, 0-100 m": {
+    "runs": 40,
+    "detected_during": 37,
+    "detection_rate_during": 0.925,
+    "detected_incl_release": 37,
+    "at_release": 0,
+    "missed": 3,
+    "advisory_only": 3,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 15.88,
+     "p90": 35.12,
+     "min": 7.3,
+     "max": 42.8
+    },
+    "latency_incl_release_s": {
+     "median": 15.88,
+     "p90": 35.12,
+     "min": 7.3,
+     "max": 42.8
+    }
+   }
+  },
+  "false_alarms": {
+   "count": 4,
+   "clean_hours": 7.751,
+   "per_hour": 0.516,
+   "upper95_per_hour": 1.181,
+   "advisories": 31,
+   "by_distance": {
+    "0-100 m": {
+     "count": 1,
+     "clean_hours": 7.068,
+     "per_hour": 0.141,
+     "upper95_per_hour": 0.671
+    },
+    "100-200 m": {
+     "count": 0,
+     "clean_hours": 0.146,
+     "per_hour": 0.0,
+     "upper95_per_hour": 20.513
+    },
+    "200-400 m": {
+     "count": 2,
+     "clean_hours": 0.441,
+     "per_hour": 4.536,
+     "upper95_per_hour": 14.279
+    },
+    ">400 m": {
+     "count": 1,
+     "clean_hours": 0.093,
+     "per_hour": 10.733,
+     "upper95_per_hour": 50.915
+    },
+    "on_ground": {
+     "count": 0,
+     "clean_hours": 0.0,
+     "per_hour": null,
+     "upper95_per_hour": null
+    }
+   },
+   "by_scenario": {
+    "a2_gps_drift-r0.25-g2": {
+     "count": 0,
+     "clean_hours": 0.496,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.039
+    },
+    "a2_gps_drift-r0.5-g2": {
+     "count": 0,
+     "clean_hours": 0.496,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.042
+    },
+    "a2_gps_drift-r1.0-g2": {
+     "count": 0,
+     "clean_hours": 0.496,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.041
+    },
+    "a2_gps_drift-r2.0-g2": {
+     "count": 0,
+     "clean_hours": 0.496,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.041
+    },
+    "a2n_gps_drift_naive-r0.25-g2": {
+     "count": 0,
+     "clean_hours": 0.496,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.044
+    },
+    "a2n_gps_drift_naive-r0.5-g2": {
+     "count": 0,
+     "clean_hours": 0.496,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.043
+    },
+    "a2n_gps_drift_naive-r1.0-g2": {
+     "count": 0,
+     "clean_hours": 0.496,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.04
+    },
+    "a2n_gps_drift_naive-r2.0-g2": {
+     "count": 0,
+     "clean_hours": 0.496,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.044
+    },
+    "b1_calm-g2": {
+     "count": 0,
+     "clean_hours": 0.594,
+     "per_hour": 0.0,
+     "upper95_per_hour": 5.047
+    },
+    "b2_wind-g2": {
+     "count": 0,
+     "clean_hours": 0.594,
+     "per_hour": 0.0,
+     "upper95_per_hour": 5.041
+    },
+    "b3_aggressive-g2": {
+     "count": 0,
+     "clean_hours": 0.599,
+     "per_hour": 0.0,
+     "upper95_per_hour": 4.999
+    },
+    "b4_gnss_glitch-g2": {
+     "count": 0,
+     "clean_hours": 0.51,
+     "per_hour": 0.0,
+     "upper95_per_hour": 5.874
+    },
+    "b5_link_fade-g2": {
+     "count": 3,
+     "clean_hours": 0.76,
+     "per_hour": 3.947,
+     "upper95_per_hour": 10.202
+    },
+    "b6_operator-g2": {
+     "count": 0,
+     "clean_hours": 0.543,
+     "per_hour": 0.0,
+     "upper95_per_hour": 5.52
+    },
+    "b7_takeoff_landing-g2": {
+     "count": 1,
+     "clean_hours": 0.184,
+     "per_hour": 5.436,
+     "upper95_per_hour": 25.787
+    }
+   },
+   "ground_phase_false_alarms": {
+    "count": 0,
+    "list": []
+   },
+   "list": [
+    {
+     "run": "b5_link_fade-g2-s6001",
+     "agent": "onboard",
+     "class": "command_injection",
+     "t_start": 190.16,
+     "evidence_types": [
+      "unsigned_command"
+     ]
+    },
+    {
+     "run": "b5_link_fade-g2-s6001",
+     "agent": "ground",
+     "class": "telemetry_manipulation",
+     "t_start": 209.95,
+     "evidence_types": [
+      "selective_commit_loss"
+     ]
+    },
+    {
+     "run": "b5_link_fade-g2-s6003",
+     "agent": "onboard",
+     "class": "command_injection",
+     "t_start": 62.02,
+     "evidence_types": [
+      "unsigned_command"
+     ]
+    },
+    {
+     "run": "b7_takeoff_landing-g2-s6008",
+     "agent": "onboard",
+     "class": "gps_spoofing",
+     "t_start": 53.34,
+     "evidence_types": [
+      "gps_spoofing"
+     ]
+    }
+   ]
+  }
+ },
+ "stock ArduPilot (with the second receiver present)": {
+  "recording_artefacts": {
+   "count": 0,
+   "list": []
+  },
+  "detection": {
+   "a2_gps_drift-r0.25-g2": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 10,
+    "at_release": 10,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": {
+     "median": 46.66,
+     "p90": 48.7,
+     "min": 41.14,
+     "max": 50.02
+    }
+   },
+   "a2_gps_drift-r0.5-g2": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 10,
+    "at_release": 10,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": {
+     "median": 46.55,
+     "p90": 48.71,
+     "min": 41.14,
+     "max": 50.04
+    }
+   },
+   "a2_gps_drift-r1.0-g2": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 10,
+    "at_release": 10,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": {
+     "median": 46.72,
+     "p90": 48.65,
+     "min": 40.96,
+     "max": 50.02
+    }
+   },
+   "a2_gps_drift-r2.0-g2": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 10,
+    "at_release": 10,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": {
+     "median": 46.62,
+     "p90": 48.45,
+     "min": 40.97,
+     "max": 49.85
+    }
+   },
+   "a2n_gps_drift_naive-r0.25-g2": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 10,
+    "at_release": 10,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": {
+     "median": 46.64,
+     "p90": 48.45,
+     "min": 40.96,
+     "max": 49.84
+    }
+   },
+   "a2n_gps_drift_naive-r0.5-g2": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 10,
+    "at_release": 10,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": {
+     "median": 46.63,
+     "p90": 48.5,
+     "min": 40.97,
+     "max": 49.8
+    }
+   },
+   "a2n_gps_drift_naive-r1.0-g2": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 10,
+    "at_release": 10,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": {
+     "median": 46.63,
+     "p90": 48.48,
+     "min": 41.02,
+     "max": 49.81
+    }
+   },
+   "a2n_gps_drift_naive-r2.0-g2": {
+    "runs": 10,
+    "detected_during": 9,
+    "detection_rate_during": 0.9,
+    "detected_incl_release": 10,
+    "at_release": 1,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 17.21,
+     "p90": 26.23,
+     "min": 2.74,
+     "max": 32.22
+    },
+    "latency_incl_release_s": {
+     "median": 18.2,
+     "p90": 34.0,
+     "min": 2.74,
+     "max": 49.98
+    }
+   }
+  },
+  "detection_by_arming": {
+   "gps_drift, after arming": {
+    "runs": 24,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 24,
+    "at_release": 24,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": {
+     "median": 46.62,
+     "p90": 48.44,
+     "min": 42.63,
+     "max": 48.56
+    }
+   },
+   "gps_drift, before arming": {
+    "runs": 16,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 16,
+    "at_release": 16,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": {
+     "median": 45.23,
+     "p90": 50.02,
+     "min": 40.96,
+     "max": 50.04
+    }
+   },
+   "gps_drift_naive, after arming": {
+    "runs": 24,
+    "detected_during": 6,
+    "detection_rate_during": 0.25,
+    "detected_incl_release": 24,
+    "at_release": 18,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 20.69,
+     "p90": 28.48,
+     "min": 2.74,
+     "max": 32.22
+    },
+    "latency_incl_release_s": {
+     "median": 45.36,
+     "p90": 48.02,
+     "min": 2.74,
+     "max": 48.36
+    }
+   },
+   "gps_drift_naive, before arming": {
+    "runs": 16,
+    "detected_during": 3,
+    "detection_rate_during": 0.188,
+    "detected_incl_release": 16,
+    "at_release": 13,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 13.37,
+     "p90": 18.03,
+     "min": 4.09,
+     "max": 19.19
+    },
+    "latency_incl_release_s": {
+     "median": 43.62,
+     "p90": 49.83,
+     "min": 4.09,
+     "max": 49.98
+    }
+   }
+  },
+  "detection_by_distance": {
+   "gps_drift, 0-100 m": {
+    "runs": 40,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 40,
+    "at_release": 40,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": {
+     "median": 46.62,
+     "p90": 48.69,
+     "min": 40.96,
+     "max": 50.04
+    }
+   },
+   "gps_drift_naive, 0-100 m": {
+    "runs": 40,
+    "detected_during": 9,
+    "detection_rate_during": 0.225,
+    "detected_incl_release": 40,
+    "at_release": 31,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 17.21,
+     "p90": 26.23,
+     "min": 2.74,
+     "max": 32.22
+    },
+    "latency_incl_release_s": {
+     "median": 44.22,
+     "p90": 48.5,
+     "min": 2.74,
+     "max": 49.98
+    }
+   }
+  },
+  "false_alarms": {
+   "count": 30,
+   "clean_hours": 7.751,
+   "per_hour": 3.871,
+   "upper95_per_hour": 5.25,
+   "advisories": 0,
+   "by_distance": {
+    "0-100 m": {
+     "count": 30,
+     "clean_hours": 7.068,
+     "per_hour": 4.245,
+     "upper95_per_hour": 5.757
+    },
+    "100-200 m": {
+     "count": 0,
+     "clean_hours": 0.146,
+     "per_hour": 0.0,
+     "upper95_per_hour": 20.513
+    },
+    "200-400 m": {
+     "count": 0,
+     "clean_hours": 0.441,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.794
+    },
+    ">400 m": {
+     "count": 0,
+     "clean_hours": 0.093,
+     "per_hour": 0.0,
+     "upper95_per_hour": 32.153
+    },
+    "on_ground": {
+     "count": 0,
+     "clean_hours": 0.0,
+     "per_hour": null,
+     "upper95_per_hour": null
+    }
+   },
+   "by_scenario": {
+    "a2_gps_drift-r0.25-g2": {
+     "count": 0,
+     "clean_hours": 0.496,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.039
+    },
+    "a2_gps_drift-r0.5-g2": {
+     "count": 0,
+     "clean_hours": 0.496,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.042
+    },
+    "a2_gps_drift-r1.0-g2": {
+     "count": 0,
+     "clean_hours": 0.496,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.041
+    },
+    "a2_gps_drift-r2.0-g2": {
+     "count": 0,
+     "clean_hours": 0.496,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.041
+    },
+    "a2n_gps_drift_naive-r0.25-g2": {
+     "count": 0,
+     "clean_hours": 0.496,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.044
+    },
+    "a2n_gps_drift_naive-r0.5-g2": {
+     "count": 0,
+     "clean_hours": 0.496,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.043
+    },
+    "a2n_gps_drift_naive-r1.0-g2": {
+     "count": 0,
+     "clean_hours": 0.496,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.04
+    },
+    "a2n_gps_drift_naive-r2.0-g2": {
+     "count": 0,
+     "clean_hours": 0.496,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.044
+    },
+    "b1_calm-g2": {
+     "count": 0,
+     "clean_hours": 0.594,
+     "per_hour": 0.0,
+     "upper95_per_hour": 5.047
+    },
+    "b2_wind-g2": {
+     "count": 0,
+     "clean_hours": 0.594,
+     "per_hour": 0.0,
+     "upper95_per_hour": 5.041
+    },
+    "b3_aggressive-g2": {
+     "count": 0,
+     "clean_hours": 0.599,
+     "per_hour": 0.0,
+     "upper95_per_hour": 4.999
+    },
+    "b4_gnss_glitch-g2": {
+     "count": 30,
+     "clean_hours": 0.51,
+     "per_hour": 58.821,
+     "upper95_per_hour": 79.781
+    },
+    "b5_link_fade-g2": {
+     "count": 0,
+     "clean_hours": 0.76,
+     "per_hour": 0.0,
+     "upper95_per_hour": 3.942
+    },
+    "b6_operator-g2": {
+     "count": 0,
+     "clean_hours": 0.543,
+     "per_hour": 0.0,
+     "upper95_per_hour": 5.52
+    },
+    "b7_takeoff_landing-g2": {
+     "count": 0,
+     "clean_hours": 0.184,
+     "per_hour": 0.0,
+     "upper95_per_hour": 16.284
+    }
+   },
+   "ground_phase_false_alarms": {
+    "count": 0,
+    "list": []
+   },
+   "list": [
+    {
+     "run": "b4_gnss_glitch-g2-s6001",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 26.98,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-g2-s6001",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 63.39,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-g2-s6001",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 102.59,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-g2-s6002",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 36.55,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-g2-s6002",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 67.36,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-g2-s6002",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 101.74,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-g2-s6003",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 21.96,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-g2-s6003",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 61.96,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-g2-s6003",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 103.76,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-g2-s6004",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 25.2,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-g2-s6004",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 58.6,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-g2-s6004",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 103.0,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-g2-s6005",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 27.95,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-g2-s6005",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 62.77,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-g2-s6005",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 103.17,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-g2-s6006",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 39.56,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-g2-s6006",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 71.14,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-g2-s6006",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 111.34,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-g2-s6007",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 32.77,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-g2-s6007",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 65.15,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-g2-s6007",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 106.37,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-g2-s6008",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 34.55,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-g2-s6008",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 69.57,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-g2-s6008",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 108.77,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-g2-s6009",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 33.14,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-g2-s6009",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 66.36,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-g2-s6009",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 94.16,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-g2-s6010",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 33.75,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-g2-s6010",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 75.35,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-g2-s6010",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 107.55,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    }
+   ]
+  }
+ }
+}

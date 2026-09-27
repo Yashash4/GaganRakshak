@@ -135,6 +135,8 @@ computed in these files.
 | development | 1–999 | building and debugging detectors |
 | calibration | 1001–2999 | learning thresholds (clean flights only) |
 | test | 5001–5999 | the benchmark; flown once, never used for tuning |
+| extension test | 6001–6999 | the second-GNSS-reference extension's own test flights |
+| extension calibration | 7001–7999 | learning the extension's threshold (clean flights only) |
 
 ## Results
 | Directory | Contents |
@@ -142,9 +144,32 @@ computed in these files.
 | `results/calibration/` | the learned calibration artefacts |
 | `results/runs/` | per-run exports (calibration, validation, test) |
 | `results/bench/` | benchmark summary (`summary.json`, `summary.md`) |
+| `results/runs_nocrypto/`, `results/bench_nocrypto/` | the test flights replayed with signatures and commitments off |
 | `results/stress/` | resource measurements, labelled with platform and load average |
+| `results/figures/` | figures drawn from the test exports and the stress measurements |
+| `results/calibration_dual/`, `results/runs_dual*/`, `results/bench_dual/` | the second-GNSS-reference extension (below) |
 
 Raw recordings (`results/raw/`: tlogs, keys, SITL DataFlash logs) are not in the repository.
+
+## Extension: an independent second GNSS reference
+An optional onboard check (`gaganrakshak/dual_gnss.py`) compares the navigation receiver with a
+second receiver on an independent constellation or band that the autopilot does not navigate on
+(in SITL a second simulated receiver with its own error process; a stand-in e.g. for NavIC, not a
+NavIC validation). The attacker spoofs the navigation receiver only. The separation threshold is
+learned on its own clean calibration flights (seeds 7001+) at its own false-alarm share of 0.2/h,
+on top of the base system's unchanged thresholds (system budget 1.0 + 0.2 per hour). The base
+results are not re-scored. The same pre-registered test flights (`configs/bench_dual.json`) are
+exported without and with the check:
+```bash
+python -m gaganrakshak.dual_bench fly calibration && python -m gaganrakshak.dual_bench fly test
+python -m gaganrakshak.dual_gnss --out results/calibration_dual/dual_gnss.json results/raw/dual/calibration/*
+python -m gaganrakshak.export --split test --raw-root results/raw --out results/runs_dual_base results/raw/dual/test/*/
+python -m gaganrakshak.export --split test --raw-root results/raw --out results/runs_dual \
+    --dual-gnss results/calibration_dual/dual_gnss.json results/raw/dual/test/*/
+python tools/dual_rows.py results/runs_dual_base/test results/runs_dual/test --out results/bench_dual
+```
+An attacker who spoofs both references coherently, or jams the reference while spoofing the
+navigation receiver, silences this check; detection then falls back to the single-GNSS physics.
 
 ## Third-party components
 See [THIRD_PARTY.md](THIRD_PARTY.md).
