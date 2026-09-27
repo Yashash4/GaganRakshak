@@ -1,0 +1,4188 @@
+{
+ "runs": 460,
+ "attack_runs": 320,
+ "benign_runs": 140,
+ "calibration": [
+  "{\"cpce.json\": \"2ff346d6d2ae1a3a699cb71fc17bbd05f81abe49\", \"estimator.json\": \"7185f8b3e9baa07a6a8f87e75ecadd6f4d69af3f\", \"link_curves.json\": \"6ea582539d3b29774b431332e3bcaa50c1b6e7f3\"}"
+ ],
+ "grace_s": 10.0,
+ "settle_s": 30.0,
+ "ids": {
+  "recording_artefacts": {
+   "count": 0,
+   "list": []
+  },
+  "detection": {
+   "a1_gps_jump": {
+    "runs": 10,
+    "detected_during": 10,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 10,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 5.42,
+     "p90": 5.6,
+     "min": 5.15,
+     "max": 5.64
+    },
+    "latency_incl_release_s": {
+     "median": 5.42,
+     "p90": 5.6,
+     "min": 5.15,
+     "max": 5.64
+    }
+   },
+   "a1_gps_jump_far": {
+    "runs": 10,
+    "detected_during": 10,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 10,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 10,
+    "latency_during_s": {
+     "median": 5.39,
+     "p90": 5.52,
+     "min": 5.07,
+     "max": 5.62
+    },
+    "latency_incl_release_s": {
+     "median": 5.39,
+     "p90": 5.52,
+     "min": 5.07,
+     "max": 5.62
+    }
+   },
+   "a2_gps_drift": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 10,
+    "at_release": 10,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": {
+     "median": 48.24,
+     "p90": 52.39,
+     "min": 45.78,
+     "max": 53.42
+    }
+   },
+   "a2_gps_drift-r0.1": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 0,
+    "at_release": 0,
+    "missed": 10,
+    "advisory_only": 8,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": null
+   },
+   "a2_gps_drift-r0.25": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 0,
+    "at_release": 0,
+    "missed": 10,
+    "advisory_only": 10,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": null
+   },
+   "a2_gps_drift-r0.5": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 10,
+    "at_release": 10,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": {
+     "median": 48.72,
+     "p90": 52.59,
+     "min": 45.98,
+     "max": 53.62
+    }
+   },
+   "a2_gps_drift-r1.0": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 10,
+    "at_release": 10,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": {
+     "median": 48.02,
+     "p90": 52.4,
+     "min": 45.79,
+     "max": 53.42
+    }
+   },
+   "a2_gps_drift-r2.0": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 10,
+    "at_release": 10,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": {
+     "median": 48.21,
+     "p90": 52.39,
+     "min": 45.61,
+     "max": 53.42
+    }
+   },
+   "a2a_gps_drift_accel-a0.005-early": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 10,
+    "at_release": 10,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": {
+     "median": 310.88,
+     "p90": 313.06,
+     "min": 307.16,
+     "max": 313.96
+    }
+   },
+   "a2a_gps_drift_accel-a0.01-early": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 10,
+    "at_release": 10,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 1,
+    "latency_during_s": null,
+    "latency_incl_release_s": {
+     "median": 310.86,
+     "p90": 313.22,
+     "min": 307.16,
+     "max": 313.76
+    }
+   },
+   "a2a_gps_drift_accel-a0.02-early": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 10,
+    "at_release": 10,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 1,
+    "latency_during_s": null,
+    "latency_incl_release_s": {
+     "median": 310.76,
+     "p90": 313.06,
+     "min": 307.16,
+     "max": 313.76
+    }
+   },
+   "a2a_gps_drift_accel-a0.05-early": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 10,
+    "at_release": 10,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": {
+     "median": 310.86,
+     "p90": 313.22,
+     "min": 307.16,
+     "max": 313.75
+    }
+   },
+   "a2a_gps_drift_accel-a0.1-early": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 10,
+    "at_release": 10,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": {
+     "median": 310.66,
+     "p90": 313.21,
+     "min": 307.18,
+     "max": 313.56
+    }
+   },
+   "a2n_gps_drift_naive": {
+    "runs": 10,
+    "detected_during": 3,
+    "detection_rate_during": 0.3,
+    "detected_incl_release": 10,
+    "at_release": 7,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 35.6,
+     "p90": 37.64,
+     "min": 35.43,
+     "max": 38.15
+    },
+    "latency_incl_release_s": {
+     "median": 46.34,
+     "p90": 52.2,
+     "min": 35.43,
+     "max": 53.22
+    }
+   },
+   "a2n_gps_drift_naive-r0.1": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 0,
+    "at_release": 0,
+    "missed": 10,
+    "advisory_only": 8,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": null
+   },
+   "a2n_gps_drift_naive-r0.25": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 0,
+    "at_release": 0,
+    "missed": 10,
+    "advisory_only": 10,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": null
+   },
+   "a2n_gps_drift_naive-r0.5": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 9,
+    "at_release": 9,
+    "missed": 1,
+    "advisory_only": 1,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": {
+     "median": 48.81,
+     "p90": 52.94,
+     "min": 46.63,
+     "max": 54.03
+    }
+   },
+   "a2n_gps_drift_naive-r1.0": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 10,
+    "at_release": 10,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": {
+     "median": 48.41,
+     "p90": 52.21,
+     "min": 45.57,
+     "max": 53.42
+    }
+   },
+   "a2n_gps_drift_naive-r2.0": {
+    "runs": 10,
+    "detected_during": 10,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 10,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 27.66,
+     "p90": 28.57,
+     "min": 24.35,
+     "max": 29.63
+    },
+    "latency_incl_release_s": {
+     "median": 27.66,
+     "p90": 28.57,
+     "min": 24.35,
+     "max": 29.63
+    }
+   },
+   "a3_cmd_injection": {
+    "runs": 10,
+    "detected_during": 10,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 10,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 10,
+    "latency_during_s": {
+     "median": 0.11,
+     "p90": 0.18,
+     "min": 0.08,
+     "max": 0.18
+    },
+    "latency_incl_release_s": {
+     "median": 0.11,
+     "p90": 0.18,
+     "min": 0.08,
+     "max": 0.18
+    }
+   },
+   "a3h_position_target": {
+    "runs": 10,
+    "detected_during": 10,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 10,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 10,
+    "latency_during_s": {
+     "median": 0.57,
+     "p90": 0.62,
+     "min": 0.11,
+     "max": 0.67
+    },
+    "latency_incl_release_s": {
+     "median": 0.57,
+     "p90": 0.62,
+     "min": 0.11,
+     "max": 0.67
+    }
+   },
+   "a3h_set_mode": {
+    "runs": 10,
+    "detected_during": 10,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 10,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 10,
+    "latency_during_s": {
+     "median": 0.12,
+     "p90": 0.17,
+     "min": 0.07,
+     "max": 0.18
+    },
+    "latency_incl_release_s": {
+     "median": 0.12,
+     "p90": 0.17,
+     "min": 0.07,
+     "max": 0.18
+    }
+   },
+   "a3h_set_servo": {
+    "runs": 10,
+    "detected_during": 10,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 10,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 10,
+    "latency_during_s": {
+     "median": 0.21,
+     "p90": 0.34,
+     "min": 0.18,
+     "max": 0.36
+    },
+    "latency_incl_release_s": {
+     "median": 0.21,
+     "p90": 0.34,
+     "min": 0.18,
+     "max": 0.36
+    }
+   },
+   "a4_telemetry_position": {
+    "runs": 10,
+    "detected_during": 10,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 10,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 10,
+    "latency_during_s": {
+     "median": 0.95,
+     "p90": 1.23,
+     "min": 0.3,
+     "max": 1.25
+    },
+    "latency_incl_release_s": {
+     "median": 0.95,
+     "p90": 1.23,
+     "min": 0.3,
+     "max": 1.25
+    }
+   },
+   "a5_link_flood": {
+    "runs": 10,
+    "detected_during": 10,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 10,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 27,
+    "latency_during_s": {
+     "median": 0.22,
+     "p90": 0.22,
+     "min": 0.21,
+     "max": 0.23
+    },
+    "latency_incl_release_s": {
+     "median": 0.22,
+     "p90": 0.22,
+     "min": 0.21,
+     "max": 0.23
+    }
+   },
+   "a5_link_flood_far": {
+    "runs": 10,
+    "detected_during": 10,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 10,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 21,
+    "latency_during_s": {
+     "median": 0.26,
+     "p90": 0.35,
+     "min": 0.22,
+     "max": 0.45
+    },
+    "latency_incl_release_s": {
+     "median": 0.26,
+     "p90": 0.35,
+     "min": 0.22,
+     "max": 0.45
+    }
+   },
+   "a5h_flood_gcs_sysid": {
+    "runs": 10,
+    "detected_during": 10,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 10,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 17,
+    "latency_during_s": {
+     "median": 0.22,
+     "p90": 0.22,
+     "min": 0.21,
+     "max": 0.22
+    },
+    "latency_incl_release_s": {
+     "median": 0.22,
+     "p90": 0.22,
+     "min": 0.21,
+     "max": 0.22
+    }
+   },
+   "a6_param_tamper": {
+    "runs": 10,
+    "detected_during": 10,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 10,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 20,
+    "latency_during_s": {
+     "median": 1.08,
+     "p90": 1.13,
+     "min": 1.05,
+     "max": 1.13
+    },
+    "latency_incl_release_s": {
+     "median": 1.08,
+     "p90": 1.13,
+     "min": 1.05,
+     "max": 1.13
+    }
+   },
+   "a7_replay": {
+    "runs": 10,
+    "detected_during": 10,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 10,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 10,
+    "latency_during_s": {
+     "median": 0.06,
+     "p90": 0.06,
+     "min": 0.04,
+     "max": 0.06
+    },
+    "latency_incl_release_s": {
+     "median": 0.06,
+     "p90": 0.06,
+     "min": 0.04,
+     "max": 0.06
+    }
+   },
+   "a8_fc_impersonation": {
+    "runs": 10,
+    "detected_during": 10,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 10,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 10,
+    "latency_during_s": {
+     "median": 0.64,
+     "p90": 0.98,
+     "min": 0.08,
+     "max": 1.04
+    },
+    "latency_incl_release_s": {
+     "median": 0.64,
+     "p90": 0.98,
+     "min": 0.08,
+     "max": 1.04
+    }
+   },
+   "a9_jamming": {
+    "runs": 10,
+    "detected_during": 10,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 10,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 4.05,
+     "p90": 4.37,
+     "min": 3.48,
+     "max": 4.42
+    },
+    "latency_incl_release_s": {
+     "median": 4.05,
+     "p90": 4.37,
+     "min": 3.48,
+     "max": 4.42
+    }
+   },
+   "a9_jamming_far": {
+    "runs": 10,
+    "detected_during": 1,
+    "detection_rate_during": 0.1,
+    "detected_incl_release": 3,
+    "at_release": 2,
+    "missed": 7,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 6.99,
+     "p90": 6.99,
+     "min": 6.99,
+     "max": 6.99
+    },
+    "latency_incl_release_s": {
+     "median": 7.54,
+     "p90": 13.48,
+     "min": 6.99,
+     "max": 14.97
+    }
+   }
+  },
+  "detection_by_arming": {
+   "command_injection, after arming": {
+    "runs": 28,
+    "detected_during": 28,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 28,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 28,
+    "latency_during_s": {
+     "median": 0.18,
+     "p90": 0.59,
+     "min": 0.07,
+     "max": 0.67
+    },
+    "latency_incl_release_s": {
+     "median": 0.18,
+     "p90": 0.59,
+     "min": 0.07,
+     "max": 0.67
+    }
+   },
+   "command_injection, before arming": {
+    "runs": 12,
+    "detected_during": 12,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 12,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 12,
+    "latency_during_s": {
+     "median": 0.18,
+     "p90": 0.54,
+     "min": 0.08,
+     "max": 0.58
+    },
+    "latency_incl_release_s": {
+     "median": 0.18,
+     "p90": 0.54,
+     "min": 0.08,
+     "max": 0.58
+    }
+   },
+   "fc_impersonation, after arming": {
+    "runs": 7,
+    "detected_during": 7,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 7,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 7,
+    "latency_during_s": {
+     "median": 0.7,
+     "p90": 0.97,
+     "min": 0.22,
+     "max": 1.04
+    },
+    "latency_incl_release_s": {
+     "median": 0.7,
+     "p90": 0.97,
+     "min": 0.22,
+     "max": 1.04
+    }
+   },
+   "fc_impersonation, before arming": {
+    "runs": 3,
+    "detected_during": 3,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 3,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 3,
+    "latency_during_s": {
+     "median": 0.12,
+     "p90": 0.8,
+     "min": 0.08,
+     "max": 0.97
+    },
+    "latency_incl_release_s": {
+     "median": 0.12,
+     "p90": 0.8,
+     "min": 0.08,
+     "max": 0.97
+    }
+   },
+   "gps_drift, after arming": {
+    "runs": 42,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 28,
+    "at_release": 28,
+    "missed": 14,
+    "advisory_only": 12,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": {
+     "median": 48.86,
+     "p90": 53.42,
+     "min": 45.61,
+     "max": 53.62
+    }
+   },
+   "gps_drift, before arming": {
+    "runs": 18,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 12,
+    "at_release": 12,
+    "missed": 6,
+    "advisory_only": 6,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": {
+     "median": 48.12,
+     "p90": 48.59,
+     "min": 46.85,
+     "max": 48.8
+    }
+   },
+   "gps_drift_accel, before arming": {
+    "runs": 50,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 50,
+    "at_release": 50,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 2,
+    "latency_during_s": null,
+    "latency_incl_release_s": {
+     "median": 310.76,
+     "p90": 313.21,
+     "min": 307.16,
+     "max": 313.96
+    }
+   },
+   "gps_drift_naive, after arming": {
+    "runs": 42,
+    "detected_during": 8,
+    "detection_rate_during": 0.19,
+    "detected_incl_release": 27,
+    "at_release": 19,
+    "missed": 15,
+    "advisory_only": 13,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 27.66,
+     "p90": 31.35,
+     "min": 24.35,
+     "max": 38.15
+    },
+    "latency_incl_release_s": {
+     "median": 47.55,
+     "p90": 52.89,
+     "min": 24.35,
+     "max": 54.03
+    }
+   },
+   "gps_drift_naive, before arming": {
+    "runs": 18,
+    "detected_during": 5,
+    "detection_rate_during": 0.278,
+    "detected_incl_release": 12,
+    "at_release": 7,
+    "missed": 6,
+    "advisory_only": 6,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 29.63,
+     "p90": 35.53,
+     "min": 25.6,
+     "max": 35.6
+    },
+    "latency_incl_release_s": {
+     "median": 46.95,
+     "p90": 48.63,
+     "min": 25.6,
+     "max": 48.81
+    }
+   },
+   "gps_jump, after arming": {
+    "runs": 11,
+    "detected_during": 11,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 11,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 4,
+    "latency_during_s": {
+     "median": 5.38,
+     "p90": 5.47,
+     "min": 5.07,
+     "max": 5.62
+    },
+    "latency_incl_release_s": {
+     "median": 5.38,
+     "p90": 5.47,
+     "min": 5.07,
+     "max": 5.62
+    }
+   },
+   "gps_jump, before arming": {
+    "runs": 9,
+    "detected_during": 9,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 9,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 6,
+    "latency_during_s": {
+     "median": 5.43,
+     "p90": 5.61,
+     "min": 5.23,
+     "max": 5.64
+    },
+    "latency_incl_release_s": {
+     "median": 5.43,
+     "p90": 5.61,
+     "min": 5.23,
+     "max": 5.64
+    }
+   },
+   "jamming, after arming": {
+    "runs": 11,
+    "detected_during": 8,
+    "detection_rate_during": 0.727,
+    "detected_incl_release": 8,
+    "at_release": 0,
+    "missed": 3,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 4.14,
+     "p90": 5.19,
+     "min": 3.55,
+     "max": 6.99
+    },
+    "latency_incl_release_s": {
+     "median": 4.14,
+     "p90": 5.19,
+     "min": 3.55,
+     "max": 6.99
+    }
+   },
+   "jamming, before arming": {
+    "runs": 9,
+    "detected_during": 3,
+    "detection_rate_during": 0.333,
+    "detected_incl_release": 5,
+    "at_release": 2,
+    "missed": 4,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 3.49,
+     "p90": 4.19,
+     "min": 3.48,
+     "max": 4.36
+    },
+    "latency_incl_release_s": {
+     "median": 4.36,
+     "p90": 12.0,
+     "min": 3.48,
+     "max": 14.97
+    }
+   },
+   "link_flood, after arming": {
+    "runs": 18,
+    "detected_during": 18,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 18,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 37,
+    "latency_during_s": {
+     "median": 0.22,
+     "p90": 0.28,
+     "min": 0.21,
+     "max": 0.45
+    },
+    "latency_incl_release_s": {
+     "median": 0.22,
+     "p90": 0.28,
+     "min": 0.21,
+     "max": 0.45
+    }
+   },
+   "link_flood, before arming": {
+    "runs": 12,
+    "detected_during": 12,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 12,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 28,
+    "latency_during_s": {
+     "median": 0.22,
+     "p90": 0.29,
+     "min": 0.21,
+     "max": 0.32
+    },
+    "latency_incl_release_s": {
+     "median": 0.22,
+     "p90": 0.29,
+     "min": 0.21,
+     "max": 0.32
+    }
+   },
+   "param_tamper, after arming": {
+    "runs": 7,
+    "detected_during": 7,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 7,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 14,
+    "latency_during_s": {
+     "median": 1.08,
+     "p90": 1.12,
+     "min": 1.05,
+     "max": 1.13
+    },
+    "latency_incl_release_s": {
+     "median": 1.08,
+     "p90": 1.12,
+     "min": 1.05,
+     "max": 1.13
+    }
+   },
+   "param_tamper, before arming": {
+    "runs": 3,
+    "detected_during": 3,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 3,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 6,
+    "latency_during_s": {
+     "median": 1.08,
+     "p90": 1.12,
+     "min": 1.06,
+     "max": 1.13
+    },
+    "latency_incl_release_s": {
+     "median": 1.08,
+     "p90": 1.12,
+     "min": 1.06,
+     "max": 1.13
+    }
+   },
+   "replay, after arming": {
+    "runs": 7,
+    "detected_during": 7,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 7,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 7,
+    "latency_during_s": {
+     "median": 0.06,
+     "p90": 0.06,
+     "min": 0.04,
+     "max": 0.06
+    },
+    "latency_incl_release_s": {
+     "median": 0.06,
+     "p90": 0.06,
+     "min": 0.04,
+     "max": 0.06
+    }
+   },
+   "replay, before arming": {
+    "runs": 3,
+    "detected_during": 3,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 3,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 3,
+    "latency_during_s": {
+     "median": 0.05,
+     "p90": 0.06,
+     "min": 0.04,
+     "max": 0.06
+    },
+    "latency_incl_release_s": {
+     "median": 0.05,
+     "p90": 0.06,
+     "min": 0.04,
+     "max": 0.06
+    }
+   },
+   "telemetry_manipulation, after arming": {
+    "runs": 7,
+    "detected_during": 7,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 7,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 7,
+    "latency_during_s": {
+     "median": 0.8,
+     "p90": 1.09,
+     "min": 0.3,
+     "max": 1.17
+    },
+    "latency_incl_release_s": {
+     "median": 0.8,
+     "p90": 1.09,
+     "min": 0.3,
+     "max": 1.17
+    }
+   },
+   "telemetry_manipulation, before arming": {
+    "runs": 3,
+    "detected_during": 3,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 3,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 3,
+    "latency_during_s": {
+     "median": 1.23,
+     "p90": 1.25,
+     "min": 0.96,
+     "max": 1.25
+    },
+    "latency_incl_release_s": {
+     "median": 1.23,
+     "p90": 1.25,
+     "min": 0.96,
+     "max": 1.25
+    }
+   }
+  },
+  "detection_by_distance": {
+   "command_injection, 0-100 m": {
+    "runs": 40,
+    "detected_during": 40,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 40,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 40,
+    "latency_during_s": {
+     "median": 0.18,
+     "p90": 0.58,
+     "min": 0.07,
+     "max": 0.67
+    },
+    "latency_incl_release_s": {
+     "median": 0.18,
+     "p90": 0.58,
+     "min": 0.07,
+     "max": 0.67
+    }
+   },
+   "fc_impersonation, 0-100 m": {
+    "runs": 10,
+    "detected_during": 10,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 10,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 10,
+    "latency_during_s": {
+     "median": 0.64,
+     "p90": 0.98,
+     "min": 0.08,
+     "max": 1.04
+    },
+    "latency_incl_release_s": {
+     "median": 0.64,
+     "p90": 0.98,
+     "min": 0.08,
+     "max": 1.04
+    }
+   },
+   "gps_drift, 0-100 m": {
+    "runs": 60,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 40,
+    "at_release": 40,
+    "missed": 20,
+    "advisory_only": 18,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": {
+     "median": 48.24,
+     "p90": 52.56,
+     "min": 45.61,
+     "max": 53.62
+    }
+   },
+   "gps_drift_accel, 0-100 m": {
+    "runs": 50,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 50,
+    "at_release": 50,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 2,
+    "latency_during_s": null,
+    "latency_incl_release_s": {
+     "median": 310.76,
+     "p90": 313.21,
+     "min": 307.16,
+     "max": 313.96
+    }
+   },
+   "gps_drift_naive, 0-100 m": {
+    "runs": 60,
+    "detected_during": 13,
+    "detection_rate_during": 0.217,
+    "detected_incl_release": 39,
+    "at_release": 26,
+    "missed": 21,
+    "advisory_only": 19,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 28.03,
+     "p90": 35.57,
+     "min": 24.35,
+     "max": 38.15
+    },
+    "latency_incl_release_s": {
+     "median": 47.04,
+     "p90": 52.21,
+     "min": 24.35,
+     "max": 54.03
+    }
+   },
+   "gps_jump, 0-100 m": {
+    "runs": 10,
+    "detected_during": 10,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 10,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 5.42,
+     "p90": 5.6,
+     "min": 5.15,
+     "max": 5.64
+    },
+    "latency_incl_release_s": {
+     "median": 5.42,
+     "p90": 5.6,
+     "min": 5.15,
+     "max": 5.64
+    }
+   },
+   "gps_jump, 100-200 m": {
+    "runs": 2,
+    "detected_during": 2,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 2,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 2,
+    "latency_during_s": {
+     "median": 5.22,
+     "p90": 5.34,
+     "min": 5.08,
+     "max": 5.37
+    },
+    "latency_incl_release_s": {
+     "median": 5.22,
+     "p90": 5.34,
+     "min": 5.08,
+     "max": 5.37
+    }
+   },
+   "gps_jump, 200-400 m": {
+    "runs": 7,
+    "detected_during": 7,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 7,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 5,
+    "latency_during_s": {
+     "median": 5.42,
+     "p90": 5.55,
+     "min": 5.07,
+     "max": 5.62
+    },
+    "latency_incl_release_s": {
+     "median": 5.42,
+     "p90": 5.55,
+     "min": 5.07,
+     "max": 5.62
+    }
+   },
+   "gps_jump, >400 m": {
+    "runs": 1,
+    "detected_during": 1,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 1,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 3,
+    "latency_during_s": {
+     "median": 5.43,
+     "p90": 5.43,
+     "min": 5.43,
+     "max": 5.43
+    },
+    "latency_incl_release_s": {
+     "median": 5.43,
+     "p90": 5.43,
+     "min": 5.43,
+     "max": 5.43
+    }
+   },
+   "jamming, 0-100 m": {
+    "runs": 10,
+    "detected_during": 10,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 10,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 4.05,
+     "p90": 4.37,
+     "min": 3.48,
+     "max": 4.42
+    },
+    "latency_incl_release_s": {
+     "median": 4.05,
+     "p90": 4.37,
+     "min": 3.48,
+     "max": 4.42
+    }
+   },
+   "jamming, 100-200 m": {
+    "runs": 2,
+    "detected_during": 1,
+    "detection_rate_during": 0.5,
+    "detected_incl_release": 2,
+    "at_release": 1,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 6.99,
+     "p90": 6.99,
+     "min": 6.99,
+     "max": 6.99
+    },
+    "latency_incl_release_s": {
+     "median": 7.27,
+     "p90": 7.49,
+     "min": 6.99,
+     "max": 7.54
+    }
+   },
+   "jamming, 200-400 m": {
+    "runs": 7,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 1,
+    "at_release": 1,
+    "missed": 6,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": {
+     "median": 14.97,
+     "p90": 14.97,
+     "min": 14.97,
+     "max": 14.97
+    }
+   },
+   "jamming, >400 m": {
+    "runs": 1,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 0,
+    "at_release": 0,
+    "missed": 1,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": null
+   },
+   "link_flood, 0-100 m": {
+    "runs": 20,
+    "detected_during": 20,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 20,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 44,
+    "latency_during_s": {
+     "median": 0.22,
+     "p90": 0.22,
+     "min": 0.21,
+     "max": 0.23
+    },
+    "latency_incl_release_s": {
+     "median": 0.22,
+     "p90": 0.22,
+     "min": 0.21,
+     "max": 0.23
+    }
+   },
+   "link_flood, 100-200 m": {
+    "runs": 1,
+    "detected_during": 1,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 1,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 3,
+    "latency_during_s": {
+     "median": 0.22,
+     "p90": 0.22,
+     "min": 0.22,
+     "max": 0.22
+    },
+    "latency_incl_release_s": {
+     "median": 0.22,
+     "p90": 0.22,
+     "min": 0.22,
+     "max": 0.22
+    }
+   },
+   "link_flood, 200-400 m": {
+    "runs": 8,
+    "detected_during": 8,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 8,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 16,
+    "latency_during_s": {
+     "median": 0.26,
+     "p90": 0.33,
+     "min": 0.23,
+     "max": 0.34
+    },
+    "latency_incl_release_s": {
+     "median": 0.26,
+     "p90": 0.33,
+     "min": 0.23,
+     "max": 0.34
+    }
+   },
+   "link_flood, >400 m": {
+    "runs": 1,
+    "detected_during": 1,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 1,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 2,
+    "latency_during_s": {
+     "median": 0.45,
+     "p90": 0.45,
+     "min": 0.45,
+     "max": 0.45
+    },
+    "latency_incl_release_s": {
+     "median": 0.45,
+     "p90": 0.45,
+     "min": 0.45,
+     "max": 0.45
+    }
+   },
+   "param_tamper, 0-100 m": {
+    "runs": 10,
+    "detected_during": 10,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 10,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 20,
+    "latency_during_s": {
+     "median": 1.08,
+     "p90": 1.13,
+     "min": 1.05,
+     "max": 1.13
+    },
+    "latency_incl_release_s": {
+     "median": 1.08,
+     "p90": 1.13,
+     "min": 1.05,
+     "max": 1.13
+    }
+   },
+   "replay, 0-100 m": {
+    "runs": 10,
+    "detected_during": 10,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 10,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 10,
+    "latency_during_s": {
+     "median": 0.06,
+     "p90": 0.06,
+     "min": 0.04,
+     "max": 0.06
+    },
+    "latency_incl_release_s": {
+     "median": 0.06,
+     "p90": 0.06,
+     "min": 0.04,
+     "max": 0.06
+    }
+   },
+   "telemetry_manipulation, 0-100 m": {
+    "runs": 10,
+    "detected_during": 10,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 10,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 10,
+    "latency_during_s": {
+     "median": 0.95,
+     "p90": 1.23,
+     "min": 0.3,
+     "max": 1.25
+    },
+    "latency_incl_release_s": {
+     "median": 0.95,
+     "p90": 1.23,
+     "min": 0.3,
+     "max": 1.25
+    }
+   }
+  },
+  "false_alarms": {
+   "count": 29,
+   "clean_hours": 22.149,
+   "per_hour": 1.309,
+   "upper95_per_hour": 1.785,
+   "advisories": 64,
+   "by_distance": {
+    "0-100 m": {
+     "count": 0,
+     "clean_hours": 18.727,
+     "per_hour": 0.0,
+     "upper95_per_hour": 0.16
+    },
+    "100-200 m": {
+     "count": 0,
+     "clean_hours": 0.657,
+     "per_hour": 0.0,
+     "upper95_per_hour": 4.556
+    },
+    "200-400 m": {
+     "count": 16,
+     "clean_hours": 1.971,
+     "per_hour": 8.117,
+     "upper95_per_hour": 12.329
+    },
+    ">400 m": {
+     "count": 10,
+     "clean_hours": 0.786,
+     "per_hour": 12.726,
+     "upper95_per_hour": 21.586
+    },
+    "on_ground": {
+     "count": 3,
+     "clean_hours": 0.0,
+     "per_hour": null,
+     "upper95_per_hour": null
+    }
+   },
+   "by_scenario": {
+    "a1_gps_jump": {
+     "count": 0,
+     "clean_hours": 0.499,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.0
+    },
+    "a1_gps_jump_far": {
+     "count": 11,
+     "clean_hours": 0.586,
+     "per_hour": 18.758,
+     "upper95_per_hour": 31.048
+    },
+    "a2_gps_drift": {
+     "count": 0,
+     "clean_hours": 0.5,
+     "per_hour": 0.0,
+     "upper95_per_hour": 5.992
+    },
+    "a2_gps_drift-r0.1": {
+     "count": 0,
+     "clean_hours": 0.5,
+     "per_hour": 0.0,
+     "upper95_per_hour": 5.996
+    },
+    "a2_gps_drift-r0.25": {
+     "count": 0,
+     "clean_hours": 0.499,
+     "per_hour": 0.0,
+     "upper95_per_hour": 5.999
+    },
+    "a2_gps_drift-r0.5": {
+     "count": 0,
+     "clean_hours": 0.499,
+     "per_hour": 0.0,
+     "upper95_per_hour": 5.999
+    },
+    "a2_gps_drift-r1.0": {
+     "count": 0,
+     "clean_hours": 0.5,
+     "per_hour": 0.0,
+     "upper95_per_hour": 5.997
+    },
+    "a2_gps_drift-r2.0": {
+     "count": 0,
+     "clean_hours": 0.5,
+     "per_hour": 0.0,
+     "upper95_per_hour": 5.996
+    },
+    "a2a_gps_drift_accel-a0.005-early": {
+     "count": 0,
+     "clean_hours": 0.217,
+     "per_hour": 0.0,
+     "upper95_per_hour": 13.831
+    },
+    "a2a_gps_drift_accel-a0.01-early": {
+     "count": 0,
+     "clean_hours": 0.181,
+     "per_hour": 0.0,
+     "upper95_per_hour": 16.52
+    },
+    "a2a_gps_drift_accel-a0.02-early": {
+     "count": 0,
+     "clean_hours": 0.167,
+     "per_hour": 0.0,
+     "upper95_per_hour": 17.919
+    },
+    "a2a_gps_drift_accel-a0.05-early": {
+     "count": 0,
+     "clean_hours": 0.167,
+     "per_hour": 0.0,
+     "upper95_per_hour": 17.903
+    },
+    "a2a_gps_drift_accel-a0.1-early": {
+     "count": 0,
+     "clean_hours": 0.167,
+     "per_hour": 0.0,
+     "upper95_per_hour": 17.918
+    },
+    "a2n_gps_drift_naive": {
+     "count": 0,
+     "clean_hours": 0.5,
+     "per_hour": 0.0,
+     "upper95_per_hour": 5.994
+    },
+    "a2n_gps_drift_naive-r0.1": {
+     "count": 0,
+     "clean_hours": 0.499,
+     "per_hour": 0.0,
+     "upper95_per_hour": 5.999
+    },
+    "a2n_gps_drift_naive-r0.25": {
+     "count": 0,
+     "clean_hours": 0.5,
+     "per_hour": 0.0,
+     "upper95_per_hour": 5.996
+    },
+    "a2n_gps_drift_naive-r0.5": {
+     "count": 0,
+     "clean_hours": 0.5,
+     "per_hour": 0.0,
+     "upper95_per_hour": 5.996
+    },
+    "a2n_gps_drift_naive-r1.0": {
+     "count": 0,
+     "clean_hours": 0.499,
+     "per_hour": 0.0,
+     "upper95_per_hour": 5.998
+    },
+    "a2n_gps_drift_naive-r2.0": {
+     "count": 0,
+     "clean_hours": 0.499,
+     "per_hour": 0.0,
+     "upper95_per_hour": 5.999
+    },
+    "a3_cmd_injection": {
+     "count": 0,
+     "clean_hours": 0.45,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.658
+    },
+    "a3h_position_target": {
+     "count": 0,
+     "clean_hours": 0.5,
+     "per_hour": 0.0,
+     "upper95_per_hour": 5.996
+    },
+    "a3h_set_mode": {
+     "count": 0,
+     "clean_hours": 0.45,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.661
+    },
+    "a3h_set_servo": {
+     "count": 0,
+     "clean_hours": 0.499,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.004
+    },
+    "a4_telemetry_position": {
+     "count": 0,
+     "clean_hours": 0.499,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.004
+    },
+    "a5_link_flood": {
+     "count": 0,
+     "clean_hours": 0.499,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.002
+    },
+    "a5_link_flood_far": {
+     "count": 6,
+     "clean_hours": 0.597,
+     "per_hour": 10.046,
+     "upper95_per_hour": 19.828
+    },
+    "a5h_flood_gcs_sysid": {
+     "count": 0,
+     "clean_hours": 0.499,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.003
+    },
+    "a6_param_tamper": {
+     "count": 0,
+     "clean_hours": 0.499,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.002
+    },
+    "a7_replay": {
+     "count": 0,
+     "clean_hours": 0.499,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.002
+    },
+    "a8_fc_impersonation": {
+     "count": 0,
+     "clean_hours": 0.499,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.003
+    },
+    "a9_jamming": {
+     "count": 0,
+     "clean_hours": 0.49,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.112
+    },
+    "a9_jamming_far": {
+     "count": 6,
+     "clean_hours": 0.668,
+     "per_hour": 8.985,
+     "upper95_per_hour": 17.735
+    },
+    "b1_calm": {
+     "count": 0,
+     "clean_hours": 1.184,
+     "per_hour": 0.0,
+     "upper95_per_hour": 2.529
+    },
+    "b2_wind": {
+     "count": 0,
+     "clean_hours": 1.185,
+     "per_hour": 0.0,
+     "upper95_per_hour": 2.528
+    },
+    "b3_aggressive": {
+     "count": 0,
+     "clean_hours": 1.193,
+     "per_hour": 0.0,
+     "upper95_per_hour": 2.512
+    },
+    "b4_gnss_glitch": {
+     "count": 0,
+     "clean_hours": 1.019,
+     "per_hour": 0.0,
+     "upper95_per_hour": 2.94
+    },
+    "b5_link_fade": {
+     "count": 6,
+     "clean_hours": 1.491,
+     "per_hour": 4.024,
+     "upper95_per_hour": 7.942
+    },
+    "b6_operator": {
+     "count": 0,
+     "clean_hours": 1.085,
+     "per_hour": 0.0,
+     "upper95_per_hour": 2.76
+    },
+    "b7_takeoff_landing": {
+     "count": 0,
+     "clean_hours": 0.364,
+     "per_hour": 0.0,
+     "upper95_per_hour": 8.24
+    }
+   },
+   "ground_phase_false_alarms": {
+    "count": 3,
+    "list": [
+     {
+      "run": "a1_gps_jump_far-s5002",
+      "agent": "onboard",
+      "class": "command_injection",
+      "t_start": 270.08,
+      "evidence_types": [
+       "unsafe_command",
+       "unsigned_command"
+      ]
+     },
+     {
+      "run": "a9_jamming_far-s5007",
+      "agent": "onboard",
+      "class": "command_injection",
+      "t_start": 266.47,
+      "evidence_types": [
+       "unsafe_command",
+       "unsigned_command"
+      ]
+     },
+     {
+      "run": "b5_link_fade-s5019",
+      "agent": "onboard",
+      "class": "command_injection",
+      "t_start": 269.98,
+      "evidence_types": [
+       "unsafe_command",
+       "unsigned_command"
+      ]
+     }
+    ]
+   },
+   "list": [
+    {
+     "run": "a1_gps_jump_far-s5002",
+     "agent": "onboard",
+     "class": "command_injection",
+     "t_start": 270.08,
+     "evidence_types": [
+      "unsafe_command",
+      "unsigned_command"
+     ]
+    },
+    {
+     "run": "a1_gps_jump_far-s5002",
+     "agent": "ground",
+     "class": "dos",
+     "t_start": 123.22,
+     "evidence_types": [
+      "telemetry_gap"
+     ]
+    },
+    {
+     "run": "a1_gps_jump_far-s5003",
+     "agent": "onboard",
+     "class": "command_injection",
+     "t_start": 241.09,
+     "evidence_types": [
+      "unsigned_command"
+     ]
+    },
+    {
+     "run": "a1_gps_jump_far-s5003",
+     "agent": "ground",
+     "class": "dos",
+     "t_start": 199.22,
+     "evidence_types": [
+      "telemetry_gap"
+     ]
+    },
+    {
+     "run": "a1_gps_jump_far-s5004",
+     "agent": "ground",
+     "class": "dos",
+     "t_start": 137.22,
+     "evidence_types": [
+      "telemetry_gap"
+     ]
+    },
+    {
+     "run": "a1_gps_jump_far-s5008",
+     "agent": "onboard",
+     "class": "command_injection",
+     "t_start": 226.28,
+     "evidence_types": [
+      "unsigned_command"
+     ]
+    },
+    {
+     "run": "a1_gps_jump_far-s5008",
+     "agent": "ground",
+     "class": "dos",
+     "t_start": 157.19,
+     "evidence_types": [
+      "telemetry_gap"
+     ]
+    },
+    {
+     "run": "a1_gps_jump_far-s5009",
+     "agent": "onboard",
+     "class": "command_injection",
+     "t_start": 109.68,
+     "evidence_types": [
+      "unsigned_command"
+     ]
+    },
+    {
+     "run": "a1_gps_jump_far-s5009",
+     "agent": "ground",
+     "class": "dos",
+     "t_start": 95.97,
+     "evidence_types": [
+      "excess_loss"
+     ]
+    },
+    {
+     "run": "a1_gps_jump_far-s5010",
+     "agent": "onboard",
+     "class": "command_injection",
+     "t_start": 240.67,
+     "evidence_types": [
+      "unsigned_command"
+     ]
+    },
+    {
+     "run": "a1_gps_jump_far-s5010",
+     "agent": "ground",
+     "class": "dos",
+     "t_start": 179.31,
+     "evidence_types": [
+      "telemetry_gap"
+     ]
+    },
+    {
+     "run": "a5_link_flood_far-s5001",
+     "agent": "onboard",
+     "class": "command_injection",
+     "t_start": 181.27,
+     "evidence_types": [
+      "unsigned_command"
+     ]
+    },
+    {
+     "run": "a5_link_flood_far-s5002",
+     "agent": "ground",
+     "class": "telemetry_manipulation",
+     "t_start": 140.91,
+     "evidence_types": [
+      "commit_timeout"
+     ]
+    },
+    {
+     "run": "a5_link_flood_far-s5004",
+     "agent": "onboard",
+     "class": "command_injection",
+     "t_start": 240.77,
+     "evidence_types": [
+      "unsigned_command"
+     ]
+    },
+    {
+     "run": "a5_link_flood_far-s5006",
+     "agent": "onboard",
+     "class": "command_injection",
+     "t_start": 240.62,
+     "evidence_types": [
+      "unsigned_command"
+     ]
+    },
+    {
+     "run": "a5_link_flood_far-s5009",
+     "agent": "ground",
+     "class": "dos",
+     "t_start": 99.83,
+     "evidence_types": [
+      "excess_loss"
+     ]
+    },
+    {
+     "run": "a5_link_flood_far-s5010",
+     "agent": "ground",
+     "class": "telemetry_manipulation",
+     "t_start": 172.63,
+     "evidence_types": [
+      "commit_timeout"
+     ]
+    },
+    {
+     "run": "a9_jamming_far-s5002",
+     "agent": "ground",
+     "class": "telemetry_manipulation",
+     "t_start": 118.92,
+     "evidence_types": [
+      "commit_timeout"
+     ]
+    },
+    {
+     "run": "a9_jamming_far-s5002",
+     "agent": "ground",
+     "class": "telemetry_manipulation",
+     "t_start": 167.97,
+     "evidence_types": [
+      "selective_commit_loss"
+     ]
+    },
+    {
+     "run": "a9_jamming_far-s5007",
+     "agent": "onboard",
+     "class": "command_injection",
+     "t_start": 266.47,
+     "evidence_types": [
+      "unsafe_command",
+      "unsigned_command"
+     ]
+    },
+    {
+     "run": "a9_jamming_far-s5008",
+     "agent": "ground",
+     "class": "dos",
+     "t_start": 181.88,
+     "evidence_types": [
+      "excess_loss"
+     ]
+    },
+    {
+     "run": "a9_jamming_far-s5010",
+     "agent": "onboard",
+     "class": "command_injection",
+     "t_start": 240.97,
+     "evidence_types": [
+      "unsigned_command"
+     ]
+    },
+    {
+     "run": "a9_jamming_far-s5010",
+     "agent": "ground",
+     "class": "telemetry_manipulation",
+     "t_start": 208.0,
+     "evidence_types": [
+      "commit_timeout"
+     ]
+    },
+    {
+     "run": "b5_link_fade-s5002",
+     "agent": "onboard",
+     "class": "command_injection",
+     "t_start": 121.48,
+     "evidence_types": [
+      "unsigned_command"
+     ]
+    },
+    {
+     "run": "b5_link_fade-s5002",
+     "agent": "onboard",
+     "class": "command_injection",
+     "t_start": 181.68,
+     "evidence_types": [
+      "unsigned_command"
+     ]
+    },
+    {
+     "run": "b5_link_fade-s5007",
+     "agent": "onboard",
+     "class": "command_injection",
+     "t_start": 58.68,
+     "evidence_types": [
+      "unsigned_command"
+     ]
+    },
+    {
+     "run": "b5_link_fade-s5009",
+     "agent": "onboard",
+     "class": "command_injection",
+     "t_start": 163.67,
+     "evidence_types": [
+      "unsigned_command"
+     ]
+    },
+    {
+     "run": "b5_link_fade-s5011",
+     "agent": "onboard",
+     "class": "command_injection",
+     "t_start": 241.08,
+     "evidence_types": [
+      "unsigned_command"
+     ]
+    },
+    {
+     "run": "b5_link_fade-s5019",
+     "agent": "onboard",
+     "class": "command_injection",
+     "t_start": 269.98,
+     "evidence_types": [
+      "unsafe_command",
+      "unsigned_command"
+     ]
+    }
+   ]
+  }
+ },
+ "baseline": {
+  "recording_artefacts": {
+   "count": 0,
+   "list": []
+  },
+  "detection": {
+   "a1_gps_jump": {
+    "runs": 10,
+    "detected_during": 10,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 10,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 0.23,
+     "p90": 0.29,
+     "min": 0.16,
+     "max": 0.4
+    },
+    "latency_incl_release_s": {
+     "median": 0.23,
+     "p90": 0.29,
+     "min": 0.16,
+     "max": 0.4
+    }
+   },
+   "a1_gps_jump_far": {
+    "runs": 10,
+    "detected_during": 10,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 10,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 0.17,
+     "p90": 0.24,
+     "min": 0.05,
+     "max": 0.31
+    },
+    "latency_incl_release_s": {
+     "median": 0.17,
+     "p90": 0.24,
+     "min": 0.05,
+     "max": 0.31
+    }
+   },
+   "a2_gps_drift": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 10,
+    "at_release": 10,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": {
+     "median": 43.16,
+     "p90": 47.2,
+     "min": 40.6,
+     "max": 48.23
+    }
+   },
+   "a2_gps_drift-r0.1": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 8,
+    "at_release": 8,
+    "missed": 2,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": {
+     "median": 43.31,
+     "p90": 47.44,
+     "min": 41.05,
+     "max": 48.24
+    }
+   },
+   "a2_gps_drift-r0.25": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 10,
+    "at_release": 10,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": {
+     "median": 43.02,
+     "p90": 47.38,
+     "min": 40.4,
+     "max": 48.23
+    }
+   },
+   "a2_gps_drift-r0.5": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 10,
+    "at_release": 10,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": {
+     "median": 43.02,
+     "p90": 47.2,
+     "min": 40.39,
+     "max": 48.22
+    }
+   },
+   "a2_gps_drift-r1.0": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 10,
+    "at_release": 10,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": {
+     "median": 43.03,
+     "p90": 47.22,
+     "min": 40.59,
+     "max": 48.22
+    }
+   },
+   "a2_gps_drift-r2.0": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 10,
+    "at_release": 10,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": {
+     "median": 43.13,
+     "p90": 47.21,
+     "min": 40.42,
+     "max": 48.24
+    }
+   },
+   "a2a_gps_drift_accel-a0.005-early": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 10,
+    "at_release": 10,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": {
+     "median": 305.67,
+     "p90": 308.05,
+     "min": 302.18,
+     "max": 308.77
+    }
+   },
+   "a2a_gps_drift_accel-a0.01-early": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 10,
+    "at_release": 10,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": {
+     "median": 305.77,
+     "p90": 308.05,
+     "min": 302.18,
+     "max": 308.78
+    }
+   },
+   "a2a_gps_drift_accel-a0.02-early": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 10,
+    "at_release": 10,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": {
+     "median": 305.67,
+     "p90": 308.04,
+     "min": 302.18,
+     "max": 308.56
+    }
+   },
+   "a2a_gps_drift_accel-a0.05-early": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 10,
+    "at_release": 10,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": {
+     "median": 305.67,
+     "p90": 308.21,
+     "min": 302.18,
+     "max": 308.57
+    }
+   },
+   "a2a_gps_drift_accel-a0.1-early": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 10,
+    "at_release": 10,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": {
+     "median": 305.66,
+     "p90": 308.22,
+     "min": 302.2,
+     "max": 308.57
+    }
+   },
+   "a2n_gps_drift_naive": {
+    "runs": 10,
+    "detected_during": 1,
+    "detection_rate_during": 0.1,
+    "detected_incl_release": 10,
+    "at_release": 9,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 19.81,
+     "p90": 19.81,
+     "min": 19.81,
+     "max": 19.81
+    },
+    "latency_incl_release_s": {
+     "median": 42.81,
+     "p90": 47.22,
+     "min": 19.81,
+     "max": 48.22
+    }
+   },
+   "a2n_gps_drift_naive-r0.1": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 7,
+    "at_release": 7,
+    "missed": 3,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": {
+     "median": 43.05,
+     "p90": 47.63,
+     "min": 40.85,
+     "max": 48.44
+    }
+   },
+   "a2n_gps_drift_naive-r0.25": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 10,
+    "at_release": 10,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": {
+     "median": 43.13,
+     "p90": 47.23,
+     "min": 40.39,
+     "max": 48.44
+    }
+   },
+   "a2n_gps_drift_naive-r0.5": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 10,
+    "at_release": 10,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": {
+     "median": 43.15,
+     "p90": 47.38,
+     "min": 40.39,
+     "max": 48.23
+    }
+   },
+   "a2n_gps_drift_naive-r1.0": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 10,
+    "at_release": 10,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": {
+     "median": 43.23,
+     "p90": 47.2,
+     "min": 40.39,
+     "max": 48.23
+    }
+   },
+   "a2n_gps_drift_naive-r2.0": {
+    "runs": 10,
+    "detected_during": 10,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 10,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 13.9,
+     "p90": 24.05,
+     "min": 4.24,
+     "max": 38.28
+    },
+    "latency_incl_release_s": {
+     "median": 13.9,
+     "p90": 24.05,
+     "min": 4.24,
+     "max": 38.28
+    }
+   },
+   "a3_cmd_injection": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 0,
+    "at_release": 0,
+    "missed": 10,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": null
+   },
+   "a3h_position_target": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 0,
+    "at_release": 0,
+    "missed": 10,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": null
+   },
+   "a3h_set_mode": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 0,
+    "at_release": 0,
+    "missed": 10,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": null
+   },
+   "a3h_set_servo": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 0,
+    "at_release": 0,
+    "missed": 10,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": null
+   },
+   "a4_telemetry_position": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 0,
+    "at_release": 0,
+    "missed": 10,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": null
+   },
+   "a5_link_flood": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 0,
+    "at_release": 0,
+    "missed": 10,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": null
+   },
+   "a5_link_flood_far": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 0,
+    "at_release": 0,
+    "missed": 10,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": null
+   },
+   "a5h_flood_gcs_sysid": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 0,
+    "at_release": 0,
+    "missed": 10,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": null
+   },
+   "a6_param_tamper": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 0,
+    "at_release": 0,
+    "missed": 10,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": null
+   },
+   "a7_replay": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 0,
+    "at_release": 0,
+    "missed": 10,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": null
+   },
+   "a8_fc_impersonation": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 0,
+    "at_release": 0,
+    "missed": 10,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": null
+   },
+   "a9_jamming": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 0,
+    "at_release": 0,
+    "missed": 10,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": null
+   },
+   "a9_jamming_far": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 0,
+    "at_release": 0,
+    "missed": 10,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": null
+   }
+  },
+  "detection_by_arming": {
+   "command_injection, after arming": {
+    "runs": 28,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 0,
+    "at_release": 0,
+    "missed": 28,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": null
+   },
+   "command_injection, before arming": {
+    "runs": 12,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 0,
+    "at_release": 0,
+    "missed": 12,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": null
+   },
+   "fc_impersonation, after arming": {
+    "runs": 7,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 0,
+    "at_release": 0,
+    "missed": 7,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": null
+   },
+   "fc_impersonation, before arming": {
+    "runs": 3,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 0,
+    "at_release": 0,
+    "missed": 3,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": null
+   },
+   "gps_drift, after arming": {
+    "runs": 42,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 40,
+    "at_release": 40,
+    "missed": 2,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": {
+     "median": 43.57,
+     "p90": 48.22,
+     "min": 40.39,
+     "max": 48.24
+    }
+   },
+   "gps_drift, before arming": {
+    "runs": 18,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 18,
+    "at_release": 18,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": {
+     "median": 43.02,
+     "p90": 43.11,
+     "min": 41.65,
+     "max": 43.26
+    }
+   },
+   "gps_drift_accel, before arming": {
+    "runs": 50,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 50,
+    "at_release": 50,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": {
+     "median": 305.76,
+     "p90": 308.22,
+     "min": 302.18,
+     "max": 308.78
+    }
+   },
+   "gps_drift_naive, after arming": {
+    "runs": 42,
+    "detected_during": 7,
+    "detection_rate_during": 0.167,
+    "detected_incl_release": 39,
+    "at_release": 32,
+    "missed": 3,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 14.2,
+     "p90": 27.53,
+     "min": 4.24,
+     "max": 38.28
+    },
+    "latency_incl_release_s": {
+     "median": 42.58,
+     "p90": 48.22,
+     "min": 4.24,
+     "max": 48.44
+    }
+   },
+   "gps_drift_naive, before arming": {
+    "runs": 18,
+    "detected_during": 4,
+    "detection_rate_during": 0.222,
+    "detected_incl_release": 18,
+    "at_release": 14,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 16.71,
+     "p90": 21.67,
+     "min": 8.85,
+     "max": 22.47
+    },
+    "latency_incl_release_s": {
+     "median": 42.44,
+     "p90": 43.22,
+     "min": 8.85,
+     "max": 43.25
+    }
+   },
+   "gps_jump, after arming": {
+    "runs": 11,
+    "detected_during": 11,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 11,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 0.19,
+     "p90": 0.25,
+     "min": 0.07,
+     "max": 0.28
+    },
+    "latency_incl_release_s": {
+     "median": 0.19,
+     "p90": 0.25,
+     "min": 0.07,
+     "max": 0.28
+    }
+   },
+   "gps_jump, before arming": {
+    "runs": 9,
+    "detected_during": 9,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 9,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 0.23,
+     "p90": 0.33,
+     "min": 0.05,
+     "max": 0.4
+    },
+    "latency_incl_release_s": {
+     "median": 0.23,
+     "p90": 0.33,
+     "min": 0.05,
+     "max": 0.4
+    }
+   },
+   "jamming, after arming": {
+    "runs": 11,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 0,
+    "at_release": 0,
+    "missed": 11,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": null
+   },
+   "jamming, before arming": {
+    "runs": 9,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 0,
+    "at_release": 0,
+    "missed": 9,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": null
+   },
+   "link_flood, after arming": {
+    "runs": 18,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 0,
+    "at_release": 0,
+    "missed": 18,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": null
+   },
+   "link_flood, before arming": {
+    "runs": 12,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 0,
+    "at_release": 0,
+    "missed": 12,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": null
+   },
+   "param_tamper, after arming": {
+    "runs": 7,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 0,
+    "at_release": 0,
+    "missed": 7,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": null
+   },
+   "param_tamper, before arming": {
+    "runs": 3,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 0,
+    "at_release": 0,
+    "missed": 3,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": null
+   },
+   "replay, after arming": {
+    "runs": 7,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 0,
+    "at_release": 0,
+    "missed": 7,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": null
+   },
+   "replay, before arming": {
+    "runs": 3,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 0,
+    "at_release": 0,
+    "missed": 3,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": null
+   },
+   "telemetry_manipulation, after arming": {
+    "runs": 7,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 0,
+    "at_release": 0,
+    "missed": 7,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": null
+   },
+   "telemetry_manipulation, before arming": {
+    "runs": 3,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 0,
+    "at_release": 0,
+    "missed": 3,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": null
+   }
+  },
+  "detection_by_distance": {
+   "command_injection, 0-100 m": {
+    "runs": 40,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 0,
+    "at_release": 0,
+    "missed": 40,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": null
+   },
+   "fc_impersonation, 0-100 m": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 0,
+    "at_release": 0,
+    "missed": 10,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": null
+   },
+   "gps_drift, 0-100 m": {
+    "runs": 60,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 58,
+    "at_release": 58,
+    "missed": 2,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": {
+     "median": 43.05,
+     "p90": 47.57,
+     "min": 40.39,
+     "max": 48.24
+    }
+   },
+   "gps_drift_accel, 0-100 m": {
+    "runs": 50,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 50,
+    "at_release": 50,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": {
+     "median": 305.76,
+     "p90": 308.22,
+     "min": 302.18,
+     "max": 308.78
+    }
+   },
+   "gps_drift_naive, 0-100 m": {
+    "runs": 60,
+    "detected_during": 11,
+    "detection_rate_during": 0.183,
+    "detected_incl_release": 57,
+    "at_release": 46,
+    "missed": 3,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 14.2,
+     "p90": 22.47,
+     "min": 4.24,
+     "max": 38.28
+    },
+    "latency_incl_release_s": {
+     "median": 42.58,
+     "p90": 47.18,
+     "min": 4.24,
+     "max": 48.44
+    }
+   },
+   "gps_jump, 0-100 m": {
+    "runs": 10,
+    "detected_during": 10,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 10,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 0.23,
+     "p90": 0.29,
+     "min": 0.16,
+     "max": 0.4
+    },
+    "latency_incl_release_s": {
+     "median": 0.23,
+     "p90": 0.29,
+     "min": 0.16,
+     "max": 0.4
+    }
+   },
+   "gps_jump, 100-200 m": {
+    "runs": 2,
+    "detected_during": 2,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 2,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 0.13,
+     "p90": 0.16,
+     "min": 0.09,
+     "max": 0.17
+    },
+    "latency_incl_release_s": {
+     "median": 0.13,
+     "p90": 0.16,
+     "min": 0.09,
+     "max": 0.17
+    }
+   },
+   "gps_jump, 200-400 m": {
+    "runs": 7,
+    "detected_during": 7,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 7,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 0.16,
+     "p90": 0.26,
+     "min": 0.05,
+     "max": 0.31
+    },
+    "latency_incl_release_s": {
+     "median": 0.16,
+     "p90": 0.26,
+     "min": 0.05,
+     "max": 0.31
+    }
+   },
+   "gps_jump, >400 m": {
+    "runs": 1,
+    "detected_during": 1,
+    "detection_rate_during": 1.0,
+    "detected_incl_release": 1,
+    "at_release": 0,
+    "missed": 0,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": {
+     "median": 0.23,
+     "p90": 0.23,
+     "min": 0.23,
+     "max": 0.23
+    },
+    "latency_incl_release_s": {
+     "median": 0.23,
+     "p90": 0.23,
+     "min": 0.23,
+     "max": 0.23
+    }
+   },
+   "jamming, 0-100 m": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 0,
+    "at_release": 0,
+    "missed": 10,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": null
+   },
+   "jamming, 100-200 m": {
+    "runs": 2,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 0,
+    "at_release": 0,
+    "missed": 2,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": null
+   },
+   "jamming, 200-400 m": {
+    "runs": 7,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 0,
+    "at_release": 0,
+    "missed": 7,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": null
+   },
+   "jamming, >400 m": {
+    "runs": 1,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 0,
+    "at_release": 0,
+    "missed": 1,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": null
+   },
+   "link_flood, 0-100 m": {
+    "runs": 20,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 0,
+    "at_release": 0,
+    "missed": 20,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": null
+   },
+   "link_flood, 100-200 m": {
+    "runs": 1,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 0,
+    "at_release": 0,
+    "missed": 1,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": null
+   },
+   "link_flood, 200-400 m": {
+    "runs": 8,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 0,
+    "at_release": 0,
+    "missed": 8,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": null
+   },
+   "link_flood, >400 m": {
+    "runs": 1,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 0,
+    "at_release": 0,
+    "missed": 1,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": null
+   },
+   "param_tamper, 0-100 m": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 0,
+    "at_release": 0,
+    "missed": 10,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": null
+   },
+   "replay, 0-100 m": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 0,
+    "at_release": 0,
+    "missed": 10,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": null
+   },
+   "telemetry_manipulation, 0-100 m": {
+    "runs": 10,
+    "detected_during": 0,
+    "detection_rate_during": 0.0,
+    "detected_incl_release": 0,
+    "at_release": 0,
+    "missed": 10,
+    "advisory_only": 0,
+    "secondary_episodes": 0,
+    "latency_during_s": null,
+    "latency_incl_release_s": null
+   }
+  },
+  "false_alarms": {
+   "count": 60,
+   "clean_hours": 22.149,
+   "per_hour": 2.709,
+   "upper95_per_hour": 3.359,
+   "advisories": 0,
+   "by_distance": {
+    "0-100 m": {
+     "count": 60,
+     "clean_hours": 18.727,
+     "per_hour": 3.204,
+     "upper95_per_hour": 3.972
+    },
+    "100-200 m": {
+     "count": 0,
+     "clean_hours": 0.657,
+     "per_hour": 0.0,
+     "upper95_per_hour": 4.556
+    },
+    "200-400 m": {
+     "count": 0,
+     "clean_hours": 1.971,
+     "per_hour": 0.0,
+     "upper95_per_hour": 1.52
+    },
+    ">400 m": {
+     "count": 0,
+     "clean_hours": 0.786,
+     "per_hour": 0.0,
+     "upper95_per_hour": 3.812
+    },
+    "on_ground": {
+     "count": 0,
+     "clean_hours": 0.0,
+     "per_hour": null,
+     "upper95_per_hour": null
+    }
+   },
+   "by_scenario": {
+    "a1_gps_jump": {
+     "count": 0,
+     "clean_hours": 0.499,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.0
+    },
+    "a1_gps_jump_far": {
+     "count": 0,
+     "clean_hours": 0.586,
+     "per_hour": 0.0,
+     "upper95_per_hour": 5.108
+    },
+    "a2_gps_drift": {
+     "count": 0,
+     "clean_hours": 0.5,
+     "per_hour": 0.0,
+     "upper95_per_hour": 5.992
+    },
+    "a2_gps_drift-r0.1": {
+     "count": 0,
+     "clean_hours": 0.5,
+     "per_hour": 0.0,
+     "upper95_per_hour": 5.996
+    },
+    "a2_gps_drift-r0.25": {
+     "count": 0,
+     "clean_hours": 0.499,
+     "per_hour": 0.0,
+     "upper95_per_hour": 5.999
+    },
+    "a2_gps_drift-r0.5": {
+     "count": 0,
+     "clean_hours": 0.499,
+     "per_hour": 0.0,
+     "upper95_per_hour": 5.999
+    },
+    "a2_gps_drift-r1.0": {
+     "count": 0,
+     "clean_hours": 0.5,
+     "per_hour": 0.0,
+     "upper95_per_hour": 5.997
+    },
+    "a2_gps_drift-r2.0": {
+     "count": 0,
+     "clean_hours": 0.5,
+     "per_hour": 0.0,
+     "upper95_per_hour": 5.996
+    },
+    "a2a_gps_drift_accel-a0.005-early": {
+     "count": 0,
+     "clean_hours": 0.217,
+     "per_hour": 0.0,
+     "upper95_per_hour": 13.831
+    },
+    "a2a_gps_drift_accel-a0.01-early": {
+     "count": 0,
+     "clean_hours": 0.181,
+     "per_hour": 0.0,
+     "upper95_per_hour": 16.52
+    },
+    "a2a_gps_drift_accel-a0.02-early": {
+     "count": 0,
+     "clean_hours": 0.167,
+     "per_hour": 0.0,
+     "upper95_per_hour": 17.919
+    },
+    "a2a_gps_drift_accel-a0.05-early": {
+     "count": 0,
+     "clean_hours": 0.167,
+     "per_hour": 0.0,
+     "upper95_per_hour": 17.903
+    },
+    "a2a_gps_drift_accel-a0.1-early": {
+     "count": 0,
+     "clean_hours": 0.167,
+     "per_hour": 0.0,
+     "upper95_per_hour": 17.918
+    },
+    "a2n_gps_drift_naive": {
+     "count": 0,
+     "clean_hours": 0.5,
+     "per_hour": 0.0,
+     "upper95_per_hour": 5.994
+    },
+    "a2n_gps_drift_naive-r0.1": {
+     "count": 0,
+     "clean_hours": 0.499,
+     "per_hour": 0.0,
+     "upper95_per_hour": 5.999
+    },
+    "a2n_gps_drift_naive-r0.25": {
+     "count": 0,
+     "clean_hours": 0.5,
+     "per_hour": 0.0,
+     "upper95_per_hour": 5.996
+    },
+    "a2n_gps_drift_naive-r0.5": {
+     "count": 0,
+     "clean_hours": 0.5,
+     "per_hour": 0.0,
+     "upper95_per_hour": 5.996
+    },
+    "a2n_gps_drift_naive-r1.0": {
+     "count": 0,
+     "clean_hours": 0.499,
+     "per_hour": 0.0,
+     "upper95_per_hour": 5.998
+    },
+    "a2n_gps_drift_naive-r2.0": {
+     "count": 0,
+     "clean_hours": 0.499,
+     "per_hour": 0.0,
+     "upper95_per_hour": 5.999
+    },
+    "a3_cmd_injection": {
+     "count": 0,
+     "clean_hours": 0.45,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.658
+    },
+    "a3h_position_target": {
+     "count": 0,
+     "clean_hours": 0.5,
+     "per_hour": 0.0,
+     "upper95_per_hour": 5.996
+    },
+    "a3h_set_mode": {
+     "count": 0,
+     "clean_hours": 0.45,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.661
+    },
+    "a3h_set_servo": {
+     "count": 0,
+     "clean_hours": 0.499,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.004
+    },
+    "a4_telemetry_position": {
+     "count": 0,
+     "clean_hours": 0.499,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.004
+    },
+    "a5_link_flood": {
+     "count": 0,
+     "clean_hours": 0.499,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.002
+    },
+    "a5_link_flood_far": {
+     "count": 0,
+     "clean_hours": 0.597,
+     "per_hour": 0.0,
+     "upper95_per_hour": 5.016
+    },
+    "a5h_flood_gcs_sysid": {
+     "count": 0,
+     "clean_hours": 0.499,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.003
+    },
+    "a6_param_tamper": {
+     "count": 0,
+     "clean_hours": 0.499,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.002
+    },
+    "a7_replay": {
+     "count": 0,
+     "clean_hours": 0.499,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.002
+    },
+    "a8_fc_impersonation": {
+     "count": 0,
+     "clean_hours": 0.499,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.003
+    },
+    "a9_jamming": {
+     "count": 0,
+     "clean_hours": 0.49,
+     "per_hour": 0.0,
+     "upper95_per_hour": 6.112
+    },
+    "a9_jamming_far": {
+     "count": 0,
+     "clean_hours": 0.668,
+     "per_hour": 0.0,
+     "upper95_per_hour": 4.486
+    },
+    "b1_calm": {
+     "count": 0,
+     "clean_hours": 1.184,
+     "per_hour": 0.0,
+     "upper95_per_hour": 2.529
+    },
+    "b2_wind": {
+     "count": 0,
+     "clean_hours": 1.185,
+     "per_hour": 0.0,
+     "upper95_per_hour": 2.528
+    },
+    "b3_aggressive": {
+     "count": 0,
+     "clean_hours": 1.193,
+     "per_hour": 0.0,
+     "upper95_per_hour": 2.512
+    },
+    "b4_gnss_glitch": {
+     "count": 60,
+     "clean_hours": 1.019,
+     "per_hour": 58.875,
+     "upper95_per_hour": 72.995
+    },
+    "b5_link_fade": {
+     "count": 0,
+     "clean_hours": 1.491,
+     "per_hour": 0.0,
+     "upper95_per_hour": 2.009
+    },
+    "b6_operator": {
+     "count": 0,
+     "clean_hours": 1.085,
+     "per_hour": 0.0,
+     "upper95_per_hour": 2.76
+    },
+    "b7_takeoff_landing": {
+     "count": 0,
+     "clean_hours": 0.364,
+     "per_hour": 0.0,
+     "upper95_per_hour": 8.24
+    }
+   },
+   "ground_phase_false_alarms": {
+    "count": 0,
+    "list": []
+   },
+   "list": [
+    {
+     "run": "b4_gnss_glitch-s5001",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 33.97,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5001",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 67.77,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5001",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 105.57,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5002",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 23.37,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5002",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 62.17,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5002",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 98.36,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5003",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 24.76,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5003",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 68.36,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5003",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 104.97,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5004",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 20.76,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5004",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 51.94,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5004",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 88.96,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5005",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 36.37,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5005",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 77.57,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5005",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 111.97,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5006",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 31.77,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5006",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 64.17,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5006",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 97.97,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5007",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 25.77,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5007",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 60.77,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5007",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 101.57,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5008",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 26.96,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5008",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 67.57,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5008",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 98.97,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5009",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 25.76,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5009",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 69.56,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5009",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 104.76,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5010",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 21.57,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5010",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 55.76,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5010",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 97.36,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5011",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 39.97,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5011",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 80.97,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5011",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 121.98,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5012",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 31.36,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5012",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 73.77,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5012",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 106.79,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5013",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 30.56,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5013",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 72.55,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5013",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 112.94,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5014",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 37.37,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5014",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 67.36,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5014",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 101.57,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5015",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 38.34,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5015",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 69.94,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5015",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 113.56,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5016",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 27.15,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5016",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 62.56,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5016",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 103.36,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5017",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 34.94,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5017",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 63.96,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5017",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 102.95,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5018",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 33.74,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5018",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 77.74,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5018",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 114.14,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5019",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 24.78,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5019",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 53.18,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5019",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 91.38,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5020",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 34.77,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5020",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 70.38,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    },
+    {
+     "run": "b4_gnss_glitch-s5020",
+     "agent": "baseline",
+     "class": "gps_spoofing",
+     "t_start": 103.78,
+     "evidence_types": [
+      "ekf_gps_glitching",
+      "ekf_pos_horiz_variance_above_1",
+      "statustext_gps_glitch",
+      "statustext_lane_switch"
+     ]
+    }
+   ]
+  }
+ }
+}
