@@ -1,0 +1,12 @@
+# A second, independent GNSS receiver used only as a monitoring reference (a stand-in for an
+# independent constellation or band, e.g. NavIC). The autopilot keeps navigating on GPS1 only
+# (no switching, no blending), so flight behaviour matches the single-receiver configuration.
+SIM_GPS2_ENABLE 1
+SIM_GPS2_TYPE 1
+GPS2_TYPE 1
+GPS_AUTO_SWITCH 0
+GPS_PRIMARY 0
+SIM_GPS2_VERR_X 0.10
+SIM_GPS2_VERR_Y 0.10
+SIM_GPS2_VERR_Z 0.15
+SIM_GPS2_NOISE 1.0

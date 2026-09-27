@@ -1,0 +1,1850 @@
+{
+ "split": "test",
+ "runs": 150,
+ "seeds": [
+  6001,
+  6010
+ ],
+ "plan": [
+  {
+   "run_id": "a2_gps_drift-r0.25-g2-s6001",
+   "scenario": "a2_gps_drift",
+   "seed": 6001,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift",
+    "start_s": 51.86,
+    "end_s": 95.28,
+    "params": {
+     "rate_ms": 0.25,
+     "bearing_deg": 351.98228506856776
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2_gps_drift-r0.25-g2-s6002",
+   "scenario": "a2_gps_drift",
+   "seed": 6002,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift",
+    "start_s": 140.66,
+    "end_s": 188.86,
+    "params": {
+     "rate_ms": 0.25,
+     "bearing_deg": 328.1917442794176
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2_gps_drift-r0.25-g2-s6003",
+   "scenario": "a2_gps_drift",
+   "seed": 6003,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift",
+    "start_s": 37.19,
+    "end_s": 78.05,
+    "params": {
+     "rate_ms": 0.25,
+     "bearing_deg": 135.16234712437026
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2_gps_drift-r0.25-g2-s6004",
+   "scenario": "a2_gps_drift",
+   "seed": 6004,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift",
+    "start_s": 113.76,
+    "end_s": 156.28,
+    "params": {
+     "rate_ms": 0.25,
+     "bearing_deg": 287.0887230798696
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2_gps_drift-r0.25-g2-s6005",
+   "scenario": "a2_gps_drift",
+   "seed": 6005,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift",
+    "start_s": 147.94,
+    "end_s": 191.83,
+    "params": {
+     "rate_ms": 0.25,
+     "bearing_deg": 196.8979831302363
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2_gps_drift-r0.25-g2-s6006",
+   "scenario": "a2_gps_drift",
+   "seed": 6006,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift",
+    "start_s": 32.16,
+    "end_s": 81.85,
+    "params": {
+     "rate_ms": 0.25,
+     "bearing_deg": 305.96084969762643
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2_gps_drift-r0.25-g2-s6007",
+   "scenario": "a2_gps_drift",
+   "seed": 6007,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift",
+    "start_s": 119.08,
+    "end_s": 165.36,
+    "params": {
+     "rate_ms": 0.25,
+     "bearing_deg": 92.46645266525833
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2_gps_drift-r0.25-g2-s6008",
+   "scenario": "a2_gps_drift",
+   "seed": 6008,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift",
+    "start_s": 126.99,
+    "end_s": 174.08,
+    "params": {
+     "rate_ms": 0.25,
+     "bearing_deg": 194.31192768573317
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2_gps_drift-r0.25-g2-s6009",
+   "scenario": "a2_gps_drift",
+   "seed": 6009,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift",
+    "start_s": 110.82,
+    "end_s": 157.34,
+    "params": {
+     "rate_ms": 0.25,
+     "bearing_deg": 279.3085163094874
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2_gps_drift-r0.25-g2-s6010",
+   "scenario": "a2_gps_drift",
+   "seed": 6010,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift",
+    "start_s": 55.79,
+    "end_s": 102.48,
+    "params": {
+     "rate_ms": 0.25,
+     "bearing_deg": 164.4195126529621
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2_gps_drift-r0.5-g2-s6001",
+   "scenario": "a2_gps_drift",
+   "seed": 6001,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift",
+    "start_s": 51.86,
+    "end_s": 95.28,
+    "params": {
+     "rate_ms": 0.5,
+     "bearing_deg": 351.98228506856776
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2_gps_drift-r0.5-g2-s6002",
+   "scenario": "a2_gps_drift",
+   "seed": 6002,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift",
+    "start_s": 140.66,
+    "end_s": 188.86,
+    "params": {
+     "rate_ms": 0.5,
+     "bearing_deg": 328.1917442794176
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2_gps_drift-r0.5-g2-s6003",
+   "scenario": "a2_gps_drift",
+   "seed": 6003,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift",
+    "start_s": 37.19,
+    "end_s": 78.05,
+    "params": {
+     "rate_ms": 0.5,
+     "bearing_deg": 135.16234712437026
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2_gps_drift-r0.5-g2-s6004",
+   "scenario": "a2_gps_drift",
+   "seed": 6004,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift",
+    "start_s": 113.76,
+    "end_s": 156.28,
+    "params": {
+     "rate_ms": 0.5,
+     "bearing_deg": 287.0887230798696
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2_gps_drift-r0.5-g2-s6005",
+   "scenario": "a2_gps_drift",
+   "seed": 6005,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift",
+    "start_s": 147.94,
+    "end_s": 191.83,
+    "params": {
+     "rate_ms": 0.5,
+     "bearing_deg": 196.8979831302363
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2_gps_drift-r0.5-g2-s6006",
+   "scenario": "a2_gps_drift",
+   "seed": 6006,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift",
+    "start_s": 32.16,
+    "end_s": 81.85,
+    "params": {
+     "rate_ms": 0.5,
+     "bearing_deg": 305.96084969762643
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2_gps_drift-r0.5-g2-s6007",
+   "scenario": "a2_gps_drift",
+   "seed": 6007,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift",
+    "start_s": 119.08,
+    "end_s": 165.36,
+    "params": {
+     "rate_ms": 0.5,
+     "bearing_deg": 92.46645266525833
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2_gps_drift-r0.5-g2-s6008",
+   "scenario": "a2_gps_drift",
+   "seed": 6008,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift",
+    "start_s": 126.99,
+    "end_s": 174.08,
+    "params": {
+     "rate_ms": 0.5,
+     "bearing_deg": 194.31192768573317
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2_gps_drift-r0.5-g2-s6009",
+   "scenario": "a2_gps_drift",
+   "seed": 6009,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift",
+    "start_s": 110.82,
+    "end_s": 157.34,
+    "params": {
+     "rate_ms": 0.5,
+     "bearing_deg": 279.3085163094874
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2_gps_drift-r0.5-g2-s6010",
+   "scenario": "a2_gps_drift",
+   "seed": 6010,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift",
+    "start_s": 55.79,
+    "end_s": 102.48,
+    "params": {
+     "rate_ms": 0.5,
+     "bearing_deg": 164.4195126529621
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2_gps_drift-r1.0-g2-s6001",
+   "scenario": "a2_gps_drift",
+   "seed": 6001,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift",
+    "start_s": 51.86,
+    "end_s": 95.28,
+    "params": {
+     "rate_ms": 1.0,
+     "bearing_deg": 351.98228506856776
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2_gps_drift-r1.0-g2-s6002",
+   "scenario": "a2_gps_drift",
+   "seed": 6002,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift",
+    "start_s": 140.66,
+    "end_s": 188.86,
+    "params": {
+     "rate_ms": 1.0,
+     "bearing_deg": 328.1917442794176
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2_gps_drift-r1.0-g2-s6003",
+   "scenario": "a2_gps_drift",
+   "seed": 6003,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift",
+    "start_s": 37.19,
+    "end_s": 78.05,
+    "params": {
+     "rate_ms": 1.0,
+     "bearing_deg": 135.16234712437026
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2_gps_drift-r1.0-g2-s6004",
+   "scenario": "a2_gps_drift",
+   "seed": 6004,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift",
+    "start_s": 113.76,
+    "end_s": 156.28,
+    "params": {
+     "rate_ms": 1.0,
+     "bearing_deg": 287.0887230798696
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2_gps_drift-r1.0-g2-s6005",
+   "scenario": "a2_gps_drift",
+   "seed": 6005,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift",
+    "start_s": 147.94,
+    "end_s": 191.83,
+    "params": {
+     "rate_ms": 1.0,
+     "bearing_deg": 196.8979831302363
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2_gps_drift-r1.0-g2-s6006",
+   "scenario": "a2_gps_drift",
+   "seed": 6006,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift",
+    "start_s": 32.16,
+    "end_s": 81.85,
+    "params": {
+     "rate_ms": 1.0,
+     "bearing_deg": 305.96084969762643
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2_gps_drift-r1.0-g2-s6007",
+   "scenario": "a2_gps_drift",
+   "seed": 6007,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift",
+    "start_s": 119.08,
+    "end_s": 165.36,
+    "params": {
+     "rate_ms": 1.0,
+     "bearing_deg": 92.46645266525833
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2_gps_drift-r1.0-g2-s6008",
+   "scenario": "a2_gps_drift",
+   "seed": 6008,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift",
+    "start_s": 126.99,
+    "end_s": 174.08,
+    "params": {
+     "rate_ms": 1.0,
+     "bearing_deg": 194.31192768573317
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2_gps_drift-r1.0-g2-s6009",
+   "scenario": "a2_gps_drift",
+   "seed": 6009,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift",
+    "start_s": 110.82,
+    "end_s": 157.34,
+    "params": {
+     "rate_ms": 1.0,
+     "bearing_deg": 279.3085163094874
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2_gps_drift-r1.0-g2-s6010",
+   "scenario": "a2_gps_drift",
+   "seed": 6010,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift",
+    "start_s": 55.79,
+    "end_s": 102.48,
+    "params": {
+     "rate_ms": 1.0,
+     "bearing_deg": 164.4195126529621
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2_gps_drift-r2.0-g2-s6001",
+   "scenario": "a2_gps_drift",
+   "seed": 6001,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift",
+    "start_s": 51.86,
+    "end_s": 95.28,
+    "params": {
+     "rate_ms": 2.0,
+     "bearing_deg": 351.98228506856776
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2_gps_drift-r2.0-g2-s6002",
+   "scenario": "a2_gps_drift",
+   "seed": 6002,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift",
+    "start_s": 140.66,
+    "end_s": 188.86,
+    "params": {
+     "rate_ms": 2.0,
+     "bearing_deg": 328.1917442794176
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2_gps_drift-r2.0-g2-s6003",
+   "scenario": "a2_gps_drift",
+   "seed": 6003,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift",
+    "start_s": 37.19,
+    "end_s": 78.05,
+    "params": {
+     "rate_ms": 2.0,
+     "bearing_deg": 135.16234712437026
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2_gps_drift-r2.0-g2-s6004",
+   "scenario": "a2_gps_drift",
+   "seed": 6004,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift",
+    "start_s": 113.76,
+    "end_s": 156.28,
+    "params": {
+     "rate_ms": 2.0,
+     "bearing_deg": 287.0887230798696
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2_gps_drift-r2.0-g2-s6005",
+   "scenario": "a2_gps_drift",
+   "seed": 6005,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift",
+    "start_s": 147.94,
+    "end_s": 191.83,
+    "params": {
+     "rate_ms": 2.0,
+     "bearing_deg": 196.8979831302363
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2_gps_drift-r2.0-g2-s6006",
+   "scenario": "a2_gps_drift",
+   "seed": 6006,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift",
+    "start_s": 32.16,
+    "end_s": 81.85,
+    "params": {
+     "rate_ms": 2.0,
+     "bearing_deg": 305.96084969762643
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2_gps_drift-r2.0-g2-s6007",
+   "scenario": "a2_gps_drift",
+   "seed": 6007,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift",
+    "start_s": 119.08,
+    "end_s": 165.36,
+    "params": {
+     "rate_ms": 2.0,
+     "bearing_deg": 92.46645266525833
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2_gps_drift-r2.0-g2-s6008",
+   "scenario": "a2_gps_drift",
+   "seed": 6008,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift",
+    "start_s": 126.99,
+    "end_s": 174.08,
+    "params": {
+     "rate_ms": 2.0,
+     "bearing_deg": 194.31192768573317
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2_gps_drift-r2.0-g2-s6009",
+   "scenario": "a2_gps_drift",
+   "seed": 6009,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift",
+    "start_s": 110.82,
+    "end_s": 157.34,
+    "params": {
+     "rate_ms": 2.0,
+     "bearing_deg": 279.3085163094874
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2_gps_drift-r2.0-g2-s6010",
+   "scenario": "a2_gps_drift",
+   "seed": 6010,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift",
+    "start_s": 55.79,
+    "end_s": 102.48,
+    "params": {
+     "rate_ms": 2.0,
+     "bearing_deg": 164.4195126529621
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2n_gps_drift_naive-r0.25-g2-s6001",
+   "scenario": "a2n_gps_drift_naive",
+   "seed": 6001,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift_naive",
+    "start_s": 51.86,
+    "end_s": 95.28,
+    "params": {
+     "rate_ms": 0.25,
+     "bearing_deg": 351.98228506856776
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2n_gps_drift_naive-r0.25-g2-s6002",
+   "scenario": "a2n_gps_drift_naive",
+   "seed": 6002,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift_naive",
+    "start_s": 140.66,
+    "end_s": 188.86,
+    "params": {
+     "rate_ms": 0.25,
+     "bearing_deg": 328.1917442794176
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2n_gps_drift_naive-r0.25-g2-s6003",
+   "scenario": "a2n_gps_drift_naive",
+   "seed": 6003,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift_naive",
+    "start_s": 37.19,
+    "end_s": 78.05,
+    "params": {
+     "rate_ms": 0.25,
+     "bearing_deg": 135.16234712437026
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2n_gps_drift_naive-r0.25-g2-s6004",
+   "scenario": "a2n_gps_drift_naive",
+   "seed": 6004,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift_naive",
+    "start_s": 113.76,
+    "end_s": 156.28,
+    "params": {
+     "rate_ms": 0.25,
+     "bearing_deg": 287.0887230798696
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2n_gps_drift_naive-r0.25-g2-s6005",
+   "scenario": "a2n_gps_drift_naive",
+   "seed": 6005,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift_naive",
+    "start_s": 147.94,
+    "end_s": 191.83,
+    "params": {
+     "rate_ms": 0.25,
+     "bearing_deg": 196.8979831302363
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2n_gps_drift_naive-r0.25-g2-s6006",
+   "scenario": "a2n_gps_drift_naive",
+   "seed": 6006,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift_naive",
+    "start_s": 32.16,
+    "end_s": 81.85,
+    "params": {
+     "rate_ms": 0.25,
+     "bearing_deg": 305.96084969762643
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2n_gps_drift_naive-r0.25-g2-s6007",
+   "scenario": "a2n_gps_drift_naive",
+   "seed": 6007,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift_naive",
+    "start_s": 119.08,
+    "end_s": 165.36,
+    "params": {
+     "rate_ms": 0.25,
+     "bearing_deg": 92.46645266525833
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2n_gps_drift_naive-r0.25-g2-s6008",
+   "scenario": "a2n_gps_drift_naive",
+   "seed": 6008,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift_naive",
+    "start_s": 126.99,
+    "end_s": 174.08,
+    "params": {
+     "rate_ms": 0.25,
+     "bearing_deg": 194.31192768573317
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2n_gps_drift_naive-r0.25-g2-s6009",
+   "scenario": "a2n_gps_drift_naive",
+   "seed": 6009,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift_naive",
+    "start_s": 110.82,
+    "end_s": 157.34,
+    "params": {
+     "rate_ms": 0.25,
+     "bearing_deg": 279.3085163094874
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2n_gps_drift_naive-r0.25-g2-s6010",
+   "scenario": "a2n_gps_drift_naive",
+   "seed": 6010,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift_naive",
+    "start_s": 55.79,
+    "end_s": 102.48,
+    "params": {
+     "rate_ms": 0.25,
+     "bearing_deg": 164.4195126529621
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2n_gps_drift_naive-r0.5-g2-s6001",
+   "scenario": "a2n_gps_drift_naive",
+   "seed": 6001,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift_naive",
+    "start_s": 51.86,
+    "end_s": 95.28,
+    "params": {
+     "rate_ms": 0.5,
+     "bearing_deg": 351.98228506856776
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2n_gps_drift_naive-r0.5-g2-s6002",
+   "scenario": "a2n_gps_drift_naive",
+   "seed": 6002,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift_naive",
+    "start_s": 140.66,
+    "end_s": 188.86,
+    "params": {
+     "rate_ms": 0.5,
+     "bearing_deg": 328.1917442794176
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2n_gps_drift_naive-r0.5-g2-s6003",
+   "scenario": "a2n_gps_drift_naive",
+   "seed": 6003,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift_naive",
+    "start_s": 37.19,
+    "end_s": 78.05,
+    "params": {
+     "rate_ms": 0.5,
+     "bearing_deg": 135.16234712437026
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2n_gps_drift_naive-r0.5-g2-s6004",
+   "scenario": "a2n_gps_drift_naive",
+   "seed": 6004,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift_naive",
+    "start_s": 113.76,
+    "end_s": 156.28,
+    "params": {
+     "rate_ms": 0.5,
+     "bearing_deg": 287.0887230798696
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2n_gps_drift_naive-r0.5-g2-s6005",
+   "scenario": "a2n_gps_drift_naive",
+   "seed": 6005,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift_naive",
+    "start_s": 147.94,
+    "end_s": 191.83,
+    "params": {
+     "rate_ms": 0.5,
+     "bearing_deg": 196.8979831302363
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2n_gps_drift_naive-r0.5-g2-s6006",
+   "scenario": "a2n_gps_drift_naive",
+   "seed": 6006,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift_naive",
+    "start_s": 32.16,
+    "end_s": 81.85,
+    "params": {
+     "rate_ms": 0.5,
+     "bearing_deg": 305.96084969762643
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2n_gps_drift_naive-r0.5-g2-s6007",
+   "scenario": "a2n_gps_drift_naive",
+   "seed": 6007,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift_naive",
+    "start_s": 119.08,
+    "end_s": 165.36,
+    "params": {
+     "rate_ms": 0.5,
+     "bearing_deg": 92.46645266525833
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2n_gps_drift_naive-r0.5-g2-s6008",
+   "scenario": "a2n_gps_drift_naive",
+   "seed": 6008,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift_naive",
+    "start_s": 126.99,
+    "end_s": 174.08,
+    "params": {
+     "rate_ms": 0.5,
+     "bearing_deg": 194.31192768573317
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2n_gps_drift_naive-r0.5-g2-s6009",
+   "scenario": "a2n_gps_drift_naive",
+   "seed": 6009,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift_naive",
+    "start_s": 110.82,
+    "end_s": 157.34,
+    "params": {
+     "rate_ms": 0.5,
+     "bearing_deg": 279.3085163094874
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2n_gps_drift_naive-r0.5-g2-s6010",
+   "scenario": "a2n_gps_drift_naive",
+   "seed": 6010,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift_naive",
+    "start_s": 55.79,
+    "end_s": 102.48,
+    "params": {
+     "rate_ms": 0.5,
+     "bearing_deg": 164.4195126529621
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2n_gps_drift_naive-r1.0-g2-s6001",
+   "scenario": "a2n_gps_drift_naive",
+   "seed": 6001,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift_naive",
+    "start_s": 51.86,
+    "end_s": 95.28,
+    "params": {
+     "rate_ms": 1.0,
+     "bearing_deg": 351.98228506856776
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2n_gps_drift_naive-r1.0-g2-s6002",
+   "scenario": "a2n_gps_drift_naive",
+   "seed": 6002,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift_naive",
+    "start_s": 140.66,
+    "end_s": 188.86,
+    "params": {
+     "rate_ms": 1.0,
+     "bearing_deg": 328.1917442794176
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2n_gps_drift_naive-r1.0-g2-s6003",
+   "scenario": "a2n_gps_drift_naive",
+   "seed": 6003,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift_naive",
+    "start_s": 37.19,
+    "end_s": 78.05,
+    "params": {
+     "rate_ms": 1.0,
+     "bearing_deg": 135.16234712437026
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2n_gps_drift_naive-r1.0-g2-s6004",
+   "scenario": "a2n_gps_drift_naive",
+   "seed": 6004,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift_naive",
+    "start_s": 113.76,
+    "end_s": 156.28,
+    "params": {
+     "rate_ms": 1.0,
+     "bearing_deg": 287.0887230798696
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2n_gps_drift_naive-r1.0-g2-s6005",
+   "scenario": "a2n_gps_drift_naive",
+   "seed": 6005,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift_naive",
+    "start_s": 147.94,
+    "end_s": 191.83,
+    "params": {
+     "rate_ms": 1.0,
+     "bearing_deg": 196.8979831302363
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2n_gps_drift_naive-r1.0-g2-s6006",
+   "scenario": "a2n_gps_drift_naive",
+   "seed": 6006,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift_naive",
+    "start_s": 32.16,
+    "end_s": 81.85,
+    "params": {
+     "rate_ms": 1.0,
+     "bearing_deg": 305.96084969762643
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2n_gps_drift_naive-r1.0-g2-s6007",
+   "scenario": "a2n_gps_drift_naive",
+   "seed": 6007,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift_naive",
+    "start_s": 119.08,
+    "end_s": 165.36,
+    "params": {
+     "rate_ms": 1.0,
+     "bearing_deg": 92.46645266525833
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2n_gps_drift_naive-r1.0-g2-s6008",
+   "scenario": "a2n_gps_drift_naive",
+   "seed": 6008,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift_naive",
+    "start_s": 126.99,
+    "end_s": 174.08,
+    "params": {
+     "rate_ms": 1.0,
+     "bearing_deg": 194.31192768573317
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2n_gps_drift_naive-r1.0-g2-s6009",
+   "scenario": "a2n_gps_drift_naive",
+   "seed": 6009,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift_naive",
+    "start_s": 110.82,
+    "end_s": 157.34,
+    "params": {
+     "rate_ms": 1.0,
+     "bearing_deg": 279.3085163094874
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2n_gps_drift_naive-r1.0-g2-s6010",
+   "scenario": "a2n_gps_drift_naive",
+   "seed": 6010,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift_naive",
+    "start_s": 55.79,
+    "end_s": 102.48,
+    "params": {
+     "rate_ms": 1.0,
+     "bearing_deg": 164.4195126529621
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2n_gps_drift_naive-r2.0-g2-s6001",
+   "scenario": "a2n_gps_drift_naive",
+   "seed": 6001,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift_naive",
+    "start_s": 51.86,
+    "end_s": 95.28,
+    "params": {
+     "rate_ms": 2.0,
+     "bearing_deg": 351.98228506856776
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2n_gps_drift_naive-r2.0-g2-s6002",
+   "scenario": "a2n_gps_drift_naive",
+   "seed": 6002,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift_naive",
+    "start_s": 140.66,
+    "end_s": 188.86,
+    "params": {
+     "rate_ms": 2.0,
+     "bearing_deg": 328.1917442794176
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2n_gps_drift_naive-r2.0-g2-s6003",
+   "scenario": "a2n_gps_drift_naive",
+   "seed": 6003,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift_naive",
+    "start_s": 37.19,
+    "end_s": 78.05,
+    "params": {
+     "rate_ms": 2.0,
+     "bearing_deg": 135.16234712437026
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2n_gps_drift_naive-r2.0-g2-s6004",
+   "scenario": "a2n_gps_drift_naive",
+   "seed": 6004,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift_naive",
+    "start_s": 113.76,
+    "end_s": 156.28,
+    "params": {
+     "rate_ms": 2.0,
+     "bearing_deg": 287.0887230798696
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2n_gps_drift_naive-r2.0-g2-s6005",
+   "scenario": "a2n_gps_drift_naive",
+   "seed": 6005,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift_naive",
+    "start_s": 147.94,
+    "end_s": 191.83,
+    "params": {
+     "rate_ms": 2.0,
+     "bearing_deg": 196.8979831302363
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2n_gps_drift_naive-r2.0-g2-s6006",
+   "scenario": "a2n_gps_drift_naive",
+   "seed": 6006,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift_naive",
+    "start_s": 32.16,
+    "end_s": 81.85,
+    "params": {
+     "rate_ms": 2.0,
+     "bearing_deg": 305.96084969762643
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2n_gps_drift_naive-r2.0-g2-s6007",
+   "scenario": "a2n_gps_drift_naive",
+   "seed": 6007,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift_naive",
+    "start_s": 119.08,
+    "end_s": 165.36,
+    "params": {
+     "rate_ms": 2.0,
+     "bearing_deg": 92.46645266525833
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2n_gps_drift_naive-r2.0-g2-s6008",
+   "scenario": "a2n_gps_drift_naive",
+   "seed": 6008,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift_naive",
+    "start_s": 126.99,
+    "end_s": 174.08,
+    "params": {
+     "rate_ms": 2.0,
+     "bearing_deg": 194.31192768573317
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2n_gps_drift_naive-r2.0-g2-s6009",
+   "scenario": "a2n_gps_drift_naive",
+   "seed": 6009,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift_naive",
+    "start_s": 110.82,
+    "end_s": 157.34,
+    "params": {
+     "rate_ms": 2.0,
+     "bearing_deg": 279.3085163094874
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "a2n_gps_drift_naive-r2.0-g2-s6010",
+   "scenario": "a2n_gps_drift_naive",
+   "seed": 6010,
+   "variant": "dev",
+   "attack": {
+    "type": "gps_drift_naive",
+    "start_s": 55.79,
+    "end_s": 102.48,
+    "params": {
+     "rate_ms": 2.0,
+     "bearing_deg": 164.4195126529621
+    }
+   },
+   "duration_s": 220
+  },
+  {
+   "run_id": "b1_calm-g2-s6001",
+   "scenario": "b1_calm",
+   "seed": 6001,
+   "variant": null,
+   "attack": null,
+   "duration_s": 180
+  },
+  {
+   "run_id": "b1_calm-g2-s6002",
+   "scenario": "b1_calm",
+   "seed": 6002,
+   "variant": null,
+   "attack": null,
+   "duration_s": 180
+  },
+  {
+   "run_id": "b1_calm-g2-s6003",
+   "scenario": "b1_calm",
+   "seed": 6003,
+   "variant": null,
+   "attack": null,
+   "duration_s": 180
+  },
+  {
+   "run_id": "b1_calm-g2-s6004",
+   "scenario": "b1_calm",
+   "seed": 6004,
+   "variant": null,
+   "attack": null,
+   "duration_s": 180
+  },
+  {
+   "run_id": "b1_calm-g2-s6005",
+   "scenario": "b1_calm",
+   "seed": 6005,
+   "variant": null,
+   "attack": null,
+   "duration_s": 180
+  },
+  {
+   "run_id": "b1_calm-g2-s6006",
+   "scenario": "b1_calm",
+   "seed": 6006,
+   "variant": null,
+   "attack": null,
+   "duration_s": 180
+  },
+  {
+   "run_id": "b1_calm-g2-s6007",
+   "scenario": "b1_calm",
+   "seed": 6007,
+   "variant": null,
+   "attack": null,
+   "duration_s": 180
+  },
+  {
+   "run_id": "b1_calm-g2-s6008",
+   "scenario": "b1_calm",
+   "seed": 6008,
+   "variant": null,
+   "attack": null,
+   "duration_s": 180
+  },
+  {
+   "run_id": "b1_calm-g2-s6009",
+   "scenario": "b1_calm",
+   "seed": 6009,
+   "variant": null,
+   "attack": null,
+   "duration_s": 180
+  },
+  {
+   "run_id": "b1_calm-g2-s6010",
+   "scenario": "b1_calm",
+   "seed": 6010,
+   "variant": null,
+   "attack": null,
+   "duration_s": 180
+  },
+  {
+   "run_id": "b2_wind-g2-s6001",
+   "scenario": "b2_wind",
+   "seed": 6001,
+   "variant": null,
+   "attack": null,
+   "duration_s": 180
+  },
+  {
+   "run_id": "b2_wind-g2-s6002",
+   "scenario": "b2_wind",
+   "seed": 6002,
+   "variant": null,
+   "attack": null,
+   "duration_s": 180
+  },
+  {
+   "run_id": "b2_wind-g2-s6003",
+   "scenario": "b2_wind",
+   "seed": 6003,
+   "variant": null,
+   "attack": null,
+   "duration_s": 180
+  },
+  {
+   "run_id": "b2_wind-g2-s6004",
+   "scenario": "b2_wind",
+   "seed": 6004,
+   "variant": null,
+   "attack": null,
+   "duration_s": 180
+  },
+  {
+   "run_id": "b2_wind-g2-s6005",
+   "scenario": "b2_wind",
+   "seed": 6005,
+   "variant": null,
+   "attack": null,
+   "duration_s": 180
+  },
+  {
+   "run_id": "b2_wind-g2-s6006",
+   "scenario": "b2_wind",
+   "seed": 6006,
+   "variant": null,
+   "attack": null,
+   "duration_s": 180
+  },
+  {
+   "run_id": "b2_wind-g2-s6007",
+   "scenario": "b2_wind",
+   "seed": 6007,
+   "variant": null,
+   "attack": null,
+   "duration_s": 180
+  },
+  {
+   "run_id": "b2_wind-g2-s6008",
+   "scenario": "b2_wind",
+   "seed": 6008,
+   "variant": null,
+   "attack": null,
+   "duration_s": 180
+  },
+  {
+   "run_id": "b2_wind-g2-s6009",
+   "scenario": "b2_wind",
+   "seed": 6009,
+   "variant": null,
+   "attack": null,
+   "duration_s": 180
+  },
+  {
+   "run_id": "b2_wind-g2-s6010",
+   "scenario": "b2_wind",
+   "seed": 6010,
+   "variant": null,
+   "attack": null,
+   "duration_s": 180
+  },
+  {
+   "run_id": "b3_aggressive-g2-s6001",
+   "scenario": "b3_aggressive",
+   "seed": 6001,
+   "variant": null,
+   "attack": null,
+   "duration_s": 180
+  },
+  {
+   "run_id": "b3_aggressive-g2-s6002",
+   "scenario": "b3_aggressive",
+   "seed": 6002,
+   "variant": null,
+   "attack": null,
+   "duration_s": 180
+  },
+  {
+   "run_id": "b3_aggressive-g2-s6003",
+   "scenario": "b3_aggressive",
+   "seed": 6003,
+   "variant": null,
+   "attack": null,
+   "duration_s": 180
+  },
+  {
+   "run_id": "b3_aggressive-g2-s6004",
+   "scenario": "b3_aggressive",
+   "seed": 6004,
+   "variant": null,
+   "attack": null,
+   "duration_s": 180
+  },
+  {
+   "run_id": "b3_aggressive-g2-s6005",
+   "scenario": "b3_aggressive",
+   "seed": 6005,
+   "variant": null,
+   "attack": null,
+   "duration_s": 180
+  },
+  {
+   "run_id": "b3_aggressive-g2-s6006",
+   "scenario": "b3_aggressive",
+   "seed": 6006,
+   "variant": null,
+   "attack": null,
+   "duration_s": 180
+  },
+  {
+   "run_id": "b3_aggressive-g2-s6007",
+   "scenario": "b3_aggressive",
+   "seed": 6007,
+   "variant": null,
+   "attack": null,
+   "duration_s": 180
+  },
+  {
+   "run_id": "b3_aggressive-g2-s6008",
+   "scenario": "b3_aggressive",
+   "seed": 6008,
+   "variant": null,
+   "attack": null,
+   "duration_s": 180
+  },
+  {
+   "run_id": "b3_aggressive-g2-s6009",
+   "scenario": "b3_aggressive",
+   "seed": 6009,
+   "variant": null,
+   "attack": null,
+   "duration_s": 180
+  },
+  {
+   "run_id": "b3_aggressive-g2-s6010",
+   "scenario": "b3_aggressive",
+   "seed": 6010,
+   "variant": null,
+   "attack": null,
+   "duration_s": 180
+  },
+  {
+   "run_id": "b4_gnss_glitch-g2-s6001",
+   "scenario": "b4_gnss_glitch",
+   "seed": 6001,
+   "variant": null,
+   "attack": null,
+   "duration_s": 150
+  },
+  {
+   "run_id": "b4_gnss_glitch-g2-s6002",
+   "scenario": "b4_gnss_glitch",
+   "seed": 6002,
+   "variant": null,
+   "attack": null,
+   "duration_s": 150
+  },
+  {
+   "run_id": "b4_gnss_glitch-g2-s6003",
+   "scenario": "b4_gnss_glitch",
+   "seed": 6003,
+   "variant": null,
+   "attack": null,
+   "duration_s": 150
+  },
+  {
+   "run_id": "b4_gnss_glitch-g2-s6004",
+   "scenario": "b4_gnss_glitch",
+   "seed": 6004,
+   "variant": null,
+   "attack": null,
+   "duration_s": 150
+  },
+  {
+   "run_id": "b4_gnss_glitch-g2-s6005",
+   "scenario": "b4_gnss_glitch",
+   "seed": 6005,
+   "variant": null,
+   "attack": null,
+   "duration_s": 150
+  },
+  {
+   "run_id": "b4_gnss_glitch-g2-s6006",
+   "scenario": "b4_gnss_glitch",
+   "seed": 6006,
+   "variant": null,
+   "attack": null,
+   "duration_s": 150
+  },
+  {
+   "run_id": "b4_gnss_glitch-g2-s6007",
+   "scenario": "b4_gnss_glitch",
+   "seed": 6007,
+   "variant": null,
+   "attack": null,
+   "duration_s": 150
+  },
+  {
+   "run_id": "b4_gnss_glitch-g2-s6008",
+   "scenario": "b4_gnss_glitch",
+   "seed": 6008,
+   "variant": null,
+   "attack": null,
+   "duration_s": 150
+  },
+  {
+   "run_id": "b4_gnss_glitch-g2-s6009",
+   "scenario": "b4_gnss_glitch",
+   "seed": 6009,
+   "variant": null,
+   "attack": null,
+   "duration_s": 150
+  },
+  {
+   "run_id": "b4_gnss_glitch-g2-s6010",
+   "scenario": "b4_gnss_glitch",
+   "seed": 6010,
+   "variant": null,
+   "attack": null,
+   "duration_s": 150
+  },
+  {
+   "run_id": "b5_link_fade-g2-s6001",
+   "scenario": "b5_link_fade",
+   "seed": 6001,
+   "variant": null,
+   "attack": null,
+   "duration_s": 240
+  },
+  {
+   "run_id": "b5_link_fade-g2-s6002",
+   "scenario": "b5_link_fade",
+   "seed": 6002,
+   "variant": null,
+   "attack": null,
+   "duration_s": 240
+  },
+  {
+   "run_id": "b5_link_fade-g2-s6003",
+   "scenario": "b5_link_fade",
+   "seed": 6003,
+   "variant": null,
+   "attack": null,
+   "duration_s": 240
+  },
+  {
+   "run_id": "b5_link_fade-g2-s6004",
+   "scenario": "b5_link_fade",
+   "seed": 6004,
+   "variant": null,
+   "attack": null,
+   "duration_s": 240
+  },
+  {
+   "run_id": "b5_link_fade-g2-s6005",
+   "scenario": "b5_link_fade",
+   "seed": 6005,
+   "variant": null,
+   "attack": null,
+   "duration_s": 240
+  },
+  {
+   "run_id": "b5_link_fade-g2-s6006",
+   "scenario": "b5_link_fade",
+   "seed": 6006,
+   "variant": null,
+   "attack": null,
+   "duration_s": 240
+  },
+  {
+   "run_id": "b5_link_fade-g2-s6007",
+   "scenario": "b5_link_fade",
+   "seed": 6007,
+   "variant": null,
+   "attack": null,
+   "duration_s": 240
+  },
+  {
+   "run_id": "b5_link_fade-g2-s6008",
+   "scenario": "b5_link_fade",
+   "seed": 6008,
+   "variant": null,
+   "attack": null,
+   "duration_s": 240
+  },
+  {
+   "run_id": "b5_link_fade-g2-s6009",
+   "scenario": "b5_link_fade",
+   "seed": 6009,
+   "variant": null,
+   "attack": null,
+   "duration_s": 240
+  },
+  {
+   "run_id": "b5_link_fade-g2-s6010",
+   "scenario": "b5_link_fade",
+   "seed": 6010,
+   "variant": null,
+   "attack": null,
+   "duration_s": 240
+  },
+  {
+   "run_id": "b6_operator-g2-s6001",
+   "scenario": "b6_operator",
+   "seed": 6001,
+   "variant": null,
+   "attack": null,
+   "duration_s": 180
+  },
+  {
+   "run_id": "b6_operator-g2-s6002",
+   "scenario": "b6_operator",
+   "seed": 6002,
+   "variant": null,
+   "attack": null,
+   "duration_s": 180
+  },
+  {
+   "run_id": "b6_operator-g2-s6003",
+   "scenario": "b6_operator",
+   "seed": 6003,
+   "variant": null,
+   "attack": null,
+   "duration_s": 180
+  },
+  {
+   "run_id": "b6_operator-g2-s6004",
+   "scenario": "b6_operator",
+   "seed": 6004,
+   "variant": null,
+   "attack": null,
+   "duration_s": 180
+  },
+  {
+   "run_id": "b6_operator-g2-s6005",
+   "scenario": "b6_operator",
+   "seed": 6005,
+   "variant": null,
+   "attack": null,
+   "duration_s": 180
+  },
+  {
+   "run_id": "b6_operator-g2-s6006",
+   "scenario": "b6_operator",
+   "seed": 6006,
+   "variant": null,
+   "attack": null,
+   "duration_s": 180
+  },
+  {
+   "run_id": "b6_operator-g2-s6007",
+   "scenario": "b6_operator",
+   "seed": 6007,
+   "variant": null,
+   "attack": null,
+   "duration_s": 180
+  },
+  {
+   "run_id": "b6_operator-g2-s6008",
+   "scenario": "b6_operator",
+   "seed": 6008,
+   "variant": null,
+   "attack": null,
+   "duration_s": 180
+  },
+  {
+   "run_id": "b6_operator-g2-s6009",
+   "scenario": "b6_operator",
+   "seed": 6009,
+   "variant": null,
+   "attack": null,
+   "duration_s": 180
+  },
+  {
+   "run_id": "b6_operator-g2-s6010",
+   "scenario": "b6_operator",
+   "seed": 6010,
+   "variant": null,
+   "attack": null,
+   "duration_s": 180
+  },
+  {
+   "run_id": "b7_takeoff_landing-g2-s6001",
+   "scenario": "b7_takeoff_landing",
+   "seed": 6001,
+   "variant": null,
+   "attack": null,
+   "duration_s": 45
+  },
+  {
+   "run_id": "b7_takeoff_landing-g2-s6002",
+   "scenario": "b7_takeoff_landing",
+   "seed": 6002,
+   "variant": null,
+   "attack": null,
+   "duration_s": 45
+  },
+  {
+   "run_id": "b7_takeoff_landing-g2-s6003",
+   "scenario": "b7_takeoff_landing",
+   "seed": 6003,
+   "variant": null,
+   "attack": null,
+   "duration_s": 45
+  },
+  {
+   "run_id": "b7_takeoff_landing-g2-s6004",
+   "scenario": "b7_takeoff_landing",
+   "seed": 6004,
+   "variant": null,
+   "attack": null,
+   "duration_s": 45
+  },
+  {
+   "run_id": "b7_takeoff_landing-g2-s6005",
+   "scenario": "b7_takeoff_landing",
+   "seed": 6005,
+   "variant": null,
+   "attack": null,
+   "duration_s": 45
+  },
+  {
+   "run_id": "b7_takeoff_landing-g2-s6006",
+   "scenario": "b7_takeoff_landing",
+   "seed": 6006,
+   "variant": null,
+   "attack": null,
+   "duration_s": 45
+  },
+  {
+   "run_id": "b7_takeoff_landing-g2-s6007",
+   "scenario": "b7_takeoff_landing",
+   "seed": 6007,
+   "variant": null,
+   "attack": null,
+   "duration_s": 45
+  },
+  {
+   "run_id": "b7_takeoff_landing-g2-s6008",
+   "scenario": "b7_takeoff_landing",
+   "seed": 6008,
+   "variant": null,
+   "attack": null,
+   "duration_s": 45
+  },
+  {
+   "run_id": "b7_takeoff_landing-g2-s6009",
+   "scenario": "b7_takeoff_landing",
+   "seed": 6009,
+   "variant": null,
+   "attack": null,
+   "duration_s": 45
+  },
+  {
+   "run_id": "b7_takeoff_landing-g2-s6010",
+   "scenario": "b7_takeoff_landing",
+   "seed": 6010,
+   "variant": null,
+   "attack": null,
+   "duration_s": 45
+  }
+ ]
+}

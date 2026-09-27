@@ -12,6 +12,7 @@ ARDUPILOT_DIR = Path(os.environ.get("ARDUPILOT_DIR", Path.home() / "ardupilot-fo
 BINARY = ARDUPILOT_DIR / "build/sitl/bin/arducopter"
 COPTER_PARM = ARDUPILOT_DIR / "Tools/autotest/default_params/copter.parm"
 NOISE_PARM = Path(__file__).resolve().parent.parent / "configs/sitl_noise.parm"
+DUAL_GNSS_PARM = Path(__file__).resolve().parent.parent / "configs/dual_gnss.parm"  # second, reference-only receiver
 HOME = "-35.363261,149.165230,584,353"  # ArduPilot CMAC test field
 
 

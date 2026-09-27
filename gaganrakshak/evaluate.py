@@ -13,6 +13,7 @@ from pathlib import Path
 from .cmd_sign import CmdVerifier
 from .commit import CommitRx
 from .cpce import Cpce
+from .dual_gnss import DualGnssMonitor
 from .estimator import EstimatorMonitor
 from .evidence import evidence_types
 from .ids import Ids, run_replay
@@ -41,6 +42,7 @@ def detectors(
     uncalibrated: bool = False,
     onboard_gnss: list[list] | None = None,
     no_crypto: bool = False,
+    dual_gnss_calib: Path | None = None,
 ) -> list:
     """Each agent's detector set for a recorded run, with the learned link, physics and estimator
     settings. A missing artefact is an error: silently falling back to defaults would produce
@@ -48,7 +50,9 @@ def detectors(
     judges runs before any artefact exists): then the learned detectors are left out.
     ``no_crypto`` replays the same recording as if command signatures and downlink commitments were
     unavailable (a compromised key, or signing switched off): no signature verification, no
-    commitment checks; every other detector unchanged. An evaluation-only ablation."""
+    commitment checks; every other detector unchanged. An evaluation-only ablation.
+    ``dual_gnss_calib`` adds the optional second-GNSS-reference detector (onboard) with its learned
+    threshold; without it the detector set is exactly the base system."""
     if not uncalibrated:
         missing = [str(f) for f in (link_curves, cpce_calib, estimator_calib) if not f.exists()]
         if missing:
@@ -63,6 +67,8 @@ def detectors(
         if not uncalibrated:
             onboard.append(Cpce(json.loads(cpce_calib.read_text())))
             onboard.append(EstimatorMonitor(json.loads(estimator_calib.read_text())))
+        if dual_gnss_calib is not None:
+            onboard.append(DualGnssMonitor(json.loads(dual_gnss_calib.read_text())))
         return onboard
     curves = {} if uncalibrated else load_curves(link_curves)
     commit = curves.pop("commit", {})
@@ -87,6 +93,7 @@ def evaluate(
     estimator_calib: Path = ESTIMATOR_CALIB,
     uncalibrated: bool = False,
     no_crypto: bool = False,
+    dual_gnss_calib: Path | None = None,
 ) -> dict:
     labels = json.loads((run / "labels.json").read_text())
     t0 = labels["t0_wall"]
@@ -102,7 +109,19 @@ def evaluate(
     }
     onboard_gnss: list[list] = []  # onboard confirmed-spoof intervals, forwarded to the ground agent
     for side in ("onboard", "ground"):
-        ids = Ids(detectors(side, run, link_curves, cpce_calib, estimator_calib, uncalibrated, onboard_gnss, no_crypto))
+        ids = Ids(
+            detectors(
+                side,
+                run,
+                link_curves,
+                cpce_calib,
+                estimator_calib,
+                uncalibrated,
+                onboard_gnss,
+                no_crypto,
+                dual_gnss_calib,
+            )
+        )
         run_replay(ids, run / side)
         if side == "onboard":  # confirmed GNSS spoofing, open until cleared, for the ground agent's distance trust
             onboard_gnss += [iv for d in ids.detectors if isinstance(d, Cpce) for iv in d.spoof_intervals]

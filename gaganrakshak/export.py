@@ -152,12 +152,13 @@ KEEP = (
 
 def calibration_used() -> dict:
     """{file name: git blob hash} of the calibration files the IDS loads (present ones only)."""
-    out = {}
-    for f in (CPCE_CALIB, LINK_CURVES, ESTIMATOR_CALIB):
-        if f.exists():
-            data = f.read_bytes()
-            out[f.name] = hashlib.sha1(b"blob %d\0" % len(data) + data).hexdigest()
-    return out
+    return {f.name: _blob(f) for f in (CPCE_CALIB, LINK_CURVES, ESTIMATOR_CALIB) if f.exists()}
+
+
+def _blob(f: Path) -> str:
+    """git blob hash of a file (matches `git hash-object`)."""
+    data = f.read_bytes()
+    return hashlib.sha1(b"blob %d\0" % len(data) + data).hexdigest()
 
 
 def distance_track(run: Path, t0: float, every_s: float = 1.0) -> list[list[float]]:
@@ -203,6 +204,7 @@ def export_run(
     source: str | None = None,
     evaluated_with: str | None = None,
     no_crypto: bool = False,
+    dual_gnss_calib: Path | None = None,
 ) -> Path:
     if split not in SPLITS:
         raise ValueError(f"split must be one of {SPLITS}")
@@ -220,6 +222,7 @@ def export_run(
         "flown_at": flown_at(labels),
         "evaluated_with": evaluated_with or _code_version(),
         "calibration": calibration_used(),
+        **({"dual_gnss_calibration": _blob(dual_gnss_calib)} if dual_gnss_calib else {}),
         "scenario": labels["scenario"],
         "seed": labels["seed"],
         "split": split,
@@ -244,7 +247,7 @@ def export_run(
         "baseline_episodes": [],
     }
     if labels["status"] == "ok":
-        ev = evaluate(run, no_crypto=no_crypto)
+        ev = evaluate(run, no_crypto=no_crypto, dual_gnss_calib=dual_gnss_calib)
         doc["physics"] = ev["physics"]
         doc["episodes"] = [
             {k: ep[k] for k in ("agent", "class", "severity", "t_start", "t_end", "evidence_types")}
@@ -254,6 +257,8 @@ def export_run(
             doc["episodes"][i]["artefact"] = "old_sizing"
             doc["episodes"][i]["matched_uplink"] = matched
         doc["baseline_episodes"] = baseline_episodes(run)
+        if dual_gnss_calib:  # the new statistic's own evidence, so it can also be scored alone
+            doc["dual_gnss_evidence"] = [e["t"] for e in ev["evidence"] if e["type"] == "gnss_reference_disagreement"]
         doc["distance_track"] = distance_track(run, labels["t0_wall"])
     out = out_root / split / f"{source}.json"
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -271,6 +276,9 @@ def main() -> None:
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--allow-dirty", action="store_true", help="scratch output outside results/ from uncommitted code")
     ap.add_argument("--no-crypto", action="store_true", help="ablation: replay without signature/commitment checks")
+    ap.add_argument(
+        "--dual-gnss", type=Path, help="extension: add the second-GNSS-reference detector with this calibration"
+    )
     a = ap.parse_args()
     version = _code_version()
     check_output(a.out, version, a.allow_dirty)
@@ -291,7 +299,8 @@ def main() -> None:
     with ProcessPoolExecutor(a.workers) as ex:
         n = len(runs)
         nc = [a.no_crypto] * n
-        for out in ex.map(export_run, runs, [a.split] * n, [a.out] * n, sources, [version] * n, nc):
+        dual = [a.dual_gnss] * n
+        for out in ex.map(export_run, runs, [a.split] * n, [a.out] * n, sources, [version] * n, nc, dual):
             print(out)
 
 

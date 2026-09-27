@@ -93,6 +93,7 @@ def resolve(spec: dict, seed: int) -> dict:
         "wind": wind,
         "sim_params": spec.get("sim_params", {}),
         "gnss_noise": spec.get("gnss_noise", {"sigma_m": 2.1, "tau_s": 60.0}),
+        **({"gnss2": spec["gnss2"]} if spec.get("gnss2") else {}),
         "link": spec.get("link", {}),
         "operator": spec.get("operator", []),
         "attack": attack,
@@ -200,6 +201,13 @@ class Run:
         dt = 1.0 / GNSS_UPDATE_HZ
         phi = math.exp(-dt / tau)
         gm = [rng.gauss(0, sig), rng.gauss(0, sig)]
+        # the second receiver (if any): its own independent error process, from its own stream so
+        # the first receiver's errors are the same as in a single-receiver flight of this seed
+        g2 = self.plan.get("gnss2")
+        if g2:
+            rng2 = random.Random(self.plan["seed"] + 2_000_003)
+            sig2, phi2 = g2["sigma_m"], math.exp(-dt / g2["tau_s"])
+            gm2 = [rng2.gauss(0, sig2), rng2.gauss(0, sig2)]
         next_t = time.monotonic()
         while not self._stop.is_set():
             while (m := h.recv_msg()) is not None:  # keep the TCP buffer drained
@@ -225,6 +233,11 @@ class Run:
             h.param_set_send("SIM_GPS1_GLTCH_X", n / M_PER_DEG)
             h.param_set_send("SIM_GPS1_GLTCH_Y", e / (M_PER_DEG * math.cos(math.radians(HOME_LAT))))
             self.gnss_log.write(f"{self.t():.3f},{gm[0]:.3f},{gm[1]:.3f},{an:.3f},{ae:.3f}\n")
+            if g2:  # never spoofed: the attacker model covers the first receiver only
+                gm2 = [x * phi2 + sig2 * math.sqrt(1 - phi2 * phi2) * rng2.gauss(0, 1) for x in gm2]
+                h.param_set_send("SIM_GPS2_GLTCH_X", gm2[0] / M_PER_DEG)
+                h.param_set_send("SIM_GPS2_GLTCH_Y", gm2[1] / (M_PER_DEG * math.cos(math.radians(HOME_LAT))))
+                self.gnss2_log.write(f"{self.t():.3f},{gm2[0]:.3f},{gm2[1]:.3f}\n")
 
     def _benign_glitch(self, rng):
         """B4: short incoherent GNSS glitches (random direction each second) that return."""
@@ -360,7 +373,8 @@ class Run:
         procs = []
         recs = []
         try:
-            procs.append(sitl.start(self.instance, out / "sitl"))
+            dual = (sitl.DUAL_GNSS_PARM,) if self.plan.get("gnss2") else ()
+            procs.append(sitl.start(self.instance, out / "sitl", extra_parm=dual))
             sitl.wait_ready(out / "sitl")
             recs = [Recorder(p["ids_on"], out / "onboard"), Recorder(p["ids_gnd"], out / "ground")]
             py = [sys.executable, "-m", "gaganrakshak.router"]
@@ -418,6 +432,9 @@ class Run:
                 self.harness.param_set_send(k, v)
             self.gnss_log = open(out / "gnss_error.csv", "w")
             self.gnss_log.write("t,gm_n,gm_e,attack_n,attack_e\n")
+            if self.plan.get("gnss2"):  # ground truth of the reference receiver's injected error
+                self.gnss2_log = open(out / "gnss2_error.csv", "w")
+                self.gnss2_log.write("t,gm_n,gm_e\n")
             threading.Thread(target=self._harness, daemon=True).start()
             self.gcs = mavutil.mavlink_connection(
                 f"udpin:127.0.0.1:{p['gcs']}", source_system=255, source_component=190
@@ -448,6 +465,8 @@ class Run:
                 self.link.stop()
             if hasattr(self, "gnss_log"):
                 self.gnss_log.close()
+            if hasattr(self, "gnss2_log"):
+                self.gnss2_log.close()
         labels = {
             **plan,
             "code_version": code_version(),
