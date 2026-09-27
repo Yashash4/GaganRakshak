@@ -77,8 +77,8 @@ airborne hours), flown once on the frozen code.
 - Detected *while the attack was active* in 10/10 flights each: GNSS jump (5.4 s median),
   command injection incl. held-out variants (0.1–0.6 s), replay (0.1 s), FC impersonation
   (0.6 s), telemetry manipulation (0.9 s), parameter tampering (1.1 s), link flood incl. far and
-  held-out (0.2 s), jamming within 100 m (4.0 s). Stock ArduPilot flagged none of these except
-  the GNSS jump.
+  held-out (0.2 s), jamming within 100 m (4.0 s). For these attack families stock ArduPilot
+  flagged only the GNSS jump.
 - False alarms: 29 in 22.1 clean airborne hours = 1.31/h (95 % upper bound 1.79/h), above our
   1/h design budget. None within 200 m of the ground station (19.4 h); all 29 on the fading-link
   and far-range flights: 26 airborne beyond 200 m, 3 after landing (see limitations). Stock ArduPilot: 60 (2.71/h), all on
@@ -87,7 +87,7 @@ airborne hours), flown once on the frozen code.
   caught at release for ≥ 0.5 m/s and only as an advisory below. A careless (naive) 2 m/s drift
   is caught during the attack in 10/10 (27.6 s).
 - With an independent second GNSS reference (extension, own test flights): slow drift of
-  0.5–2 m/s is caught during the attack in 60/60 flights (0.25 m/s: 14/20), adding no false alarms.
+  0.5–2 m/s is caught during the attack in 60/60 flights (0.25 m/s: 14/20), with no incremental false alarms (4 in 7.75 h with or without it).
 - Compute (DGX Spark, real-time replay of test flights, frozen code): onboard agent ~1,470
   messages/s at 10–11 % of one core and 186–198 MB, median per-message latency 0.4 ms, never
   falling behind; ground agent 2 % of one core and 70–75 MB. Capped at 25 % of one core (enforced by the kernel), it still kept real time with no dropped messages or growing backlog; only the latency tail grew (p99 0.16 s, max 1 s). Not yet measured on a companion
@@ -117,8 +117,9 @@ GCS displays can be falsified even when the aircraft is fine).
 - *Flight-controller health checks* (EKF innovation gating, failsafes) are designed for
   faults; a coherent spoofer that stays inside the gates is accepted, and they do not
   look at the link.
-- *Message authentication* (e.g. MAVLink 2 signing) prevents some forgery but detects
-  nothing, uses one shared key, is often disabled, and cannot tell whether authentic-looking
+- *Message authentication* (e.g. MAVLink 2 signing) can authenticate signed messages and reject
+  invalid signatures, but it does not detect physical GNSS anomalies, command–response
+  inconsistencies or link-level attacks; it uses one shared key, is often disabled, and cannot tell whether authentic-looking
   navigation data is physically true.
 - *Machine-learning-only IDS* on network or telemetry features report high accuracy on
   their own datasets but tend to raise false alarms on legitimate but unusual flight
@@ -220,7 +221,7 @@ a self-report, not attestation.
 
 **(g) Supporting evidence (never an alarm alone).** The autopilot's own estimator test ratios
 (learned thresholds) contribute LOW-severity advisories only. Six clean-trained anomaly models were
-also evaluated offline at a matched false-alarm budget. The learned models did not transfer: on validation flights five of six put 4–6 % of clean windows over a threshold set for 1 per hour; only the isolation forest held its rate, flagging 11 of 43 attacks. None is deployed (a negative result, reported in results/ml).
+also evaluated offline at a matched false-alarm budget. The learned models did not transfer: on validation flights five of six put 4–6 % of clean windows over a threshold set for 1 per hour; only the isolation forest held its rate, flagging 11 of 43 attacks. LOF was the formal winner under the pre-set ranking rule but exceeded the budget on validation, so none is deployed (a negative result, reported in results/ml).
 
 **(h) Decision and budget.** One false-alarm budget for the whole system: 1 MEDIUM+ alarm per
 clean flight-hour in total, shared equally by the five tunable statistics (0.2/h each) and learned
@@ -236,8 +237,8 @@ receiver cannot move the second, so their horizontal separation grows. The separ
 share of 0.2 alarms/h; every base threshold stays frozen, so the extension system's budget is
 1.2/h. It is evaluated on its own 150 pre-registered test flights: slow GNSS drift detected *during the
 attack* rises from 11/80 flights without it to 74/80 with it (all 60 at 0.5–2 m/s, 14/20 at
-0.25 m/s), with a median delay of 9–35 s (about threshold/rate + 5 s), and it added no false
-alarms in 7.75 clean hours (the base system had 4). An attacker who
+0.25 m/s), with a median delay of 9–35 s (about threshold/rate + 5 s), and it added no
+incremental false alarms (4 in 7.75 clean hours with or without it). An attacker who
 spoofs both references coherently, or jams the second while spoofing the first, silences this
 check; detection then falls back to the single-receiver physics.
 
@@ -271,7 +272,7 @@ Metrics: per-class detection rate, precision, event-F1, confusion matrix; false 
 flight-hour with 95 % upper bound; latency p50/p95 from attack start; drift-rate curve and
 max undetected drift rate; per-message processing time,
 CPU, RAM (labelled **DGX Spark**); commitment bandwidth. Comparison with stock ArduPilot's
-own indicators on the same flights: ArduPilot flagged every GNSS jump (0.2 s) and naive drift in 11/60 flights during the attack, but 0 of 150 injection, telemetry, flood, parameter, replay, impersonation and jamming flights, with 60 false alarms (2.7/h, all on benign GNSS glitches).
+own indicators on the same flights: ArduPilot flagged every GNSS jump (0.2 s) and naive drift in 11/60 flights during the attack, but 0 of 130 injection, telemetry, flood, parameter, replay, impersonation and jamming flights, with 60 false alarms (2.7/h, all on benign GNSS glitches).
 
 ---
 
@@ -384,7 +385,7 @@ rejected automatically, including cross-run outliers.
 | TC-07 | Replay of a captured signed command | Signature counters | Stale counter | `replay` |
 | TC-08 | FC impersonation toward the GCS | Downlink sequence / commitments | Duplicate sequences, uncommitted frames | `mavlink_anomaly` / `telemetry_manipulation` |
 | TC-09 | Jamming (burst link loss) | Link stats vs learned distance bands | Loss/silence above band at trusted distance | `dos`; not excused by a spoofed distance |
-| TC-10 | Benign suite B1–B7 | all | No alarm | False alarms per flight-hour ≤ budget, 1.31/h, 95 % bound 1.79/h (above budget; see limitations) |
+| TC-10 | Benign suite B1–B7 | all | No alarm | Target ≤ 1/h. Measured 1.31/h (95 % UB 1.79/h): did not meet the 1.0/h design target (see limitations) |
 
 ---
 
