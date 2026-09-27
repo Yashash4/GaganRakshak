@@ -33,7 +33,7 @@ NOTE = "SITL, simulated"
 GREYS = ("0.15", "0.55", "0.85", "0.35", "0.7")
 HATCHES = ("", "//", "xx", "..", "\\\\")
 MARKERS = ("o", "s", "^", "D", "v")
-RATE = re.compile(r"^(a2n?)_gps_drift(?:_naive)?-r([\d.]+)$")
+RATE = re.compile(r"^(a2n?)_gps_drift(?:_naive)?-r([\d.]+)(?:-g2)?$")
 ACCEL = re.compile(r"^a2a_gps_drift_accel-a([\d.]+)-early$")
 
 
@@ -106,62 +106,69 @@ def fig_latency(plt, docs: list[dict], out: Path) -> list[Path]:
     return _save(fig, out, "latency")
 
 
-def fig_drift(plt, m: dict, out: Path) -> list[Path]:
-    det = m["ids"]["detection"]
+def fig_drift(plt, m: dict, out: Path, extra: dict | None = None) -> list[Path]:
+    """Detection vs drift rate, cumulative: "during" the attack, and "during or at release".
+    ``extra`` = the metrics of the second-GNSS-reference extension, drawn as its own families."""
     curves: dict[str, list] = defaultdict(list)
-    for g, s in det.items():
-        if hit := RATE.match(g):
-            curves["coherent (a2)" if hit.group(1) == "a2" else "naive (a2n)"].append((float(hit.group(2)), s))
-        elif hit := ACCEL.match(g):
-            curves["accelerating, early start (a2a)"].append((float(hit.group(1)), s))
+    for metrics, tag in ((m, ""), (extra, " + second reference")):
+        for g, s in (metrics or {"ids": {"detection": {}}})["ids"]["detection"].items():
+            if hit := RATE.match(g):
+                name = "coherent (a2)" if hit.group(1) == "a2" else "naive (a2n)"
+                curves[name + tag].append((float(hit.group(2)), s))
+            elif (hit := ACCEL.match(g)) and not tag:
+                curves["accelerating, early start (a2a)"].append((float(hit.group(1)), s))
     if not curves:
         return []
-    fig, axes = plt.subplots(1, 2 + ("accelerating, early start (a2a)" in curves), figsize=(10, 3.4), squeeze=False)
-    ax_rate, ax_lat = axes[0][0], axes[0][1]
-    for i, name in enumerate(k for k in sorted(curves) if not k.startswith("accel")):
+    accel = "accelerating, early start (a2a)" in curves
+    fig, axes = plt.subplots(1, 1 + accel, figsize=(4.8 * (1 + accel), 3.6), squeeze=False)
+    ax_rate = axes[0][0]
+    families = [k for k in sorted(curves) if not k.startswith("accel")]
+    for i, name in enumerate(families):
         pts = sorted(curves[name], key=lambda p: p[0])
-        x = [p[0] for p in pts]
+        shift = 1 + 0.04 * (i - (len(families) - 1) / 2)  # markers of different families side by side
+        x = [p[0] * shift for p in pts]
+        col = GREYS[i % len(GREYS)]
         ax_rate.plot(
             x,
             [p[1]["detected_during"] / p[1]["runs"] for p in pts],
             "-" + MARKERS[i],
-            color="black",
-            label=f"{name}, during",
+            color=col,
+            label=f"{name}: during",
         )
         ax_rate.plot(
             x,
-            [p[1]["at_release"] / p[1]["runs"] for p in pts],
+            [p[1]["detected_incl_release"] / p[1]["runs"] for p in pts],
             ":" + MARKERS[i],
-            color="0.5",
+            color=col,
             mfc="none",
-            label=f"{name}, at release",
+            label=f"{name}: during or at release",
         )
-        lat = [p[1]["latency_during_s"]["median"] if p[1]["latency_during_s"] else np.nan for p in pts]
-        ax_lat.plot(x, lat, "-" + MARKERS[i], color="black", label=name)
-        for xi, p in zip(x, pts, strict=True):
-            ax_rate.annotate(f"n={p[1]['runs']}", (xi, 1.02), fontsize=6, ha="center")
-    for ax in (ax_rate, ax_lat):
-        ax.set_xscale("log")
-        ax.set_xlabel("drift rate (m/s)")
+    ns = sorted({p[1]["runs"] for c in curves.values() for p in c})
+    ax_rate.set_xscale("log")
+    ax_rate.set_xlabel("drift rate (m/s)")
     ax_rate.set_ylabel("fraction of runs detected")
-    ax_rate.set_ylim(-0.05, 1.12)
-    ax_lat.set_ylabel("median latency during the attack (s)")
+    ax_rate.set_ylim(-0.05, 1.08)
+    ax_rate.set_title(f"n = {', '.join(map(str, ns))} runs per point", fontsize=7)
     ax_rate.legend(fontsize=6)
-    ax_lat.legend(fontsize=6)
-    if "accelerating, early start (a2a)" in curves:
-        ax = axes[0][2]
+    if accel:
+        ax = axes[0][1]
         pts = sorted(curves["accelerating, early start (a2a)"], key=lambda p: p[0])
         x = [p[0] for p in pts]
         ax.plot(x, [p[1]["detected_during"] / p[1]["runs"] for p in pts], "-o", color="black", label="during")
-        ax.plot(x, [p[1]["at_release"] / p[1]["runs"] for p in pts], ":s", color="0.5", mfc="none", label="at release")
-        for xi, p in zip(x, pts, strict=True):
-            ax.annotate(f"n={p[1]['runs']}", (xi, 1.02), fontsize=6, ha="center")
+        ax.plot(
+            x,
+            [p[1]["detected_incl_release"] / p[1]["runs"] for p in pts],
+            ":o",
+            color="black",
+            mfc="none",
+            label="during or at release",
+        )
         ax.set_xscale("log")
         ax.set_xlabel("spoof acceleration (m/s²)")
         ax.set_ylabel("fraction of runs detected")
-        ax.set_ylim(-0.05, 1.12)
+        ax.set_ylim(-0.05, 1.08)
         ax.legend(fontsize=6)
-    fig.suptitle(f"Coherent and naive GNSS drift: detection vs spoof dynamics — {NOTE}")
+    fig.suptitle(f"GNSS drift: detection vs spoof dynamics — {NOTE}")
     return _save(fig, out, "drift_rate")
 
 
@@ -191,7 +198,9 @@ def fig_false_alarms(plt, m: dict, out: Path) -> list[Path]:
             )
         g = f["ground_phase_false_alarms"]["count"] if "ground_phase_false_alarms" in f else 0
         axg.bar(i, g, 0.6, color=GREYS[i], hatch=HATCHES[i], edgecolor="black")
-    ax.set_xticks(x, [*bands, "all airborne"])
+    ground = m["ids"]["false_alarms"].get("ground_phase_false_alarms", {}).get("count", 0)
+    # the headline counts every clean-time alarm; the ground ones are shown again on the right
+    ax.set_xticks(x, [*bands, f"all\n(incl. {ground} on ground)" if ground else "all airborne"])
     ax.set_xlabel("distance from home")
     ax.set_ylabel("false alarms per clean flight-hour\n(bar: rate, whisker: 95 % upper bound)")
     ax.legend(fontsize=7)
