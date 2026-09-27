@@ -486,13 +486,16 @@ def anchored_offset(res: Residuals, anchor: tuple, t: float, gnss_ne) -> tuple[n
     return np.asarray(gnss_ne) - pred, h
 
 
-def gate_at(gate: dict | None, age: float) -> float:
-    """Learned anchored-offset gate (clean-flight upper band per anchor-age bin). Offsets grow with
-    age, so a bin's quantile is set by its oldest ages: it is the gate at the bin's END, linearly
-    interpolated from the previous bin's (a step at the bin start would jump a whole bin early)."""
+def gate_at(gate: dict | None, age: float, reg: int | None = None) -> float:
+    """Learned anchored-offset gate (clean-flight upper band per anchor-age bin), for the inertial
+    acceleration regime at the anchor when known: dead-reckoning from an anchor taken in a hard
+    manoeuvre drifts much faster (the autopilot's tilt lags), and suspicions are opened exactly then.
+    Offsets grow with age, so a bin's quantile is set by its oldest ages: it is the gate at the
+    bin's END, linearly interpolated from the previous bin's."""
     if not gate:
         return float("inf")  # uncalibrated: never claim spoofing, advisories only
-    upper, w = gate["upper"], gate["bin_s"]
+    by_reg = gate.get("upper_by_regime")
+    upper, w = (by_reg[str(reg)] if by_reg and reg is not None else gate["upper"]), gate["bin_s"]
     ends = [w * (b + 1) for b in range(len(upper))]
     return float(np.interp(age, [0.0, *ends], [upper[0], *upper]))
 
@@ -555,6 +558,7 @@ class Cpce:
         # [confirmed at, cleared at or None]: a confirmed spoof stays open until the physics clears
         # it (forwarded to the ground agent, which then distrusts the reported distance)
         self.spoof_intervals: list[list] = []
+        self._reg = 0
         self._reset()
 
     def _reset(self, t: float | None = None):
@@ -589,7 +593,12 @@ class Cpce:
     def _step(self, r):
         t = r["t"]
         g = self.res.gnss[-1]
-        self.states.append((t, g[1], g[2], g[4], g[5]))
+        if r["H"] == min(self.res.horizons):
+            # Regime of the anchor = inertial acceleration (IMU only, never GNSS) of the short window
+            # ENDING at that state. An anchor lies before the suspicion's window, so its regime is
+            # fixed before any onset: a spoof that makes the autopilot fly hard cannot widen its gate.
+            self._reg = r["reg"]
+        self.states.append((t, g[1], g[2], g[4], g[5], self._reg))
         while self.states and t - self.states[0][0] > self.anchor_max_s + 30:
             self.states.popleft()
         z = nis(r, self.calib["sigma"])
@@ -639,7 +648,7 @@ class Cpce:
         if off is None:
             return out
         o, age = off
-        gate = gate_at(self.calib.get("anchor_gate"), age)
+        gate = gate_at(self.calib.get("anchor_gate"), age, self.suspect["anchor"][5])
         mag = float(np.linalg.norm(o))
         if mag > 1e-6:
             self.suspect["units"].append(o / mag)
@@ -673,26 +682,46 @@ class Cpce:
         return out
 
 
-def learn_gate(offsets: list[tuple[float, float]], bin_s: float = 10.0, q: float = 0.999, floor: float = 2.0) -> dict:
+def learn_gate(offsets: list[tuple], bin_s: float = 10.0, q: float = 0.999, floor: float = 2.0) -> dict:
     """Anchored-offset gate per anchor-age bin: the q-quantile of the offsets clean flights reach
-    at that age (pure inertial prediction from a trusted anchor), non-decreasing with age."""
+    at that age (pure inertial prediction from a trusted anchor), non-decreasing with age; pooled,
+    and per acceleration regime at the anchor (offsets are (age, magnitude, regime)). A regime bin
+    with too few samples uses the pooled value, never less than the gentler regime's."""
     n = int(ANCHOR_MAX_S // bin_s) + 1
-    upper, prev = [], floor
-    for b in range(n):
-        xs = [m for age, m in offsets if b * bin_s <= age < (b + 1) * bin_s]
-        if len(xs) >= 20:
-            prev = max(prev, float(np.quantile(xs, q)))
-        upper.append(round(prev, 2))
-    return {"bin_s": bin_s, "q": q, "upper": upper, "samples": len(offsets)}
+
+    def band(sel) -> list[float]:
+        upper, prev = [], floor
+        for b in range(n):
+            xs = [o[1] for o in sel if b * bin_s <= o[0] < (b + 1) * bin_s]
+            if len(xs) >= 20:
+                prev = max(prev, float(np.quantile(xs, q)))
+            upper.append(round(prev, 2))
+        return upper
+
+    pooled = band(offsets)
+    by_reg: dict[str, list[float]] = {}
+    for reg in range(3):
+        sel = [o for o in offsets if len(o) > 2 and o[2] == reg]
+        own = band(sel) if len(sel) >= 20 * n // 3 else pooled
+        lower = by_reg.get(str(reg - 1), [floor] * n)
+        by_reg[str(reg)] = [round(max(a, b), 2) for a, b in zip(own, lower, strict=True)]
+    return {
+        "bin_s": bin_s,
+        "q": q,
+        "upper": pooled,
+        "upper_by_regime": by_reg,
+        "samples": len(offsets),
+        "samples_by_regime": {str(r): sum(1 for o in offsets if len(o) > 2 and o[2] == r) for r in range(3)},
+    }
 
 
-def _extract(run: Path, imu_keep: int = 1) -> tuple[list[dict], list[tuple[float, float]], float]:
+def _extract(run: Path, imu_keep: int = 1) -> tuple[list[dict], list[tuple[float, float, int]], float]:
     """One clean flight: residual windows (unclipped), anchored offsets vs anchor age, and the
     flight's peak NED-trend statistic (the trend test never fires here, so learning is unaltered)."""
     from .adapter import ArduPilotAdapter
     from .ids import replay_tlogs
 
-    offsets: list[tuple[float, float]] = []
+    offsets: list[tuple[float, float, int]] = []
     res = Residuals()
     res.imu.max_s = res.att_hist.max_s = ANCHOR_MAX_S + max(HORIZONS) + 5
     anchors: list[tuple] = []
@@ -719,13 +748,16 @@ def _extract(run: Path, imu_keep: int = 1) -> tuple[list[dict], list[tuple[float
             if rows and rows[0]["armed"] and t >= t_eval:  # same code path as the detector
                 t_eval = t + 1.0
                 g = res.gnss[-1]
-                if not anchors or t - anchors[-1][0] >= 20.0:
-                    anchors.append((g[0], g[1], g[2], g[4], g[5]))
+                # anchors every 2 s, so anchors taken in manoeuvres (where the detector anchors, since
+                # that is when suspicions open) are sampled, each tagged with its acceleration regime
+                if not anchors or t - anchors[-1][0] >= 2.0:
+                    reg = next((r["reg"] for r in rows if r["H"] == min(HORIZONS)), 0)
+                    anchors.append((g[0], g[1], g[2], g[4], g[5], reg))
                 anchors = [a for a in anchors if t - a[0] <= ANCHOR_MAX_S]
                 for a in anchors:
                     off = anchored_offset(res, a, t, (g[1], g[2]))
                     if off is not None:
-                        offsets.append((off[1], float(np.linalg.norm(off[0]))))
+                        offsets.append((off[1], float(np.linalg.norm(off[0])), a[5]))
     return raw, offsets, res.trend_peak
 
 
@@ -779,6 +811,8 @@ def calibrate(
     with ProcessPoolExecutor(workers) as ex:
         results = list(ex.map(_extract, runs, [imu_keep] * len(runs)))
     runs, results, screened = screen_outliers(runs, results)
+    # the gate's evidence per regime counted in flights too (dense anchors are correlated within a flight)
+    flights_by_regime = {str(g): sum(1 for _, off, _ in results if any(o[2] == g for o in off)) for g in range(3)}
     per_run = [raw for raw, _, _ in results]
     offsets = [o for _, off, _ in results for o in off]
     vibs = np.array([r["vib"] for rr in per_run for r in rr]) if any(per_run) else np.zeros(1)
@@ -857,7 +891,12 @@ def calibrate(
         "sigma": sigma,
         "cusum": {"k": k, "h": h},
         "vib_edges": edges,
-        "anchor_gate": learn_gate(offsets),
+        "anchor_gate": {
+            **learn_gate(offsets),
+            "flights_by_regime": flights_by_regime,
+            # a regime seen on too few flights cannot support the 0.999 quantile on its own
+            "regimes_below_20_flights": [g for g, n in flights_by_regime.items() if n < 20],
+        },
         "trend": learn_trend_crit([peak for _, _, peak in results], hours, budget_per_hour),
         "meta": {
             "false_onsets": int(onsets),
