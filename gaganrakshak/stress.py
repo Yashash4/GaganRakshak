@@ -44,6 +44,18 @@ PLATFORM = "DGX Spark"
 ALERT_WINDOW_S = 10.0
 
 
+def cpu_limit() -> dict:
+    """The CPU this measurement was allowed, as the kernel enforces it: the cores the process may
+    run on and its cgroup v2 quota (cpu.max, "max 100000" = unlimited)."""
+    quota = None
+    try:
+        rel = Path("/proc/self/cgroup").read_text().split("::", 1)[1].strip()
+        quota = (Path("/sys/fs/cgroup") / rel.lstrip("/") / "cpu.max").read_text().strip()
+    except (OSError, IndexError):
+        pass
+    return {"cores": sorted(os.sched_getaffinity(0)), "cgroup_cpu_max": quota}
+
+
 def _pct(xs) -> dict:
     if not len(xs):
         return {}
@@ -167,6 +179,7 @@ def measure(run: Path, paced: bool = False, make=detectors) -> dict:
         "platform": PLATFORM,
         "cpus": os.cpu_count(),
         "load_avg_1m_at_start": round(os.getloadavg()[0], 2),
+        "cpu_limit": cpu_limit(),
         "run_id": labels["run_id"],
         "attack": labels["attack"]["type"] if labels.get("attack") else None,
         "mode": "paced" if paced else "fast",
