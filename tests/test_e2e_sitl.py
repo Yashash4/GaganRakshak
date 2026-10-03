@@ -139,7 +139,11 @@ def test_clean_link_imu_rate_and_radio_load(chain):
     print(f"IDS RAW_IMU {imu_hz:.1f} Hz; radio downlink load {load:.1%} of 57.6 kbps (commitments {ids_share:.1%})")
     assert any(m.get_type() == "GR_COMMIT" for m in off_radio)
     assert imu_hz >= 50
-    assert load < 0.70
+    # Total load is set by the GCS's requested stream rates (here 4 Hz on every stream, ~63 % on its own),
+    # not by the IDS. Bound what the IDS adds (~6.5 % at these rates: commitments + signed link reports;
+    # bound 10 %), and check the link as a whole is not saturated.
+    assert ids_share < 0.10
+    assert load < 1.0
     assert any(m.get_type() == "GPS_RAW_INT" for m in at_gcs)
     assert any(m.get_type() == "RADIO_STATUS" and m.get_srcSystem() == 51 for m in at_gcs)
 
