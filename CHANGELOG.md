@@ -7,6 +7,19 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- README: results summary, quick links, measured limitations, roadmap and citation.
+- `docs/technical-report.md`: technical report aligned with the submitted Stage 1 report.
+- `docs/verify`: independent script that recomputes the headline metrics from the raw results.
+
+### Changed
+- The end-to-end SITL test bounds the IDS's own share of the radio downlink (< 10 %) and checks
+  the link is not saturated, instead of a total load that depends on the GCS's stream rates.
+- Corrected the ArduPilot comparison count and clarified signing, extension and ML wording in
+  the technical report.
+
+## [0.1.0-stage1] - 2026-09-27
+
+### Added
 - ArduPilot MAVLink adapter to a platform-independent sample schema.
 - Inline onboard and ground MAVLink routers with downlink stream shaping.
 - Simulated 57.6 kbps telemetry radio with length- and distance-dependent loss and attacker hooks.
