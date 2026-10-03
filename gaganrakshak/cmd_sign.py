@@ -8,10 +8,11 @@ without a valid report in the last LINK_STALE_S the ground agent sends COPIES_MA
 
 Onboard agent (``CmdVerifier``, an IDS detector): pairs each uplink command with its
 signature. Evidence (class ``command_injection`` unless noted):
-- ``unsigned_command``   no valid signature arrived within ``wait_s`` (injected, or both
-                         signature copies lost on the radio). When the uplink loss measured from
-                         the GCS's own sequence gaps makes losing both copies likely (p² > alpha),
-                         it is reported as LOW ``dos`` corroboration instead.
+- ``unsigned_command``   no valid signature arrived within ``wait_s`` (injected, or every
+                         signature copy lost on the radio). Always MEDIUM: never downgraded by
+                         loss, since an attacker can jam the uplink while injecting. The uplink loss
+                         upper bound p from the GCS's own sequence gaps, the expected copies k and
+                         p^k go to the operator as metadata.
 - ``bad_signature``      signature present but does not verify (altered command or forged sig)
 - ``replayed_command``   valid signature, counter not newer than the last accepted  [replay]
 Alert-only: commands are always forwarded; blocking is a deployment option, not the default.
